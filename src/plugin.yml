@@ -1,0 +1,12 @@
+name: StaminaAndClimbing
+version: 1.0
+author: Offz
+main: com.offz.minecraft.staminaclimbing.plugin.StaminaAndClimbing
+
+prefix: SnC
+description: A mod that lets you climb and get exhausted
+
+commands:
+  toggleStamina:
+    description: Toggles stamina and climbing system for player
+    usage: /toggleStamina
