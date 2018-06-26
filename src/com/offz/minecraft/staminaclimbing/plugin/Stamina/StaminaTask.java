@@ -18,9 +18,9 @@ public class StaminaTask extends BukkitRunnable {
             BossBar b = StaminaBar.registeredBars.get(uuid);
             double progress = b.getProgress();
 
-            if(progress + 0.0025 <= 1) {
+            if (progress + 0.0025 <= 1) {
                 b.setProgress(progress + 0.0025);
-            }else{
+            } else {
                 b.setProgress(1);
             }
 

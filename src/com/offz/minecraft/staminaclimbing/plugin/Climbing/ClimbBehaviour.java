@@ -1,12 +1,15 @@
 package com.offz.minecraft.staminaclimbing.plugin.Climbing;
 
 import com.offz.minecraft.staminaclimbing.plugin.Stamina.StaminaBar;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -18,14 +21,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class ClimbBehaviour {
+public class ClimbBehaviour implements Listener {
 
     public static Map<UUID, Integer> jumpCount = new HashMap<>();
 
-    public static void onClick(PlayerInteractEvent e) {
-        if(!StaminaBar.toggled.contains(e.getPlayer().getUniqueId())) return;
-
+    @EventHandler()
+    public static void onRightClick(PlayerInteractEvent e) {
         Player p = e.getPlayer();
+
+        if(!StaminaBar.toggled.contains(p.getUniqueId()) || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) return; //Make sure player is in survival and has climb system enabled
+
         BossBar b = StaminaBar.registeredBars.get(p.getUniqueId());
         double progress = b.getProgress();
         int playerJumpCount = jumpCount.get(p.getUniqueId());
@@ -43,58 +48,53 @@ public class ClimbBehaviour {
             switch (e.getBlockFace()) {
                 case UP:
                     if (distance < 2.4 && !p.isOnGround()) {
-                        jumpCount.put(p.getUniqueId(), playerJumpCount + 1);
                         p.setVelocity(p.getVelocity().setY(0.4 * multipler));
-                    }else
-                        return;
-                    break;
+                        break;
+                    }
+                    return;
                 case EAST:
                     if (distance < 2.4 && p.isSneaking()) {
                         p.setVelocity(new Vector(0.4, 0.5 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     } else {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     }
                     break;
                 case WEST:
                     if (distance < 2.4 && p.isSneaking()) {
                         p.setVelocity(new Vector(-0.4, 0.5 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     } else {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     }
                     break;
                 case NORTH:
                     if (distance < 2.4 && p.isSneaking()) {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.5 * multipler, -0.4));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     } else {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     }
                     break;
                 case SOUTH:
                     if (distance < 2.4 && p.isSneaking()) {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.5 * multipler, 0.4));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     } else {
                         p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, p.getVelocity().getZ()));
-                        p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     }
                     break;
             }
+            p.setFallDistance(p.getFallDistance() / (float) 1.2);
             jumpCount.put(p.getUniqueId(), playerJumpCount + 1);
             if (progress - 0.01 >= 0) {
                 b.setProgress(progress - 0.02);
             }
         }
     }
-    public static void onLeftClick(PlayerAnimationEvent e) {
-        if(!StaminaBar.toggled.contains(e.getPlayer().getUniqueId())) return;
 
+    @EventHandler()
+    public void onLeftClick(PlayerAnimationEvent e) {
         Player p = e.getPlayer();
+
+        if(!StaminaBar.toggled.contains(p.getUniqueId()) || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) return;
+
         BossBar b = StaminaBar.registeredBars.get(p.getUniqueId());
         double progress = b.getProgress();
         int playerJumpCount = jumpCount.get(p.getUniqueId());
@@ -109,30 +109,25 @@ public class ClimbBehaviour {
             switch (blockFace) {
                 case UP:
                     if (!p.isOnGround() && playerJumpCount <= 2) {
-                        jumpCount.put(p.getUniqueId(), playerJumpCount + 2);
                         p.setVelocity(p.getVelocity().setY(0.4 * multipler));
-                        if (progress - 0.01 >= 0) {
-                            b.setProgress(progress - 0.01);
-                        }
+                        jumpCount.put(p.getUniqueId(), playerJumpCount - 2);
+                        break;
                     }
                     return;
                 case EAST:
                     p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, Math.signum(p.getLocation().getDirection().getZ()) * 0.5));
-                    p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     break;
                 case WEST:
                     p.setVelocity(new Vector(p.getVelocity().getX(), 0.3 * multipler, Math.signum(p.getLocation().getDirection().getZ()) * 0.5));
-                    p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     break;
                 case NORTH:
                     p.setVelocity(new Vector(Math.signum(p.getLocation().getDirection().getX()) * 0.5, 0.3 * multipler, p.getVelocity().getZ()));
-                    p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     break;
                 case SOUTH:
                     p.setVelocity(new Vector(Math.signum(p.getLocation().getDirection().getX()) * 0.5, 0.3 * multipler, p.getVelocity().getZ()));
-                    p.setFallDistance(p.getFallDistance() / (float) 1.2);
                     break;
             }
+            p.setFallDistance(p.getFallDistance() / (float) 1.2);
             jumpCount.put(p.getUniqueId(), playerJumpCount + 4);
             if (progress - 0.01 >= 0) {
                 b.setProgress(progress - 0.02);
@@ -140,11 +135,10 @@ public class ClimbBehaviour {
         }
     }
 
-    public static void onFall(PlayerMoveEvent e) {
-        if(!StaminaBar.toggled.contains(e.getPlayer().getUniqueId())) return;
-        if (e.getPlayer().isOnGround()) {
-            jumpCount.put(e.getPlayer().getUniqueId(), 0);
-        }
-
+    @EventHandler
+    public void onMove(PlayerMoveEvent e) {
+        if (!StaminaBar.toggled.contains(e.getPlayer().getUniqueId())) return;
+        if ((e.getPlayer().getGameMode() == GameMode.ADVENTURE || e.getPlayer().getGameMode() == GameMode.SURVIVAL) && e.getPlayer().isOnGround())
+                jumpCount.put(e.getPlayer().getUniqueId(), 0);
     }
 }
