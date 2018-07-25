@@ -12,13 +12,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class StaminaAndClimbing extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(label.equalsIgnoreCase("toggleStamina")) {
+        if(label.equalsIgnoreCase("toggleStamina")) { //Stamina toggle
             if (sender instanceof Player) {
                 Player p = (Player) sender;
                 if (StaminaBar.toggled.contains(p.getUniqueId())) {
                     p.sendMessage("Stamina and climbing system: OFF!");
-                    StaminaBar.toggled.remove(p.getUniqueId());
                     StaminaBar.unregisterBar(p.getUniqueId());
+                    StaminaBar.toggled.remove(p.getUniqueId());
                     return true;
                 }
                 p.sendMessage("Stamina and climbing system: ON!");

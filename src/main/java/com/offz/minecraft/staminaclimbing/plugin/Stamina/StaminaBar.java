@@ -39,7 +39,9 @@ public class StaminaBar implements Listener {
     }
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent e) {
-        Player p = e.getPlayer();
+        /*Player p = e.getPlayer();
+
+        if(!StaminaBar.toggled.contains(p.getUniqueId())) return;
 
         if(registeredBars.get(p.getUniqueId()) == null)
             registerBar(e.getPlayer());
@@ -47,14 +49,14 @@ public class StaminaBar implements Listener {
         BossBar b = registeredBars.get(p.getUniqueId());
 
         if (p.isSprinting() && b.getProgress() >= 0.1 + 0.0035) {
-            removeBossBarProgress(0.0035, p, b);
+            removeBossBarProgress(0.0035, b);
         } else if (p.isSneaking()){ //Do nothing
         } else {
-            removeBossBarProgress(0.00025, p, b);
-        }
+            removeBossBarProgress(0.00025, b);
+        }*/ //Stamina depletion for movement has been turned off as it may be replaced by a different system
     }
     @EventHandler
-    public void onPlayerFall(EntityDamageEvent e) {
+    public void onPlayerFall(EntityDamageEvent e) { //Remove stamina from player falls
         if (e.getEntity() instanceof Player && e.getCause() == EntityDamageEvent.DamageCause.FALL) {
             Player p = (Player) e.getEntity();
 
@@ -62,7 +64,9 @@ public class StaminaBar implements Listener {
 
             BossBar b = registeredBars.get(p.getUniqueId());
 
-            removeBossBarProgress((p.getFallDistance() * (p.getFallDistance()/2)) / 112.5, p, b);
+            b.setVisible(true);
+
+            removeBossBarProgress((p.getFallDistance() * (p.getFallDistance()/2)) / 112.5, b);
         }
     }
     @EventHandler
@@ -88,7 +92,7 @@ public class StaminaBar implements Listener {
         registeredBars.get(uuid).removeAll();
         registeredBars.remove(uuid);
     }
-    public void removeBossBarProgress(double amount, Player p, BossBar b){
+    public void removeBossBarProgress(double amount, BossBar b){ //Removes double amount from BossBar b's progress
         double progress = b.getProgress();
         if(progress - amount >= 0) {
             b.setProgress(b.getProgress() - amount);

@@ -2,20 +2,29 @@ group 'offz'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
-
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven {
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+    mavenLocal()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
 }
 
-task copyJar(type: Copy) {
-    from jar // here it automatically reads jar file produced from jar task
-    into 'C:/Users/Offz/Documents/Programming/Spigot servers/plugins'
-}
+//Move into plugins folder
+//task copyJar(type: Copy) {
+//    from jar // here it automatically reads jar file produced from jar task
+//    into 'C:/Users/Offz/Documents/Programming/Spigot servers/plugins'
+//}
 
-build.dependsOn copyJar
+//build.dependsOn copyJar
