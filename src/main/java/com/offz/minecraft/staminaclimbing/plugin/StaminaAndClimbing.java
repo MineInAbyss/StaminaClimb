@@ -10,9 +10,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 
 public final class StaminaAndClimbing extends JavaPlugin {
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(label.equalsIgnoreCase("toggleStamina")) { //Stamina toggle
+        //Stamina toggle
+        if (label.equalsIgnoreCase("toggleStamina")) {
             if (sender instanceof Player) {
                 Player p = (Player) sender;
                 if (StaminaBar.toggled.contains(p.getUniqueId())) {
@@ -26,8 +28,7 @@ public final class StaminaAndClimbing extends JavaPlugin {
                 StaminaBar.registerBar(p);
                 return true;
             }
-        }
-        return false;
+        } return false;
     }
 
     @Override
