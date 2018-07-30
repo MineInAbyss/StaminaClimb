@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -26,42 +27,26 @@ public class ClimbBehaviour implements Listener {
 
     public static Map<UUID, Integer> jumpCount = new HashMap<>();
     public static Map<UUID, Boolean> canClimb = new HashMap<>();
-    public static Map<UUID, Integer> cooldown = new HashMap<>();
+    public static Map<UUID, Long> cooldown = new HashMap<>();
 
     @EventHandler()
     public static void onRightClick(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
-
-        if (!StaminaBar.toggled.contains(uuid) || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) //Make sure player is in survival and has climb system enabled
-            return;
-
         BossBar b = StaminaBar.registeredBars.get(uuid);
-        boolean playerCanClimb = canClimb.get(uuid);
 
-        int playerJumpCount = 0;
-        if (jumpCount.containsKey(uuid)) //Remove any chance of null pointer
-            playerJumpCount = jumpCount.get(uuid);
+        if (allowClimb(p) && rightClicked(e)) {
+            int playerJumpCount = 0;
+            if (jumpCount.containsKey(uuid)) //Remove any chance of null pointer
+                playerJumpCount = jumpCount.get(uuid);
 
-        //Cooldown so player does not trigger twice accidentally
-        int playerCooldown = 0;
-        if (cooldown.containsKey(uuid)) {
-            playerCooldown = cooldown.get(uuid);
-            if (playerCooldown == 0)
-                cooldown.remove(uuid);
-        }
-
-        if (e.getAction().equals(Action.RIGHT_CLICK_BLOCK) && e.getHand().equals(EquipmentSlot.HAND) //Check right click, e.getHand makes event only trigger once, otherwise spigot calls it twice
-                && playerCanClimb
-                && e.getClickedBlock().getType().isSolid()
-                && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) { //Make sure player is holding nothing in hand
             Location L1 = p.getLocation();
             Location L2 = e.getClickedBlock().getLocation();
             L2.add(0.5, -0.5, 0.5);//Get location at center of block
             double distance = L1.distance(L2);
 
             if (p.isSneaking()) { //Wall slide
-                if (p.isOnGround() || distance > 2) //If player is sneaking on ground, do not perform slide, nor jump
+                if(p.isOnGround() || distance > 2.3) //If player is sneaking on ground, do not perform slide, nor jump
                     return;
                 //Calculate slowdown based on current velocity
                 Vector velocity = p.getVelocity();
@@ -86,9 +71,9 @@ public class ClimbBehaviour implements Listener {
                 //Remove stamina based on distance fallen
                 double removeStamina = Math.abs(0.01 - y / 20);
                 StaminaBar.removeProgress(removeStamina, b);
-            } else if (playerJumpCount <= 1 && playerCooldown == 0) { //Climb jump (right click)
+            } else if (playerJumpCount <= 1 && cooldownComplete(p)) { //Climb jump (right click)
                 jumpY(p, e.getBlockFace(), distance, b);
-                cooldown.put(uuid, 2); //Set a cooldown of 2 ticks
+                cooldown.put(uuid, System.currentTimeMillis()); //Set a cooldown of 2 ticks
             }
         }
     }
@@ -96,42 +81,41 @@ public class ClimbBehaviour implements Listener {
     @EventHandler()
     public void onLeftClick(PlayerAnimationEvent e) {
         Player p = e.getPlayer();
-        UUID uuid = p.getUniqueId();
 
-        if (!StaminaBar.toggled.contains(uuid) || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR)
-            return;
+        if (allowClimb(p)) {
+            UUID uuid = p.getUniqueId();
+            BossBar b = StaminaBar.registeredBars.get(uuid);
+            int playerJumpCount = jumpCount.get(uuid);
 
-        BossBar b = StaminaBar.registeredBars.get(uuid);
-        int playerJumpCount = jumpCount.get(uuid);
+            //Find left clicked block (in adventure mode)
+            List<Block> blocks = p.getLastTwoTargetBlocks(null, 4); //Get two connected blocks player is looking at
+            BlockFace blockFace = blocks.get(1).getFace(blocks.get(0)); //Find the face between both of these blocks
 
-        //Find left clicked block (in adventure mode)
-        List<Block> blocks = p.getLastTwoTargetBlocks(null, 4); //Get two connected blocks player is looking at
-        BlockFace blockFace = blocks.get(1).getFace(blocks.get(0)); //Find the face between both of these blocks
-
-        //Horizontal leap
-        if (blocks.get(1).getType() != Material.AIR && playerJumpCount <= 2 && playerJumpCount >= 1) { //Make sure target block isn't air
-            Vector direction = p.getLocation().getDirection();
-            switch (blockFace) {
-                case UP:
-                    if (!p.isOnGround() && playerJumpCount <= 1) {
+            //Horizontal leap
+            if (blocks.get(1).getType() != Material.AIR && playerJumpCount <= 2 && playerJumpCount >= 1) { //Make sure target block isn't air
+                Vector direction = p.getLocation().getDirection();
+                switch (blockFace) {
+                    case UP:
+                        if (!p.isOnGround() && playerJumpCount <= 1) {
+                            jumpY(p, blockFace, 4, b);
+                            return; //This action is the same as jumping (right clicking) on top of block, so it does not proceed further
+                        }
+                        return;
+                    case EAST:
+                    case WEST:
                         jumpY(p, blockFace, 4, b);
-                        return; //This action is the same as jumping (right clicking) on top of block, so it does not proceed further
-                    }
-                    return;
-                case EAST:
-                case WEST:
-                    jumpY(p, blockFace, 4, b);
-                    p.setVelocity(p.getVelocity().setZ(Math.signum(direction.getZ()) * 0.5));
-                    break;
-                case NORTH:
-                case SOUTH:
-                    jumpY(p, blockFace, 4, b);
-                    p.setVelocity(p.getVelocity().setX(Math.signum(direction.getX()) * 0.5));
-                    break;
+                        p.setVelocity(p.getVelocity().setZ(Math.signum(direction.getZ()) * 0.5));
+                        break;
+                    case NORTH:
+                    case SOUTH:
+                        jumpY(p, blockFace, 4, b);
+                        p.setVelocity(p.getVelocity().setX(Math.signum(direction.getX()) * 0.5));
+                        break;
+                }
+                p.setFallDistance(p.getFallDistance() * 0.8f);//Reduce less fall damage than regular jump
+                jumpCount.put(uuid, playerJumpCount + 1);//Add extra to jumpCount so player cannot jump after left clicking
+                StaminaBar.removeProgress(0.05, b);//Use slightly more stamina than regular jump
             }
-            p.setFallDistance(p.getFallDistance() * 0.8f);//Reduce less fall damage than regular jump
-            jumpCount.put(uuid, playerJumpCount + 1);//Add extra to jumpCount so player cannot jump after left clicking
-            StaminaBar.removeProgress(0.05, b);//Use slightly more stamina than regular jump
         }
     }
 
@@ -164,5 +148,32 @@ public class ClimbBehaviour implements Listener {
         p.setFallDistance(p.getFallDistance() / 1.5f);
         StaminaBar.removeProgress(0.05, b);
         jumpCount.put(uuid, jumpCount.get(uuid) + 1);
+    }
+
+    private static boolean allowClimb(Player p){
+        UUID uuid = p.getUniqueId();
+        if(StaminaBar.toggled.contains(uuid) //Check if player has stamina system on
+                && canClimb.get(uuid) //Check if player allowed to climb
+                && (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) //Check if player in survival or adventure mode
+                && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand
+            return true;
+        return false;
+    }
+
+    private static boolean rightClicked(PlayerInteractEvent e){
+        if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK) && e.getHand().equals(EquipmentSlot.HAND) //Check right click, e.getHand makes event only trigger once, otherwise spigot calls it twice
+                && e.getClickedBlock().getType().isSolid()) //Check if clicked block is solid
+            return true;
+        return false;
+    }
+    private static boolean cooldownComplete(Player p){
+        UUID uuid = p.getUniqueId();
+        if (!cooldown.containsKey(uuid))
+            cooldown.put(uuid, System.currentTimeMillis());
+
+        long playerCooldown = cooldown.get(uuid);
+        if (playerCooldown - System.currentTimeMillis() <= -100) //At least 100 milliseconds must pass until player can jump again
+            return true;
+        return false;
     }
 }

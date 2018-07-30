@@ -18,12 +18,6 @@ import java.util.UUID;
 public class StaminaTask extends BukkitRunnable {
     @Override
     public void run() {
-        for (UUID uuid : ClimbBehaviour.cooldown.keySet()) {
-            int cooldown = ClimbBehaviour.cooldown.get(uuid);
-            if(cooldown > 0){
-                ClimbBehaviour.cooldown.put(uuid, cooldown - 1);
-            }
-        }
         for (UUID uuid : StaminaBar.registeredBars.keySet()) { //Regenerate stamina for every BossBar
             Player p = Bukkit.getPlayer(uuid);
             BossBar b = StaminaBar.registeredBars.get(uuid);
