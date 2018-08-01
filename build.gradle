@@ -22,9 +22,9 @@ dependencies {
 }
 
 //Move into plugins folder
-task copyJar(type: Copy) {
-    from jar // here it automatically reads jar file produced from jar task
-    into 'C:/Users/Offz/Documents/Programming/Spigot servers/plugins'
-}
+//task copyJar(type: Copy) {
+//    from jar // here it automatically reads jar file produced from jar task
+//    into 'C:/Users/Offz/Documents/Programming/Spigot servers/plugins'
+//}
 
-build.dependsOn copyJar
+//build.dependsOn copyJar

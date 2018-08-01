@@ -8,6 +8,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.UUID;
+
 
 public final class StaminaAndClimbing extends JavaPlugin {
 
@@ -17,14 +19,17 @@ public final class StaminaAndClimbing extends JavaPlugin {
         if (label.equalsIgnoreCase("toggleStamina")) {
             if (sender instanceof Player) {
                 Player p = (Player) sender;
-                if (StaminaBar.toggled.contains(p.getUniqueId())) {
+                UUID uuid = p.getUniqueId();
+                if (StaminaBar.toggled.contains(uuid)) {
                     p.sendMessage("Stamina and climbing system: OFF!");
-                    StaminaBar.unregisterBar(p.getUniqueId());
-                    StaminaBar.toggled.remove(p.getUniqueId());
+                    StaminaBar.unregisterBar(uuid);
+                    StaminaBar.toggled.remove(uuid);
+                    ClimbBehaviour.cooldown.remove(uuid);
                     return true;
                 }
                 p.sendMessage("Stamina and climbing system: ON!");
-                StaminaBar.toggled.add(p.getUniqueId());
+                StaminaBar.toggled.add(uuid);
+                ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
                 StaminaBar.registerBar(p);
                 return true;
             }

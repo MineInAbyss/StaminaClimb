@@ -25,12 +25,15 @@ import java.util.UUID;
 
 public class ClimbBehaviour implements Listener {
 
+    public long JUMP_COOLDOWN = 100; //Milliseconds
+    public double SLIDE_DISTANCE = 3; //Blocks
+
     public static Map<UUID, Integer> jumpCount = new HashMap<>();
     public static Map<UUID, Boolean> canClimb = new HashMap<>();
     public static Map<UUID, Long> cooldown = new HashMap<>();
 
     @EventHandler()
-    public static void onRightClick(PlayerInteractEvent e) {
+    public void onRightClick(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
         BossBar b = StaminaBar.registeredBars.get(uuid);
@@ -46,7 +49,7 @@ public class ClimbBehaviour implements Listener {
             double distance = L1.distance(L2);
 
             if (p.isSneaking()) { //Wall slide
-                if(p.isOnGround() || distance > 2.3) //If player is sneaking on ground, do not perform slide, nor jump
+                if(p.isOnGround() || distance > SLIDE_DISTANCE) //If player is sneaking on ground, do not perform slide, nor jump
                     return;
                 //Calculate slowdown based on current velocity
                 Vector velocity = p.getVelocity();
@@ -129,7 +132,7 @@ public class ClimbBehaviour implements Listener {
             jumpCount.put(uuid, 0);
     }
 
-    private static void jumpY(Player p, BlockFace blockFace, double distance, BossBar b) {
+    private void jumpY(Player p, BlockFace blockFace, double distance, BossBar b) {
         Vector velocity = p.getVelocity();
         UUID uuid = p.getUniqueId();
         double y = velocity.getY();
@@ -150,7 +153,7 @@ public class ClimbBehaviour implements Listener {
         jumpCount.put(uuid, jumpCount.get(uuid) + 1);
     }
 
-    private static boolean allowClimb(Player p){
+    private boolean allowClimb(Player p){
         UUID uuid = p.getUniqueId();
         if(StaminaBar.toggled.contains(uuid) //Check if player has stamina system on
                 && canClimb.get(uuid) //Check if player allowed to climb
@@ -160,19 +163,17 @@ public class ClimbBehaviour implements Listener {
         return false;
     }
 
-    private static boolean rightClicked(PlayerInteractEvent e){
+    private boolean rightClicked(PlayerInteractEvent e){
         if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK) && e.getHand().equals(EquipmentSlot.HAND) //Check right click, e.getHand makes event only trigger once, otherwise spigot calls it twice
                 && e.getClickedBlock().getType().isSolid()) //Check if clicked block is solid
             return true;
         return false;
     }
-    private static boolean cooldownComplete(Player p){
+    private boolean cooldownComplete(Player p){
         UUID uuid = p.getUniqueId();
-        if (!cooldown.containsKey(uuid))
-            cooldown.put(uuid, System.currentTimeMillis());
 
         long playerCooldown = cooldown.get(uuid);
-        if (playerCooldown - System.currentTimeMillis() <= -100) //At least 100 milliseconds must pass until player can jump again
+        if (playerCooldown - System.currentTimeMillis() <= -JUMP_COOLDOWN) //At least JUMP_COOLDOWN milliseconds must pass until player can jump again
             return true;
         return false;
     }
