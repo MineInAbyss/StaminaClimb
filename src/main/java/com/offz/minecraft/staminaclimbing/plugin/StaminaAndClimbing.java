@@ -16,7 +16,7 @@ public final class StaminaAndClimbing extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         //Stamina toggle
-        if (label.equalsIgnoreCase("toggleStamina")) {
+        if (label.equalsIgnoreCase("toggleStamina") || label.equalsIgnoreCase("climb")) {
             if (sender instanceof Player) {
                 Player p = (Player) sender;
                 UUID uuid = p.getUniqueId();

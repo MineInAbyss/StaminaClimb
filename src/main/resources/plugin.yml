@@ -1,5 +1,5 @@
-name: StaminaAndClimbing
-version: 1.0
+name: StaminaClimb
+version: 1.0.1
 author: Offz
 main: com.offz.minecraft.staminaclimbing.plugin.StaminaAndClimbing
 
@@ -10,3 +10,6 @@ commands:
   toggleStamina:
     description: Toggles stamina and climbing system for player
     usage: /toggleStamina
+  climb:
+    description: Toggles stamina and climbing system for player
+    usage: /climb (same as /togglestamina)
