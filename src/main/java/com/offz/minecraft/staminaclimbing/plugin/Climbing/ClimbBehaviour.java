@@ -25,7 +25,6 @@ public class ClimbBehaviour implements Listener {
     public long JUMP_COOLDOWN = 100; //Milliseconds
     public double SLIDE_DISTANCE = 3; //Blocks
     List BLOCK_BLACKLIST  = Arrays.asList(Material.AIR, Material.TRAP_DOOR, Material.DARK_OAK_DOOR,  Material.ACACIA_DOOR,  Material.BIRCH_DOOR, Material.JUNGLE_DOOR, Material.SPRUCE_DOOR, Material.WOODEN_DOOR, Material.IRON_DOOR, Material.CHEST, Material.ENDER_CHEST, Material.TRAPPED_CHEST);
-
     public static Map<UUID, Integer> jumpCount = new HashMap<>();
     public static Map<UUID, Boolean> canClimb = new HashMap<>();
     public static Map<UUID, Long> cooldown = new HashMap<>();
@@ -92,6 +91,8 @@ public class ClimbBehaviour implements Listener {
 
             //Find left clicked block (in adventure mode)
             List<Block> blocks = p.getLastTwoTargetBlocks(null, 4); //Get two connected blocks player is looking at
+            if(blocks.get(0).isLiquid())
+                return;
             BlockFace blockFace = blocks.get(1).getFace(blocks.get(0)); //Find the face between both of these blocks
 
             //Horizontal leap
@@ -152,7 +153,7 @@ public class ClimbBehaviour implements Listener {
             p.setVelocity(velocity.setY(y / 2.5));
         } else if (y < -0.3) {
             p.setVelocity(velocity.setY(0.225));
-        } else if (blockFace == BlockFace.UP && distance < 2.4 && !p.isOnGround()) {
+        } else if (blockFace == BlockFace.UP && distance < 1.6 && !p.isOnGround()) {
             p.setVelocity(velocity.setY(0.37));
         } else if (blockFace != BlockFace.UP) {
             p.setVelocity(velocity.setY(0.37));
@@ -177,6 +178,9 @@ public class ClimbBehaviour implements Listener {
     }
 
     private boolean rightClicked(PlayerInteractEvent e) {
+        if(e.getClickedBlock() == null)
+            return false;
+
         Player p = e.getPlayer();
         Material block = e.getClickedBlock().getType();
 
