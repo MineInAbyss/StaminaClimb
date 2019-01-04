@@ -1,6 +1,7 @@
 name: StaminaClimb
 version: 1.0.1
 author: Offz
+api-version: 1.13
 main: com.offz.minecraft.staminaclimbing.plugin.StaminaAndClimbing
 
 prefix: SnC

@@ -1,8 +1,9 @@
 package com.offz.minecraft.staminaclimbing.plugin.Stamina;
 
-import com.offz.minecraft.staminaclimbing.plugin.StaminaAndClimbing;
+import com.offz.minecraft.staminaclimbing.plugin.Climbing.ClimbBehaviour;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -15,6 +16,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -50,7 +52,7 @@ public class StaminaBar implements Listener {
 
         double vel = p.getVelocity().getY();
         if (vel < -0.1) {
-            this.velocities.put(uuid, Double.valueOf(vel));
+            velocities.put(uuid, vel);
         }
 
         /*if(registeredBars.get(p.getUniqueId()) == null)
@@ -64,6 +66,14 @@ public class StaminaBar implements Listener {
         } else {
             removeProgress(0.00025, b);
         }*/ //Stamina depletion for movement has been turned off as it may be replaced by a different system
+
+        Location loc = e.getFrom();
+        Location to = e.getTo();
+
+        //if player is climbing and has moved
+        if (ClimbBehaviour.isClimbing.containsKey(uuid) && (loc.getX() != to.getX() || loc.getY() != to.getY() || loc.getZ() != to.getZ()) && p.getVelocity().equals(new Vector(0, 0, 0))) {
+            StaminaBar.removeProgress(0.005, uuid);
+        }
     }
 
     @EventHandler
@@ -96,6 +106,7 @@ public class StaminaBar implements Listener {
             double damage = Math.pow((vel + threshold) * -multiplier, exponent);
             e.setDamage(damage);
             removeProgress(damage / 15, b); //Taking 15 health of damage reduces stamina fully
+            p.setVelocity(p.getVelocity().setY(0)); //stop weird effects from levitation
         }
     }
 
@@ -129,10 +140,18 @@ public class StaminaBar implements Listener {
 
     public static void removeProgress(double amount, BossBar b) { //Removes double amount from BossBar b's progress
         double progress = b.getProgress();
-        if (progress - amount >= 0) {
+        if (progress - amount >= 0)
             b.setProgress(progress - amount);
-        } else {
+        else
             b.setProgress(0);
-        }
+    }
+
+    public static void removeProgress(double amount, UUID uuid) { //Removes double amount from BossBar b's progress
+        BossBar b = StaminaBar.registeredBars.get(uuid);
+        double progress = b.getProgress();
+        if (progress - amount >= 0)
+            b.setProgress(progress - amount);
+        else
+            b.setProgress(0);
     }
 }
