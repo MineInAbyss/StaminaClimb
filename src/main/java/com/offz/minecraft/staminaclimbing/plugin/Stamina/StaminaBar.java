@@ -55,18 +55,6 @@ public class StaminaBar implements Listener {
             velocities.put(uuid, vel);
         }
 
-        /*if(registeredBars.get(p.getUniqueId()) == null)
-            registerBar(e.getPlayer());
-
-        BossBar b = registeredBars.get(p.getUniqueId());
-
-        if (p.isSprinting() && b.getProgress() >= 0.1 + 0.0035) {
-            removeProgress(0.0035, b);
-        } else if (p.isSneaking()){ //Do nothing
-        } else {
-            removeProgress(0.00025, b);
-        }*/ //Stamina depletion for movement has been turned off as it may be replaced by a different system
-
         Location loc = e.getFrom();
         Location to = e.getTo();
 

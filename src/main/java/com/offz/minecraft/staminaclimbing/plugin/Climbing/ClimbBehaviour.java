@@ -11,13 +11,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
@@ -37,19 +35,12 @@ public class ClimbBehaviour implements Listener {
     public void onRightClick(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
-//        BossBar b = StaminaBar.registeredBars.get(uuid);
         Location L1 = p.getLocation();
 
         if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && atWall(L1)) {
             Vector v = p.getVelocity();
 
-//            p.sendMessage(Double.toString(v.getY()));
-//            Location L2 = e.getClickedBlock().getLocation();
-//            L2.add(0.5, -0.5, 0.5);//Get location at center of block
-//            double distance = L1.distance(L2);
             if (!isClimbing.containsKey(uuid) && v.getY() > -0.08 && v.getY() < -0.07) {
-//                p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 2, false, false));
-//                p.teleport(p.getLocation().add(new Vector(0, 0.1, 0)));
                 p.setVelocity(v.add(new Vector(0, 0.3, 0)));
             }
 
@@ -57,40 +48,7 @@ public class ClimbBehaviour implements Listener {
             p.setAllowFlight(true);
             p.setFlying(true);
             p.setFlySpeed(0.03f);
-//            StaminaBar.removeProgress(0.015 * (p.getFallDistance() * 4 + 1), b);
-//            cooldown.put(uuid, System.currentTimeMillis() + JUMP_COOLDOWN); //Set a cooldown
-
-//            double y = v.getY();
-//            double fall = p.getFallDistance();
-
-//            PotionEffect currentEffect = p.getPotionEffect(PotionEffectType.LEVITATION);
-//            if (y < -0.1) {
-//                if(!p.hasPotionEffect(PotionEffectType.LEVITATION) || currentEffect.getAmplifier() == 255)
-//                    p.removePotionEffect(PotionEffectType.LEVITATION);
-//                if (fall < 2)
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 10, 1, false, false));
-//                else if (fall < 5)
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 252, false, false));
-//                else if (fall < 7)
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 245, false, false));
-//                else if (fall < 10)
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, 20, 240, false, false));
-//                return;
-//            }
-
-//            if (!p.hasPotionEffect(PotionEffectType.LEVITATION) || currentEffect.getAmplifier() == 255) {
-//                p.removePotionEffect(PotionEffectType.LEVITATION);
-//                if (p.isSneaking()) //climb down when sneaking
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, Integer.MAX_VALUE, 250, false, false));
-//                else //otherwise climb up
-//                    p.addPotionEffect(new PotionEffect(PotionEffectType.LEVITATION, Integer.MAX_VALUE, 2, false, false));
-//            }
         }
-    }
-
-
-    @EventHandler()
-    public void onMove(PlayerMoveEvent e) {
     }
 
     @EventHandler()
@@ -117,7 +75,7 @@ public class ClimbBehaviour implements Listener {
                 double y = direction.getY();
                 y += Math.signum(y) * 0.5;
                 double z = direction.getZ();
-                p.setVelocity(p.getVelocity().setX(x/1.5).setY(y/1.5).setZ(z/1.5));
+                p.setVelocity(p.getVelocity().setX(x / 1.5).setY(y / 1.5).setZ(z / 1.5));
 
                 if (blockFace.equals(BlockFace.UP))
                     p.setVelocity(p.getVelocity().setY(0.5 * Math.signum(direction.getY() + 0.95)));
@@ -128,8 +86,6 @@ public class ClimbBehaviour implements Listener {
     }
 
     public static void stopClimbing(Player p) {
-//        p.removePotionEffect(PotionEffectType.LEVITATION);
-//        p.setVelocity(p.getVelocity().setY(0));
         p.setAllowFlight(false);
         p.setFlying(false);
         p.setFlySpeed(0.1f);
@@ -139,7 +95,7 @@ public class ClimbBehaviour implements Listener {
     }
 
     public static boolean atWall(Location loc) { //checks if player is at climbable wall
-        if(loc.getBlock().getType().equals(Material.WATER)) //don't fly if in water
+        if (loc.getBlock().getType().equals(Material.WATER)) //don't fly if in water
             return false;
         for (int x = -1; x <= 1; x += 2) { //check for block to hang onto in a 2x2x2 area around player
             for (int y = 0; y <= 1; y += 1) {
