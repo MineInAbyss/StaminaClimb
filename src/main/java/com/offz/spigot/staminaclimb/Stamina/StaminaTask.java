@@ -1,6 +1,6 @@
-package com.offz.minecraft.staminaclimbing.plugin.Stamina;
+package com.offz.spigot.staminaclimb.Stamina;
 
-import com.offz.minecraft.staminaclimbing.plugin.Climbing.ClimbBehaviour;
+import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.boss.BarColor;

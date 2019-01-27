@@ -1,6 +1,6 @@
-package com.offz.minecraft.staminaclimbing.plugin.Climbing;
+package com.offz.spigot.staminaclimb.Climbing;
 
-import com.offz.minecraft.staminaclimbing.plugin.Stamina.StaminaBar;
+import com.offz.spigot.staminaclimb.Stamina.StaminaBar;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,10 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerAnimationEvent;
-import org.bukkit.event.player.PlayerAnimationType;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -41,13 +38,32 @@ public class ClimbBehaviour implements Listener {
             Vector v = p.getVelocity();
 
             if (!isClimbing.containsKey(uuid) && v.getY() > -0.08 && v.getY() < -0.07) {
-                p.setVelocity(v.add(new Vector(0, 0.3, 0)));
-            }
+                p.setVelocity(v.add(new Vector(0, 0.35, 0)));
+            }//Calculate slowdown based on current velocity
 
-            isClimbing.put(uuid, true);
-            p.setAllowFlight(true);
-            p.setFlying(true);
-            p.setFlySpeed(0.03f);
+            Vector velocity = p.getVelocity();
+            double y = p.getVelocity().getY();
+            double slowdown;
+            if (y > -0.85)
+                slowdown = 1.2;
+            else if (y > -1.1)
+                slowdown = 1.04;
+            else if (y > -1.5)
+                slowdown = 1.015;
+            else if (y > -2)
+                slowdown = 1.01;
+            else
+                slowdown = 1.01;
+            p.setVelocity(velocity.setY(y / slowdown));
+
+            StaminaBar.removeProgress(p.getFallDistance() / 20, uuid);
+
+            if(StaminaBar.registeredBars.get(uuid).getProgress() > 0) {
+                isClimbing.put(uuid, true);
+                p.setAllowFlight(true);
+                p.setFlying(true);
+                p.setFlySpeed(0.03f);
+            }
         }
     }
 
@@ -75,12 +91,20 @@ public class ClimbBehaviour implements Listener {
                 double y = direction.getY();
                 y += Math.signum(y) * 0.5;
                 double z = direction.getZ();
-                p.setVelocity(p.getVelocity().setX(x / 1.5).setY(y / 1.5).setZ(z / 1.5));
+
+                if(!atWall(p.getLocation())) { //if not at a wall (i.e. double jump)
+                    StaminaBar.removeProgress(0.4, b); //take away more stamina when in the air
+                    p.setVelocity(p.getVelocity().setX(x / 2).setY(y / 2).setZ(z / 2)); //shorter leap
+                    cooldown.put(uuid, 0L);
+                }
+                else {
+                    StaminaBar.removeProgress(0.3, b);
+                    p.setVelocity(p.getVelocity().setX(x / 1.5).setY(y / 1.5).setZ(z / 1.5));
+                }
 
                 if (blockFace.equals(BlockFace.UP))
                     p.setVelocity(p.getVelocity().setY(0.5 * Math.signum(direction.getY() + 0.95)));
 
-                StaminaBar.removeProgress(0.3, b); //remove almost a third, allowing for only 3 leaps max
             }
         }
     }
@@ -100,7 +124,7 @@ public class ClimbBehaviour implements Listener {
         for (int x = -1; x <= 1; x += 2) { //check for block to hang onto in a 2x2x2 area around player
             for (int y = 0; y <= 1; y += 1) {
                 for (int z = -1; z <= 1; z += 2) {
-                    double checkRange = 0.33;
+                    double checkRange = 0.4;
                     Location to = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ()).add(x * checkRange, y, z * checkRange);
                     if (to.getBlock().getType().isSolid())
                         return true;
@@ -112,7 +136,7 @@ public class ClimbBehaviour implements Listener {
 
     private boolean allowClimb(Player p) { //does player meet all requirements to be able to climb
         UUID uuid = p.getUniqueId();
-        if (StaminaBar.toggled.contains(uuid) //Check if player has stamina system on
+        if (!StaminaBar.toggled.contains(uuid) //If player is not in the blacklist, they have their stamina toggled on
                 && canClimb.get(uuid) //Check if player allowed to climb
                 && (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) //Check if player in survival or adventure mode
                 && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand

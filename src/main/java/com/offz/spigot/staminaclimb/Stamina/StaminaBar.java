@@ -1,6 +1,6 @@
-package com.offz.minecraft.staminaclimbing.plugin.Stamina;
+package com.offz.spigot.staminaclimb.Stamina;
 
-import com.offz.minecraft.staminaclimbing.plugin.Climbing.ClimbBehaviour;
+import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -48,7 +48,7 @@ public class StaminaBar implements Listener {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
 
-        if (!StaminaBar.toggled.contains(uuid)) return; //Only run if player has system turned on
+        if (StaminaBar.toggled.contains(uuid)) return; //Only run if player has system turned on
 
         double vel = p.getVelocity().getY();
         if (vel < -0.1) {
@@ -70,7 +70,7 @@ public class StaminaBar implements Listener {
             Player p = (Player) e.getEntity();
             UUID uuid = p.getUniqueId();
 
-            if (!StaminaBar.toggled.contains(uuid)) return;
+            if (StaminaBar.toggled.contains(uuid)) return;
             BossBar b = registeredBars.get(uuid);
 
             double threshold = 0.6;
@@ -103,7 +103,7 @@ public class StaminaBar implements Listener {
         Player p = e.getEntity();
         UUID uuid = p.getUniqueId();
 
-        if (!StaminaBar.toggled.contains(uuid)) return;
+        if (StaminaBar.toggled.contains(uuid)) return;
 
         BossBar b = registeredBars.get(uuid);
         b.setProgress(1);
@@ -111,8 +111,9 @@ public class StaminaBar implements Listener {
 
     public static void registerBar(Player p) {
         UUID uuid = p.getUniqueId();
-
-        if (!StaminaBar.toggled.contains(uuid)) return;
+        ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
+        ClimbBehaviour.canClimb.put(uuid, true);
+        StaminaBar.toggled.remove(uuid);
 
         BossBar b = Bukkit.createBossBar(ChatColor.BOLD + "Stamina", BarColor.GREEN, BarStyle.SEGMENTED_10);
         b.addPlayer(p);
@@ -120,8 +121,7 @@ public class StaminaBar implements Listener {
     }
 
     public static void unregisterBar(UUID uuid) {
-        if (!StaminaBar.toggled.contains(uuid)) return;
-
+        ClimbBehaviour.cooldown.remove(uuid);
         registeredBars.get(uuid).removeAll();
         registeredBars.remove(uuid);
     }
