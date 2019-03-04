@@ -20,13 +20,14 @@ public class StaminaTask extends BukkitRunnable {
             Player p = Bukkit.getPlayer(uuid);
             BossBar b = StaminaBar.registeredBars.get(uuid);
             double progress = b.getProgress();
-
             if (progress + 0.01 <= 1) {
                 b.setVisible(true);
-                b.setProgress(progress + 0.01);
+                if (p.isOnGround() || !ClimbBehaviour.canClimb.get(uuid))
+                    b.setProgress(progress + 0.01);
             } else {
                 b.setVisible(false);
-                b.setProgress(1);
+                if (p.isOnGround() || !ClimbBehaviour.canClimb.get(uuid))
+                    b.setProgress(1);
             }
 
             if (progress <= 0.02) { //Changing bar colors and effects on player depending on its progress
@@ -81,8 +82,8 @@ public class StaminaTask extends BukkitRunnable {
                     continue;
                 }
             }
-
-            StaminaBar.removeProgress(0.014, uuid);
+            if (ClimbBehaviour.isClimbing.get(uuid))
+                StaminaBar.removeProgress(0.008, uuid);
         }
     }
 }

@@ -59,8 +59,8 @@ public class StaminaBar implements Listener {
         Location to = e.getTo();
 
         //if player is climbing and has moved
-        if (ClimbBehaviour.isClimbing.containsKey(uuid) && (loc.getX() != to.getX() || loc.getY() != to.getY() || loc.getZ() != to.getZ()) && p.getVelocity().equals(new Vector(0, 0, 0))) {
-            StaminaBar.removeProgress(0.005, uuid);
+        if (ClimbBehaviour.isClimbing.containsKey(uuid) && ClimbBehaviour.isClimbing.get(uuid) && (loc.getX() != to.getX() || loc.getY() != to.getY() || loc.getZ() != to.getZ()) && p.getVelocity().equals(new Vector(0, 0, 0))) {
+            StaminaBar.removeProgress(0.002, uuid);
         }
     }
 
