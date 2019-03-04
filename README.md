@@ -1,6 +1,6 @@
-# Spigot-Stamina-and-Climbing-Plugin
+# StaminaClimb
 
-Spigot plugin that allows for a basic stamina and climbing system. Originally intended for [Mine in Abyss](https://github.com/Derongan/MineInAbyss)
+Spigot plugin that allows for a basic stamina and climbing system. Originally intended for [Mine in Abyss](https://github.com/MineInAbyss/MineInAbyss)
 
 ## Stamina
 * Turns on in Survival or Adventure mode. Toggle with /climb
