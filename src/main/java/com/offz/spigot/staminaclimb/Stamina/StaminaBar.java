@@ -27,13 +27,6 @@ public class StaminaBar implements Listener {
     public static Map<UUID, Double> velocities = new HashMap<>();
 
     @EventHandler
-    public void onDisable(PluginDisableEvent e) {
-        for (BossBar b : registeredBars.values()) {
-            b.removeAll();
-        }
-    }
-
-    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
         registerBar(e.getPlayer());
     }

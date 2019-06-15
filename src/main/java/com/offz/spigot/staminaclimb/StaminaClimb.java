@@ -4,6 +4,7 @@ import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
 import com.offz.spigot.staminaclimb.Stamina.StaminaBar;
 import com.offz.spigot.staminaclimb.Stamina.StaminaTask;
 import org.bukkit.Bukkit;
+import org.bukkit.boss.BossBar;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -58,5 +59,17 @@ public final class StaminaClimb extends JavaPlugin {
     public void onDisable() {
         // Plugin shutdown logic
         getLogger().info("onDisable has been invoked!");
+
+        //prevent players from getting access to flight after server restart/plugin reload
+        for (UUID uuid : ClimbBehaviour.isClimbing.keySet()) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null)
+                ClimbBehaviour.stopClimbing(p);
+        }
+
+        //stop stamina bars from duplicating on plugin reload
+        for (BossBar b : StaminaBar.registeredBars.values()) {
+            b.removeAll();
+        }
     }
 }

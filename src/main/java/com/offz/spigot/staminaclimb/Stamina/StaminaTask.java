@@ -38,7 +38,6 @@ public class StaminaTask extends BukkitRunnable {
                 }
 
                 ClimbBehaviour.canClimb.put(uuid, false); //If player reaches red zone, they can't climb until they get back in green zone
-//                p.setSaturation(0);
                 p.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 110, 2, false, false));
                 p.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false));
             } else if (progress < 1) {
