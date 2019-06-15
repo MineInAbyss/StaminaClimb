@@ -69,7 +69,7 @@ public class StaminaTask extends BukkitRunnable {
                 continue;
             }
 
-            if (ClimbBehaviour.atWall(p.getLocation())) {
+            if (ClimbBehaviour.atWall(p.getLocation(), uuid)) {
                 if (ClimbBehaviour.cooldown.get(uuid) <= System.currentTimeMillis())
                     ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
                 p.setAllowFlight(true);
@@ -77,7 +77,7 @@ public class StaminaTask extends BukkitRunnable {
                 ClimbBehaviour.isClimbing.put(uuid, true);
             } else {
                 if (isClimbing) {
-//                    p.setVelocity(new Vector(v.getX() + direction.getX() / 20, v.getY(), v.getZ() + direction.getZ() / 20));
+                    p.setVelocity(new Vector(v.getX() + direction.getX() / 20, v.getY(), v.getZ() + direction.getZ() / 20));
                     ClimbBehaviour.isClimbing.put(uuid, false);
                     ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
                     p.setFlying(false);

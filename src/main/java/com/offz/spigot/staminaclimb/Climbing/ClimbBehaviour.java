@@ -64,15 +64,20 @@ public class ClimbBehaviour implements Listener {
         ClimbBehaviour.isClimbing.remove(uuid);
     }
 
-    public static boolean atWall(Location loc) { //checks if player is at climbable wall
+    public static boolean atWall(Location loc, UUID uuid) { //checks if player is at climbable wall
         if (loc.getBlock().getType().equals(Material.WATER)) //don't fly if in water
             return false;
         for (int x = -1; x <= 1; x += 2) { //check for block to hang onto in a 2x2x2 area around player
             for (int y = 0; y <= 1; y += 1) {
                 for (int z = -1; z <= 1; z += 2) {
                     double checkRange = 0.4;
-                    Location to = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ()).add(x * checkRange, y + 0.6, z * checkRange);
+                    Location to = new Location(loc.getWorld(), loc.getX(), loc.getY(), loc.getZ()).add(x * checkRange, y, z * checkRange);
 
+                    //fix some issues with half slabs by checking half a block higher when the player isn't yet climbing
+                    if (!isClimbing.containsKey(uuid)) {
+                        to.add(0, 0.5, 0);
+
+                    }
                     if (to.getBlock().getType().isSolid())
                         return true;
                 }
@@ -117,12 +122,12 @@ public class ClimbBehaviour implements Listener {
         Vector v = p.getVelocity();
         if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid)
                 && (!p.isSneaking() || v.getY() < -0.5)) {  //if sneaking, don't climb, but do climb if player is also falling
-            if (!isClimbing.containsKey(uuid) && v.getY() > -0.08 && v.getY() < -0.07 && atWall(L1)) {
-                p.setVelocity(v.add(new Vector(0, 0.37, 0)));
+            if (!isClimbing.containsKey(uuid) && v.getY() > -0.08 && v.getY() < -0.07 && atWall(L1, uuid)) {
+                p.setVelocity(v.add(new Vector(0, 0.25, 0)));
             } //Calculate slowdown based on current velocity
 
             if (StaminaBar.registeredBars.get(uuid).getProgress() > 0) {
-                if (atWall(L1)) {
+                if (atWall(L1, uuid)) {
                     isClimbing.put(uuid, true);
                     p.setAllowFlight(true);
                     p.setFlying(true);
@@ -162,7 +167,7 @@ public class ClimbBehaviour implements Listener {
 //                y += Math.signum(y) * 0.7;
                 double z = direction.getZ();
 
-                if (!atWall(p.getLocation())) { //if not at a wall (i.e. double jump)
+                if (!atWall(p.getLocation(), uuid)) { //if not at a wall (i.e. double jump)
                     StaminaBar.removeProgress(0.275, b); //take away more stamina when in the air
                     p.setVelocity(p.getVelocity().setX(x / 1.8).setY(y / 2 + 0.3).setZ(z / 1.8)); //shorter leap
                     cooldown.put(uuid, 0L);
