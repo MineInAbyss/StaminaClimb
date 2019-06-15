@@ -29,6 +29,7 @@ public final class StaminaClimb extends JavaPlugin {
                     p.sendMessage("Stamina and climbing system: OFF!");
                     StaminaBar.toggled.add(uuid);
                     StaminaBar.unregisterBar(uuid);
+                    ClimbBehaviour.stopClimbing(p);
                     return true;
                 }
             } else
@@ -39,7 +40,6 @@ public final class StaminaClimb extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
         // Plugin startup logic
         for (Player p : Bukkit.getOnlinePlayers()) { //toggle system on for all online players (for plugin reload)
             StaminaBar.registerBar(p);
