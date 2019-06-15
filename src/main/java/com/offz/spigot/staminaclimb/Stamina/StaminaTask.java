@@ -53,13 +53,18 @@ public class StaminaTask extends BukkitRunnable {
             }
         }
         for (UUID uuid : ClimbBehaviour.isClimbing.keySet()) {
+            //im not sure if this is needed but we're using a ConcurrentHashMap to solve some errors, so I assume it's
+            //possible for the real map to not contain something we're currently iterating over
+            if (!ClimbBehaviour.isClimbing.containsKey(uuid))
+                return;
+
             Player p = Bukkit.getPlayer(uuid);
             Vector direction = p.getLocation().getDirection();
             Vector v = p.getVelocity();
 
             boolean isClimbing = ClimbBehaviour.isClimbing.get(uuid);
 
-            if (!p.isFlying() && isClimbing) {
+            if (!p.isFlying() && isClimbing || p.getFallDistance() > 5) {
                 ClimbBehaviour.stopClimbing(p);
                 continue;
             }
@@ -72,7 +77,7 @@ public class StaminaTask extends BukkitRunnable {
                 ClimbBehaviour.isClimbing.put(uuid, true);
             } else {
                 if (isClimbing) {
-                    p.setVelocity(new Vector(v.getX() + direction.getX() / 20, v.getY(), v.getZ() + direction.getZ() / 20));
+//                    p.setVelocity(new Vector(v.getX() + direction.getX() / 20, v.getY(), v.getZ() + direction.getZ() / 20));
                     ClimbBehaviour.isClimbing.put(uuid, false);
                     ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
                     p.setFlying(false);

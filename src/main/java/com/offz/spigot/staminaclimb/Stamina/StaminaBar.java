@@ -40,7 +40,11 @@ public class StaminaBar implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent e) {
-        unregisterBar(e.getPlayer().getUniqueId());
+        Player p = e.getPlayer();
+        UUID uuid = p.getUniqueId();
+        unregisterBar(uuid);
+        if (ClimbBehaviour.isClimbing.containsKey(uuid))
+            ClimbBehaviour.stopClimbing(p);
     }
 
     @EventHandler
@@ -94,7 +98,6 @@ public class StaminaBar implements Listener {
             double damage = Math.pow((vel + threshold) * -multiplier, exponent);
             e.setDamage(damage);
             removeProgress(damage / 15, b); //Taking 15 health of damage reduces stamina fully
-            p.setVelocity(p.getVelocity().setY(0)); //stop weird effects from levitation
         }
     }
 
