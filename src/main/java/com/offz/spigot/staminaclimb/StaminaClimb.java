@@ -13,7 +13,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.UUID;
 
 public final class StaminaClimb extends JavaPlugin {
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (label.equalsIgnoreCase("toggleStamina") || label.equalsIgnoreCase("climb")) { //Stamina toggle

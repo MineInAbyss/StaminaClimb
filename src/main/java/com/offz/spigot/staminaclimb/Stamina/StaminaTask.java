@@ -3,6 +3,7 @@ package com.offz.spigot.staminaclimb.Stamina;
 import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
@@ -22,7 +23,7 @@ public class StaminaTask extends BukkitRunnable {
             double progress = b.getProgress();
             if (progress + 0.01 <= 1) {
                 b.setVisible(true);
-                if (p.isOnGround() || !ClimbBehaviour.canClimb.get(uuid))
+                if (p.isOnGround() || p.getGameMode().equals(GameMode.CREATIVE) || p.getVehicle() != null || !ClimbBehaviour.canClimb.get(uuid))
                     b.setProgress(progress + 0.01);
             } else {
                 b.setVisible(false);
@@ -62,6 +63,14 @@ public class StaminaTask extends BukkitRunnable {
             Vector v = p.getVelocity();
 
             boolean isClimbing = ClimbBehaviour.isClimbing.get(uuid);
+
+            //if climbing in creative, stop climbing but keep flight
+            if(p.getGameMode().equals(GameMode.CREATIVE)) {
+                ClimbBehaviour.stopClimbing(p);
+                p.setAllowFlight(true);
+                p.setFlying(true);
+                continue;
+            }
 
             if (!p.isFlying() && isClimbing || p.getFallDistance() > 5) {
                 ClimbBehaviour.stopClimbing(p);

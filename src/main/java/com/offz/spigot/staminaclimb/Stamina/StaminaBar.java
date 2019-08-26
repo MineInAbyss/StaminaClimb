@@ -15,7 +15,6 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -25,6 +24,40 @@ public class StaminaBar implements Listener {
     public static List<UUID> toggled = new ArrayList<>();
     public static Map<UUID, BossBar> registeredBars = new HashMap<>();
     public static Map<UUID, Double> velocities = new HashMap<>();
+
+    public static void registerBar(Player p) {
+        UUID uuid = p.getUniqueId();
+        ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
+        ClimbBehaviour.canClimb.put(uuid, true);
+        StaminaBar.toggled.remove(uuid);
+
+        BossBar b = Bukkit.createBossBar(ChatColor.BOLD + "Stamina", BarColor.GREEN, BarStyle.SEGMENTED_10);
+        b.addPlayer(p);
+        registeredBars.put(uuid, b);
+    }
+
+    public static void unregisterBar(UUID uuid) {
+        ClimbBehaviour.cooldown.remove(uuid);
+        registeredBars.get(uuid).removeAll();
+        registeredBars.remove(uuid);
+    }
+
+    public static void removeProgress(double amount, BossBar b) { //Removes double amount from BossBar b's progress
+        double progress = b.getProgress();
+        if (progress - amount >= 0)
+            b.setProgress(progress - amount);
+        else
+            b.setProgress(0);
+    }
+
+    public static void removeProgress(double amount, UUID uuid) { //Removes double amount from BossBar b's progress
+        BossBar b = StaminaBar.registeredBars.get(uuid);
+        double progress = b.getProgress();
+        if (progress - amount >= 0)
+            b.setProgress(progress - amount);
+        else
+            b.setProgress(0);
+    }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
@@ -67,7 +100,8 @@ public class StaminaBar implements Listener {
             Player p = (Player) e.getEntity();
             UUID uuid = p.getUniqueId();
 
-            if (StaminaBar.toggled.contains(uuid)) return;
+            if (StaminaBar.toggled.contains(uuid) || !velocities.containsKey(uuid))
+                return;
             BossBar b = registeredBars.get(uuid);
 
             double threshold = 0.6;
@@ -77,13 +111,8 @@ public class StaminaBar implements Listener {
 
             b.setVisible(true);
 
-            if (!velocities.containsKey(uuid)) {
-                e.setCancelled(true);
-                return;
-            }
 
             if (vel > -threshold) {
-                e.setCancelled(true);
                 removeProgress(0.1 / 15, b);
                 return;
             }
@@ -103,39 +132,5 @@ public class StaminaBar implements Listener {
 
         BossBar b = registeredBars.get(uuid);
         b.setProgress(1);
-    }
-
-    public static void registerBar(Player p) {
-        UUID uuid = p.getUniqueId();
-        ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
-        ClimbBehaviour.canClimb.put(uuid, true);
-        StaminaBar.toggled.remove(uuid);
-
-        BossBar b = Bukkit.createBossBar(ChatColor.BOLD + "Stamina", BarColor.GREEN, BarStyle.SEGMENTED_10);
-        b.addPlayer(p);
-        registeredBars.put(uuid, b);
-    }
-
-    public static void unregisterBar(UUID uuid) {
-        ClimbBehaviour.cooldown.remove(uuid);
-        registeredBars.get(uuid).removeAll();
-        registeredBars.remove(uuid);
-    }
-
-    public static void removeProgress(double amount, BossBar b) { //Removes double amount from BossBar b's progress
-        double progress = b.getProgress();
-        if (progress - amount >= 0)
-            b.setProgress(progress - amount);
-        else
-            b.setProgress(0);
-    }
-
-    public static void removeProgress(double amount, UUID uuid) { //Removes double amount from BossBar b's progress
-        BossBar b = StaminaBar.registeredBars.get(uuid);
-        double progress = b.getProgress();
-        if (progress - amount >= 0)
-            b.setProgress(progress - amount);
-        else
-            b.setProgress(0);
     }
 }

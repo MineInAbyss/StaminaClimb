@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.boss.BossBar;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -120,11 +121,21 @@ public class ClimbBehaviour implements Listener {
         Location L1 = p.getLocation();
 
         Vector v = p.getVelocity();
-        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid)
-                && (!p.isSneaking() || v.getY() < -0.5)) {  //if sneaking, don't climb, but do climb if player is also falling
-            if (!isClimbing.containsKey(uuid) && v.getY() > -0.08 && v.getY() < -0.07 && atWall(L1, uuid)) {
+        //if sneaking, don't climb, but do climb if player is also falling
+        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid)) {
+            //remove stamina progress based on how long the player's already fallen
+            StaminaBar.removeProgress(p.getFallDistance() / 15, uuid);
+            double featherFall = 0;
+            if (p.getEquipment() != null && p.getEquipment().getBoots() != null)
+                featherFall = p.getEquipment().getBoots().getEnchantmentLevel(Enchantment.PROTECTION_FALL) * 0.5; //reduce fall damage by half heart per feather fall level
+            double damangeAmount = ((p.getFallDistance() - 3) / 1.9) - featherFall;
+            if (damangeAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
+                p.damage(damangeAmount);
+
+            //jump a bit if player is standing on ground and starts climbing
+            if (v.getY() > -0.08 && v.getY() < -0.07 && atWall(L1, uuid)) {
                 p.setVelocity(v.add(new Vector(0, 0.25, 0)));
-            } //Calculate slowdown based on current velocity
+            }
 
             if (StaminaBar.registeredBars.get(uuid).getProgress() > 0) {
                 if (atWall(L1, uuid)) {
@@ -135,10 +146,8 @@ public class ClimbBehaviour implements Listener {
                     isClimbing.put(uuid, false);
                     cooldown.put(uuid, System.currentTimeMillis());
                 }
-                p.setFlySpeed(0.03f);
             }
-            StaminaBar.removeProgress(p.getFallDistance() / 15, uuid);
-            p.damage((p.getFallDistance() - 3) / 1.9);
+            p.setFlySpeed(0.03f);
         }
     }
 
@@ -153,7 +162,8 @@ public class ClimbBehaviour implements Listener {
 
             //Find left clicked block (in adventure mode)
             List<Block> blocks = p.getLastTwoTargetBlocks(null, 4); //Get two connected blocks player is looking at
-            if (blocks.get(0).isLiquid())
+
+            if (blocks.size() < 2 || blocks.get(0).isLiquid())
                 return;
 
             //Horizontal leap
@@ -183,8 +193,8 @@ public class ClimbBehaviour implements Listener {
         UUID uuid = p.getUniqueId();
         if (!StaminaBar.toggled.contains(uuid) //If player is not in the blacklist, they have their stamina toggled on
                 && canClimb.get(uuid) //Check if player allowed to climb
-                && (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE) //Check if player in survival or adventure mode
-        )//&& p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand
+                && (p.getGameMode() == GameMode.SURVIVAL || p.getGameMode() == GameMode.ADVENTURE)) //Check if player in survival or adventure mode
+//            && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand
             return true;
         return false;
     }
