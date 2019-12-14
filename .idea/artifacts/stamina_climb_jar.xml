@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="stamina-climb:jar">
-    <output-path>$PROJECT_DIR$/out/artifacts/stamina_climb_jar</output-path>
-    <root id="archive" name="stamina-climb.jar">
-      <element id="extracted-dir" path="$USER_HOME$/Documents/Programming/Spigot servers/spigot-1.12.2-R0.1-SNAPSHOT.jar" path-in-jar="/" />
-    </root>
-  </artifact>
-</component>

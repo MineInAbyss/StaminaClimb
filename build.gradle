@@ -28,7 +28,7 @@ dependencies {
 //Move into plugins folder
 if (plugin_path != '') {
     task copyJar(type: Copy) {
-        from shadowJar // here it automatically reads jar file produced from jar task
+        from jar // here it automatically reads jar file produced from jar task
         into plugin_path
     }
     build.dependsOn copyJar
