@@ -4,27 +4,32 @@ version '1.0.2-SNAPSHOT'
 apply plugin: 'java'
 sourceCompatibility = 1.8
 
+ext {
+    //Put your plugins folder directory here! If it is left as '', jars won't be copied
+    plugin_path = ''
+}
+
 repositories {
     mavenCentral()
     maven {
-        name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
-    }
-    maven {
-        name = 'sonatype'
-        url = 'https://oss.sonatype.org/content/groups/public/'
-    }
+        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup 'org.spigotmc'
+        }
+    } //Spigot
     mavenLocal()
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly 'org.spigotmc:spigot-api:1.15-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
 }
 
 //Move into plugins folder
-//task copyJar(type: Copy) {
-//    from jar // here it automatically reads jar file produced from jar task
-//    into 'C:/Users/Offz/Documents/Programming/Spigot servers/plugins'
-//}
-
-//build.dependsOn copyJar
+if (plugin_path != '') {
+    task copyJar(type: Copy) {
+        from shadowJar // here it automatically reads jar file produced from jar task
+        into plugin_path
+    }
+    build.dependsOn copyJar
+} else println("Skipped copyJar")
