@@ -49,15 +49,15 @@ public class ClimbBehaviour implements Listener {
             Material.ENDER_CHEST,
             Material.FARMLAND,
             Material.FURNACE,
-//            Material.GRINDSTONE,
+            Material.GRINDSTONE,
             Material.HOPPER,
             Material.HOPPER_MINECART,
             Material.ITEM_FRAME,
-//            Material.LECTERN,
+            Material.LECTERN,
             Material.LEVER,
-//            Material.LOOM,
-            Material.NOTE_BLOCK);
-//            Material.STONECUTTER);
+            Material.LOOM,
+            Material.NOTE_BLOCK,
+            Material.STONECUTTER);
     private long JUMP_COOLDOWN = 300; //Milliseconds
     private long WALL_JUMP_COOLDOWN = 300;
 
