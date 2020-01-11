@@ -20,7 +20,6 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 public class StaminaBar implements Listener {
-
     public static List<UUID> toggled = new ArrayList<>();
     public static Map<UUID, BossBar> registeredBars = new HashMap<>();
     public static Map<UUID, Double> velocities = new HashMap<>();
@@ -110,7 +109,6 @@ public class StaminaBar implements Listener {
             double vel = velocities.get(uuid);
 
             b.setVisible(true);
-
 
             if (vel > -threshold) {
                 removeProgress(0.1 / 15, b);
