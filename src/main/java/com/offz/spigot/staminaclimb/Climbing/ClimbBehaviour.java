@@ -33,25 +33,31 @@ public class ClimbBehaviour implements Listener {
             "CHEST",
             "MINECART",
             "BUTTON",
-            "SIGN");
+            "SIGN",
+            "SHULKER_BOX");
     private List BLOCK_BLACKLIST = Arrays.asList(
             Material.ANVIL,
             Material.BEACON,
             Material.COMMAND_BLOCK,
             Material.CRAFTING_TABLE,
+            Material.CAULDRON,
             Material.BREWING_STAND,
             Material.DAYLIGHT_DETECTOR,
             Material.DISPENSER,
             Material.DROPPER,
             Material.ENCHANTING_TABLE,
             Material.ENDER_CHEST,
+            Material.FARMLAND,
             Material.FURNACE,
+            Material.GRINDSTONE,
             Material.HOPPER,
             Material.HOPPER_MINECART,
             Material.ITEM_FRAME,
+            Material.LECTERN,
             Material.LEVER,
+            Material.LOOM,
             Material.NOTE_BLOCK,
-            Material.FARMLAND);
+            Material.STONECUTTER);
     private long JUMP_COOLDOWN = 300; //Milliseconds
     private long WALL_JUMP_COOLDOWN = 300;
 
