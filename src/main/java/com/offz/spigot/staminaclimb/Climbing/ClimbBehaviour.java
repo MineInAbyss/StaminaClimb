@@ -28,7 +28,10 @@ public class ClimbBehaviour implements Listener {
     private static List<String> BLOCK_BLACKLIST_GENERALIZED = Arrays.asList(
             "DOOR",
             "FENCE",
+            "FURNACE",
             "BED",
+            "BEE",
+            "BELL",
             "BOAT",
             "CHEST",
             "MINECART",
@@ -38,9 +41,13 @@ public class ClimbBehaviour implements Listener {
     private List BLOCK_BLACKLIST = Arrays.asList(
             Material.ANVIL,
             Material.BEACON,
-            Material.COMMAND_BLOCK,
-            Material.CRAFTING_TABLE,
+            Material.BARREL,
+            Material.CAMPFIRE,
+            Material.CARTOGRAPHY_TABLE,
             Material.CAULDRON,
+            Material.COMMAND_BLOCK,
+            Material.COMPOSTER,
+            Material.CRAFTING_TABLE,
             Material.BREWING_STAND,
             Material.DAYLIGHT_DETECTOR,
             Material.DISPENSER,
@@ -48,16 +55,21 @@ public class ClimbBehaviour implements Listener {
             Material.ENCHANTING_TABLE,
             Material.ENDER_CHEST,
             Material.FARMLAND,
-            Material.FURNACE,
+//            Material.FURNACE, //moving to generalized list to cover the blast furnace
             Material.GRINDSTONE,
             Material.HOPPER,
             Material.HOPPER_MINECART,
             Material.ITEM_FRAME,
+            Material.LANTERN,
             Material.LECTERN,
             Material.LEVER,
             Material.LOOM,
             Material.NOTE_BLOCK,
-            Material.STONECUTTER);
+            Material.SCAFFOLDING,
+            Material.SMOKER,
+//            Material.SMITHING_TABLE, //There is currently no reason to right-click this block, so I'm commenting it out.
+            Material.STONECUTTER,
+            Material.SWEET_BERRY_BUSH);
     private long JUMP_COOLDOWN = 300; //Milliseconds
     private long WALL_JUMP_COOLDOWN = 300;
 
