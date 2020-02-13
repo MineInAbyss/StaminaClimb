@@ -1,6 +1,7 @@
 package com.offz.spigot.staminaclimb.Climbing;
 
 import com.offz.spigot.staminaclimb.Stamina.StaminaBar;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -138,9 +139,10 @@ public class ClimbBehaviour implements Listener {
         Location L1 = p.getLocation();
 
         Vector v = p.getVelocity();
-        //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid)) {
-            //remove stamina progress based on how long the player's already fallen
+
+        //todo make pick improve stamina and speed?
+
+        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid) && p.getInventory().getItemInMainHand().getType().equals(Material.IRON_PICKAXE) && p.getInventory().getItemInMainHand().getItemMeta().getDisplayName().equals(ChatColor.LIGHT_PURPLE + "Climbing Axe")) {
             StaminaBar.removeProgress(p.getFallDistance() / 15, uuid);
             double featherFall = 0;
             if (p.getEquipment() != null && p.getEquipment().getBoots() != null)
@@ -164,7 +166,36 @@ public class ClimbBehaviour implements Listener {
                     cooldown.put(uuid, System.currentTimeMillis());
                 }
             }
-            p.setFlySpeed(0.03f);
+            p.setFlySpeed(0.0391f);
+        }
+
+        //if sneaking, don't climb, but do climb if player is also falling
+        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid)){
+            //            //remove stamina progress based on how long the player's already fallen
+            StaminaBar.removeProgress(p.getFallDistance() / 15, uuid);
+            double featherFall = 0;
+            if (p.getEquipment() != null && p.getEquipment().getBoots() != null)
+                featherFall = p.getEquipment().getBoots().getEnchantmentLevel(Enchantment.PROTECTION_FALL) * 0.5; //reduce fall damage by half heart per feather fall level
+            double damangeAmount = ((p.getFallDistance() - 3) / 1.9) - featherFall;
+            if (damangeAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
+                p.damage(damangeAmount);
+
+            //jump a bit if player is standing on ground and starts climbing
+            if (v.getY() > -0.08 && v.getY() < -0.07 && atWall(L1, uuid)) {
+                p.setVelocity(v.add(new Vector(0, 0.25, 0)));
+            }
+
+            if (StaminaBar.registeredBars.get(uuid).getProgress() > 0) {
+                if (atWall(L1, uuid)) {
+                    isClimbing.put(uuid, true);
+                    p.setAllowFlight(true);
+                    p.setFlying(true);
+                } else {
+                    isClimbing.put(uuid, false);
+                    cooldown.put(uuid, System.currentTimeMillis());
+                }
+            }
+            p.setFlySpeed(0.025f);
         }
     }
 

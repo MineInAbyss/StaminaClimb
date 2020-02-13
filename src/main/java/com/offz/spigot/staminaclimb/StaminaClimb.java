@@ -1,13 +1,18 @@
 package com.offz.spigot.staminaclimb;
 
 import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
+import com.offz.spigot.staminaclimb.ClimbingAxe.ClimbingAxeProperties;
 import com.offz.spigot.staminaclimb.Stamina.StaminaBar;
 import com.offz.spigot.staminaclimb.Stamina.StaminaTask;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.UUID;
@@ -15,6 +20,17 @@ import java.util.UUID;
 public final class StaminaClimb extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if(command.getName().equalsIgnoreCase("climbkit")) { //give the player the climbing axe
+            if(sender instanceof Player) {
+                ItemStack pick = new ItemStack(Material.IRON_PICKAXE ,1);
+                ItemMeta meta = pick.getItemMeta();
+                meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Climbing Axe");
+                pick.setItemMeta(meta);
+                ((Player) sender).getInventory().addItem(pick);
+            }
+            return true;
+        }
+
         if (label.equalsIgnoreCase("toggleStamina") || label.equalsIgnoreCase("climb")) { //Stamina toggle
             if (sender.hasPermission("staminaclimb.toggle")) {
                 if (sender instanceof Player) {
@@ -51,6 +67,7 @@ public final class StaminaClimb extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new ClimbBehaviour(), this);
         getServer().getPluginManager().registerEvents(new StaminaBar(), this);
+        getServer().getPluginManager().registerEvents(new ClimbingAxeProperties(), this);
 
     }
 

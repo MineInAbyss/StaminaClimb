@@ -14,3 +14,6 @@ commands:
   climb:
     description: Toggles stamina and climbing system for player
     usage: /climb (same as /togglestamina)
+  climbkit:
+    description: gives the player a kit with the new climbing axe and a few basic materials
+    usage: /climbkit
