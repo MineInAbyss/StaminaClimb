@@ -26,9 +26,8 @@ public class ClimbBehaviour implements Listener {
     public static Map<UUID, Boolean> isClimbing = new ConcurrentHashMap<>();
     public static Map<UUID, Long> cooldown = new HashMap<>();
     private static List<String> BLOCK_BLACKLIST_GENERALIZED = Arrays.asList(
-           
-	    "ANVIL" 
-	    "DOOR",
+            "ANVIL",
+            "DOOR",
             "FENCE",
             "FURNACE",
             "BED",
