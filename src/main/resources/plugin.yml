@@ -17,3 +17,6 @@ commands:
   climbkit:
     description: gives the player a kit with the new climbing axe and a few basic materials
     usage: /climbkit
+  climbkit_block:
+    description: gives the custom barrel which gives the player the kit
+    usage: /climbkit_block

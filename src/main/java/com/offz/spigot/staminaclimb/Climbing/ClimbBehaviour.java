@@ -17,6 +17,8 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -141,8 +143,18 @@ public class ClimbBehaviour implements Listener {
         Vector v = p.getVelocity();
 
         //todo make pick improve stamina and speed?
+        //todo shorten thi
+        //todo add more picks??
 
-        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid) && p.getInventory().getItemInMainHand().getType().equals(Material.IRON_PICKAXE) && p.getInventory().getItemInMainHand().getItemMeta().getDisplayName().equals(ChatColor.LIGHT_PURPLE + "Climbing Axe")) {
+        //define climbing axe so it can be shorter?
+
+        ItemStack pick = new ItemStack(Material.IRON_PICKAXE);
+        ItemMeta meta = pick.getItemMeta();
+
+        meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Climbing Axe");
+        pick.setItemMeta(meta);
+
+        if (allowClimb(p) && rightClicked(e) && cooldownComplete(uuid) && (!p.isSneaking() || v.getY() < -0.5) && !isClimbing.containsKey(uuid) && p.getInventory().getItemInMainHand().equals(pick) && p.getInventory().getItemInMainHand().getItemMeta().equals(meta)) {
             StaminaBar.removeProgress(p.getFallDistance() / 15, uuid);
             double featherFall = 0;
             if (p.getEquipment() != null && p.getEquipment().getBoots() != null)
@@ -166,7 +178,7 @@ public class ClimbBehaviour implements Listener {
                     cooldown.put(uuid, System.currentTimeMillis());
                 }
             }
-            p.setFlySpeed(0.0391f);
+            p.setFlySpeed(0.04f);
         }
 
         //if sneaking, don't climb, but do climb if player is also falling

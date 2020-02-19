@@ -7,11 +7,13 @@ import com.offz.spigot.staminaclimb.Stamina.StaminaTask;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.boss.BossBar;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -20,17 +22,32 @@ import java.util.UUID;
 public final class StaminaClimb extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(command.getName().equalsIgnoreCase("climbkit")) { //give the player the climbing axe
-            if(sender instanceof Player) {
-                ItemStack pick = new ItemStack(Material.IRON_PICKAXE ,1);
-                ItemMeta meta = pick.getItemMeta();
-                meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Climbing Axe");
-                pick.setItemMeta(meta);
-                ((Player) sender).getInventory().addItem(pick);
+        if(command.getName().equalsIgnoreCase("climbkit")) {
+            if(sender.hasPermission("staminaclimb.toggle")) {//give the player the climbing axe
+                if(sender instanceof Player) {
+                    ItemStack pick = new ItemStack(Material.IRON_PICKAXE, 1);
+                    ItemMeta meta = pick.getItemMeta();
+                    meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Climbing Axe");
+                    pick.setItemMeta(meta);
+                    ((Player) sender).getInventory().addItem(pick);
+                }
             }
             return true;
         }
 
+        if (command.getName().equalsIgnoreCase("climbkit_block")) {
+            if (sender.hasPermission("staminaclimb.toggle")) {
+                if (sender instanceof Player) {
+                    ItemStack block = new ItemStack(Material.BARREL, 1);
+                    ItemMeta meta = block.getItemMeta();
+
+                    meta.setDisplayName(ChatColor.AQUA + "KIT_GIVER");
+                    block.setItemMeta(meta);
+
+                    ((Player) sender).getInventory().addItem(block);
+                }
+            }
+        }
         if (label.equalsIgnoreCase("toggleStamina") || label.equalsIgnoreCase("climb")) { //Stamina toggle
             if (sender.hasPermission("staminaclimb.toggle")) {
                 if (sender instanceof Player) {
@@ -55,6 +72,20 @@ public final class StaminaClimb extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        ItemStack item= new ItemStack(Material.IRON_PICKAXE);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.setDisplayName(ChatColor.LIGHT_PURPLE + "Climbing Axe");
+        item.setItemMeta(meta);
+
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "climbingaxe"), item);
+        recipe.shape("III", "IS ", " S ");
+        recipe.setIngredient('I', Material.IRON_INGOT);
+        recipe.setIngredient('S', Material.STICK);
+
+        getServer().addRecipe(recipe);
+
+
         // Plugin startup logic
         for (Player p : Bukkit.getOnlinePlayers()) { //toggle system on for all online players (for plugin reload)
             StaminaBar.registerBar(p);
@@ -69,7 +100,9 @@ public final class StaminaClimb extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new StaminaBar(), this);
         getServer().getPluginManager().registerEvents(new ClimbingAxeProperties(), this);
 
-    }
+        }
+
+
 
     @Override
     public void onDisable() {
