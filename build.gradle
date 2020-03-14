@@ -10,13 +10,9 @@ if (project.hasProperty("buildNo")) version += ".$buildNo"
 repositories {
     mavenCentral()
     maven {
-        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-        content {
-            includeGroup 'org.bukkit'
-            includeGroup 'org.spigotmc'
-        }
-    } //Spigot
-    mavenLocal()
+        name = 'spigotmc-repo'
+        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
 }
 
 publishing {
@@ -45,7 +41,7 @@ dependencies {
 if (project.hasProperty("plugin_path") && plugin_path) {
     println("Copying to plugin directory $plugin_path")
     task copyJar(type: Copy) {
-        from shadowJar // here it automatically reads jar file produced from jar task
+        from jar // here it automatically reads jar file produced from jar task
         into plugin_path
     }
     build.dependsOn copyJar
