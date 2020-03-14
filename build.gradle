@@ -2,6 +2,7 @@ group 'offz'
 version '0.1.0-alpha'
 
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 sourceCompatibility = 1.8
 
 if (project.hasProperty("buildNo")) version += ".$buildNo"
