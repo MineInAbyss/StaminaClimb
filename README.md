@@ -1,3 +1,5 @@
+![CI](https://github.com/MineInAbyss/StaminaClimb/workflows/Java%20CI/badge.svg)
+
 # StaminaClimb
 
 Spigot plugin that allows for a basic stamina and climbing system. Originally intended for [Mine in Abyss](https://github.com/MineInAbyss/MineInAbyss)
