@@ -1,13 +1,10 @@
 group 'offz'
-version '1.0.2-SNAPSHOT'
+version '0.1.0-alpha'
 
 apply plugin: 'java'
 sourceCompatibility = 1.8
 
-ext {
-    //Put your plugins folder directory here! If it is left as '', jars won't be copied
-    plugin_path = ''
-}
+if (project.hasProperty("buildNo")) version += ".$buildNo"
 
 repositories {
     mavenCentral()
@@ -21,15 +18,34 @@ repositories {
     mavenLocal()
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/MineInAbyss/StaminaClimb")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
+
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.15-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
 }
 
 //Move into plugins folder
-if (plugin_path != '') {
+if (project.hasProperty("plugin_path") && plugin_path) {
+    println("Copying to plugin directory $plugin_path")
     task copyJar(type: Copy) {
-        from jar // here it automatically reads jar file produced from jar task
+        from shadowJar // here it automatically reads jar file produced from jar task
         into plugin_path
     }
     build.dependsOn copyJar
-} else println("Skipped copyJar")
+}
