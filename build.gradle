@@ -1,18 +1,67 @@
-group 'offz'
-version '0.1.0-alpha'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+    }
+}
 
-apply plugin: 'java'
-apply plugin: 'maven-publish'
-sourceCompatibility = 1.8
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+
+group = 'com.mineinabyss'
+version = plugin_version
 
 if (project.hasProperty("buildNo")) version += ".$buildNo"
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+def github_username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+def github_password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+
 repositories {
     mavenCentral()
+    jcenter()
     maven {
         name = 'spigotmc-repo'
         url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
     }
+    maven {
+        name = "MineInAbyss"
+        url = uri("https://maven.pkg.github.com/MineInAbyss/Idofront")
+        credentials {
+            username = github_username
+            password = github_password
+        }
+    }
+    maven {
+        name = "CultOfClang"
+        url = uri("https://maven.pkg.github.com/CultOfClang/Minecraft/")
+        credentials {
+            username = github_username
+            password = github_password
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    getArchiveClassifier().set('sources')
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    getArchiveClassifier().set('javadoc')
+    from javadoc.destinationDir
 }
 
 publishing {
@@ -21,28 +70,48 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/MineInAbyss/StaminaClimb")
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                username = github_username
+                password = github_password
             }
         }
     }
     publications {
         gpr(MavenPublication) {
             from(components.java)
+            artifact sourcesJar
+            artifact javadocJar
         }
     }
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.15-R0.1-SNAPSHOT' // The Spigot API with no shadowing. Requires the OSS repo.
+    compileOnly 'org.spigotmc:spigot-api:1.15-R0.1-SNAPSHOT'
+    compileOnly "org.cultofclang.minecraft:kotlinspice:$kotlin_version+"
+
+    if (useLocalIdofront.toBoolean()) implementation project(':idofront')
+    else implementation "com.mineinabyss:idofront:0.1.+"
+    // The Spigot API with no shadowing. Requires the OSS repo.
 }
+
+shadowJar {
+    getArchiveBaseName().set("StaminaClimb")
+    getArchiveClassifier().set(null)
+
+    relocate 'com.mineinabyss.idofront', "${project.group}.${project.name}.idofront".toLowerCase()
+
+    minimize()
+}
+build.dependsOn shadowJar
 
 //Move into plugins folder
 if (project.hasProperty("plugin_path") && plugin_path) {
     println("Copying to plugin directory $plugin_path")
     task copyJar(type: Copy) {
-        from jar // here it automatically reads jar file produced from jar task
+        from shadowJar // here it automatically reads jar file produced from jar task
         into plugin_path
     }
     build.dependsOn copyJar
 }
+
+compileKotlin { kotlinOptions { jvmTarget = "1.8" } }
+compileTestKotlin { kotlinOptions { jvmTarget = "1.8" } }

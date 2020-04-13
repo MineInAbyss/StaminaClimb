@@ -1,134 +1,122 @@
-package com.offz.spigot.staminaclimb.Stamina;
+package com.offz.spigot.staminaclimb.stamina
 
-import com.offz.spigot.staminaclimb.Climbing.ClimbBehaviour;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.util.Vector;
+import com.mineinabyss.idofront.messaging.color
+import com.offz.spigot.staminaclimb.*
+import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
+import org.bukkit.Bukkit
+import org.bukkit.GameMode
+import org.bukkit.boss.BarColor
+import org.bukkit.boss.BarStyle
+import org.bukkit.boss.BossBar
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.player.PlayerGameModeChangeEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import java.util.*
+import kotlin.math.pow
 
-import java.util.*;
+object StaminaBar : Listener {
+    var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
+    var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
+    private var velocities: MutableMap<UUID, Double> = mutableMapOf()
 
-public class StaminaBar implements Listener {
-    public static List<UUID> toggled = new ArrayList<>();
-    public static Map<UUID, BossBar> registeredBars = new HashMap<>();
-    public static Map<UUID, Double> velocities = new HashMap<>();
-
-    public static void registerBar(Player p) {
-        UUID uuid = p.getUniqueId();
-        ClimbBehaviour.cooldown.put(uuid, System.currentTimeMillis());
-        ClimbBehaviour.canClimb.put(uuid, true);
-        StaminaBar.toggled.remove(uuid);
-
-        BossBar b = Bukkit.createBossBar(ChatColor.BOLD + "Stamina", BarColor.GREEN, BarStyle.SEGMENTED_10);
-        b.addPlayer(p);
-        registeredBars.put(uuid, b);
-    }
-
-    public static void unregisterBar(UUID uuid) {
-        ClimbBehaviour.cooldown.remove(uuid);
-        registeredBars.get(uuid).removeAll();
-        registeredBars.remove(uuid);
-    }
-
-    public static void removeProgress(double amount, BossBar b) { //Removes double amount from BossBar b's progress
-        double progress = b.getProgress();
-        if (progress - amount >= 0)
-            b.setProgress(progress - amount);
-        else
-            b.setProgress(0);
-    }
-
-    public static void removeProgress(double amount, UUID uuid) { //Removes double amount from BossBar b's progress
-        BossBar b = StaminaBar.registeredBars.get(uuid);
-        double progress = b.getProgress();
-        if (progress - amount >= 0)
-            b.setProgress(progress - amount);
-        else
-            b.setProgress(0);
+    fun registerBar(player: Player) {
+        val uuid = player.uniqueId
+        uuid.restartCooldown()
+        uuid.canClimb = true
+        disabledPlayers.remove(uuid)
+        val bossBar = Bukkit.createBossBar("&lStamina".color(), BarColor.GREEN, BarStyle.SEGMENTED_10)
+        bossBar.addPlayer(player)
+        registeredBars[uuid] = bossBar
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e) {
-        registerBar(e.getPlayer());
+    fun onPlayerJoin(e: PlayerJoinEvent) {
+        registerBar(e.player)
     }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        Player p = e.getPlayer();
-        UUID uuid = p.getUniqueId();
-        unregisterBar(uuid);
-        if (ClimbBehaviour.isClimbing.containsKey(uuid))
-            ClimbBehaviour.stopClimbing(p);
+    fun onPlayerQuit(e: PlayerQuitEvent) {
+        val player = e.player
+        val uuid = player.uniqueId
+        unregisterBar(uuid)
+        if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
 
     @EventHandler
-    public void onPlayerMove(PlayerMoveEvent e) {
-        Player p = e.getPlayer();
-        UUID uuid = p.getUniqueId();
-
-        if (StaminaBar.toggled.contains(uuid)) return; //Only run if player has system turned on
-
-        double vel = p.getVelocity().getY();
+    fun onPlayerMove(e: PlayerMoveEvent) {
+        val player = e.player
+        val uuid = player.uniqueId
+        if (!player.climbEnabled) return  //Only run if player has system turned on
+        val vel = player.velocity.y
         if (vel < -0.1) {
-            velocities.put(uuid, vel);
+            velocities[uuid] = vel
         }
-
-        Location loc = e.getFrom();
-        Location to = e.getTo();
+        val loc = e.from
+        val to = e.to ?: return
 
         //if player is climbing and has moved
-        if (ClimbBehaviour.isClimbing.containsKey(uuid) && ClimbBehaviour.isClimbing.get(uuid) && (loc.getX() != to.getX() || loc.getY() != to.getY() || loc.getZ() != to.getZ()) && p.getVelocity().equals(new Vector(0, 0, 0))) {
-            StaminaBar.removeProgress(0.002, uuid);
-        }
+        if (uuid.isClimbing && loc.distanceSquared(to) > 0.007)
+            uuid.removeProgress(climbyConfig.STAMINA_REMOVE_WHILE_MOVING)
     }
 
     @EventHandler
-    public void onPlayerFall(EntityDamageEvent e) { //Remove stamina from player falls
-        if (e.getEntity() instanceof Player && e.getCause() == EntityDamageEvent.DamageCause.FALL) {
-            Player p = (Player) e.getEntity();
-            UUID uuid = p.getUniqueId();
+    fun onPlayerFall(e: EntityDamageEvent) { //Remove stamina from player falls
+        val player = e.entity as? Player ?: return
+        val uuid = player.uniqueId
+        if (e.cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
-            if (StaminaBar.toggled.contains(uuid) || !velocities.containsKey(uuid))
-                return;
-            BossBar b = registeredBars.get(uuid);
+        val bossBar = registeredBars[uuid]
+        val threshold = 0.6 //TODO make config and not dumb calculations
+        val multiplier = 11.0
+        val exponent = 1.1
+        val vel = velocities[uuid]!!
 
-            double threshold = 0.6;
-            double multiplier = 11.0;
-            double exponent = 1.1;
-            double vel = velocities.get(uuid);
-
-            b.setVisible(true);
-
-            if (vel > -threshold) {
-                removeProgress(0.1 / 15, b);
-                return;
-            }
-
-            double damage = Math.pow((vel + threshold) * -multiplier, exponent);
-            e.setDamage(damage);
-            removeProgress(damage / 15, b); //Taking 15 health of damage reduces stamina fully
+        bossBar!!.isVisible = true
+        if (vel > -threshold) {
+            bossBar.removeProgress(0.1 / 15)
+            return
         }
+        val damage = ((vel + threshold) * -multiplier).pow(exponent)
+        e.damage = damage
+        bossBar.removeProgress(damage / 15) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent e) {
-        Player p = e.getEntity();
-        UUID uuid = p.getUniqueId();
+    fun onPlayerDeath(e: PlayerDeathEvent) {
+        val player = e.entity
+        val uuid = player.uniqueId
+        if (!player.climbEnabled) return
+        val bossBar = registeredBars[uuid]
+        bossBar!!.progress = 1.0
+    }
 
-        if (StaminaBar.toggled.contains(uuid)) return;
+    @EventHandler
+    fun onGamemodeChange(e: PlayerGameModeChangeEvent) {
+        if (e.player.climbEnabled && (e.newGameMode == GameMode.SURVIVAL || e.newGameMode == GameMode.ADVENTURE)
+                && !registeredBars.containsKey(e.player.uniqueId)) {
+            registerBar(e.player)
+        }
+    }
 
-        BossBar b = registeredBars.get(uuid);
-        b.setProgress(1);
+    fun unregisterBar(uuid: UUID) {
+        ClimbBehaviour.cooldown.remove(uuid)
+        registeredBars[uuid]?.removeAll()
+        registeredBars.remove(uuid)
+    }
+
+    /** Removes [amount] progress from [bossBar]'s progress */
+    internal fun removeProgress(amount: Double, bossBar: BossBar) {
+        bossBar.progress = (bossBar.progress - amount).coerceAtLeast(0.0)
+    }
+
+    /** Removes [amount] progress from [uuid]'s associated BossBar's progress */
+    internal fun removeProgress(amount: Double, uuid: UUID) {
+        removeProgress(amount, registeredBars[uuid] ?: return)
     }
 }

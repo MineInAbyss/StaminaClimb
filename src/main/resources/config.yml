@@ -1,0 +1,53 @@
+air-time: 400
+stamina-regen: 0.01
+stamina-regen-in-air: 0.005
+stamina-remove-per-tick: 0.002
+stamina-remove-while-moving: 0.008
+bar-red: 0.02
+max-fall-dist: 5
+jump-cooldown: 300
+walljump-cooldown: 300
+climb-blacklist:
+  - BEACON
+  - BARREL
+  - CAMPFIRE
+  - CARTOGRAPHY_TABLE
+  - CAULDRON
+  - COMMAND_BLOCK
+  - COMPOSTER
+  - CRAFTING_TABLE
+  - BREWING_STAND
+  - DAYLIGHT_DETECTOR
+  - DISPENSER
+  - DROPPER
+  - ENCHANTING_TABLE
+  - ENDER_CHEST
+  - FARMLAND
+  - GRINDSTONE
+  - HOPPER
+  - HOPPER_MINECART
+  - ITEM_FRAME
+  - LANTERN
+  - LECTERN
+  - LEVER
+  - LOOM
+  - NOTE_BLOCK
+  - SCAFFOLDING
+  - SMOKER
+  - SMITHING_TABLE
+  - STONECUTTER
+  - SWEET_BERRY_BUSH
+climb-blacklist-general:
+  - ANVIL
+  - DOOR
+  - FENCE
+  - FURNACE
+  - BED
+  - BEE
+  - BELL
+  - BOAT
+  - CHEST
+  - MINECART
+  - BUTTON
+  - SIGN
+  - SHULKER_BOX
