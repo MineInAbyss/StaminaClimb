@@ -19,12 +19,10 @@ import org.bukkit.util.Vector
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-
 object ClimbBehaviour : Listener {
-
     val canClimb: MutableMap<UUID, Boolean> = mutableMapOf()
-    var isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
-    var cooldown: MutableMap<UUID, Long> = HashMap()
+    val isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
+    val cooldown: MutableMap<UUID, Long> = HashMap()
 
     fun stopClimbing(p: Player) {
         if (p.gameMode == GameMode.SURVIVAL || p.gameMode == GameMode.ADVENTURE) {
@@ -40,7 +38,6 @@ object ClimbBehaviour : Listener {
     fun onBlockPlace(e: BlockPlaceEvent) {
         val p = e.player
         val uuid = p.uniqueId
-        val loc = p.location
         if (!p.isSneaking && uuid.isClimbing) e.isCancelled = true
         if (cooldown.containsKey(uuid)) uuid.climbCooldown = climbyConfig.WALLJUMP_COOLDOWN
     }
@@ -66,12 +63,12 @@ object ClimbBehaviour : Listener {
             //reduce fall damage by half heart per feather fall level
             val featherFall = player.equipment?.boots
                     ?.getEnchantmentLevel(Enchantment.PROTECTION_FALL)?.times(0.5) ?: 0.0
-            val damangeAmount = (player.fallDistance - 3) / 1.9 - featherFall
-            if (damangeAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
-                player.damage(damangeAmount)
+            val damageAmount = (player.fallDistance - 3) / 1.9 - featherFall
+            if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
+                player.damage(damageAmount)
 
             if (bossBar.progress > 0)
-                if (player.atWall >= 0) {
+                if (player.wallDifficulty >= 0) {
                     //jump a bit if player is standing on ground and starts climbing
                     if (velocity.y in -0.08..-0.07)
                         player.velocity = player.velocity.add(Vector(0.0, 0.25, 0.0))
@@ -110,7 +107,7 @@ object ClimbBehaviour : Listener {
                 val y = direction.y
                 val z = direction.z
 
-                if (player.atWall < 0) { //if not at a wall (i.e. double jump)
+                if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
                     bossBar.removeProgress(0.25) //take away more stamina when in the air
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
@@ -149,11 +146,11 @@ object ClimbBehaviour : Listener {
             player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
             return false
         }
-        if (climbyConfig.CLIMB_BLACKLIST.contains(block)) {
+        if (climbyConfig.PREVENT_CLIMB_START.contains(block)) {
             player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
             return false
         } else {
-            for (interactable in climbyConfig.CLIMB_BLACKLIST_GENERAL) {
+            for (interactable in climbyConfig.PREVENT_CLIMB_START_GENERAL) {
                 if (block.toString().contains(interactable)) {
                     player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
                     return false
@@ -166,7 +163,7 @@ object ClimbBehaviour : Listener {
     //TODO dont make checks like this separate for left/right click if they do basically the same thing
     private fun leftClicked(block: Material): Boolean { //did player do a valid left click
         //If clicked block is in blacklist, return false
-        return !climbyConfig.CLIMB_BLACKLIST.contains(block)
+        return !climbyConfig.PREVENT_CLIMB_START.contains(block)
     }
 
     private fun cooldownComplete(uuid: UUID): Boolean { //is the click cooldown complete

@@ -63,7 +63,7 @@ class StaminaTask : BukkitRunnable() {
                 player.stopClimbing()
                 return@forEach
             }
-            val atWallMultiplier = player.atWall
+            val atWallMultiplier = player.wallDifficulty
             if (atWallMultiplier >= 0) {
                 if (uuid.climbCooldownDone) uuid.restartCooldown()
                 player.allowFlight = true

@@ -14,7 +14,10 @@ data class Config(
         @SerialName("bar-red") val BAR_RED: Double,
         @SerialName("max-fall-dist") val MAX_FALL_DIST: Double,
         @SerialName("jump-cooldown") val JUMP_COOLDOWN: Long,
+        @SerialName("roof-climb-difficulty") val ROOF_CLIMB_DIFFICULTY: Double,
         @SerialName("walljump-cooldown") val WALLJUMP_COOLDOWN: Long,
-        @SerialName("climb-blacklist") val CLIMB_BLACKLIST: List<Material>,
-        @SerialName("climb-blacklist-general") val CLIMB_BLACKLIST_GENERAL: List<String>
+        @SerialName("climb-blacklist") val PREVENT_CLIMB_START: List<Material>,
+        @SerialName("climb-blacklist-general") val PREVENT_CLIMB_START_GENERAL: List<String>,
+        @SerialName("climb-difficulty") val CLIMB_DIFFICULTY: Map<Material, Double> = mapOf(),
+        @SerialName("climb-difficulty-general") val CLIMB_DIFFICULTY_GENERAL: Map<String, Double> = mapOf()
 )
