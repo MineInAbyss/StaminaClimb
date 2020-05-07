@@ -1,0 +1,71 @@
+air-time: 400
+stamina-regen: 0.01
+stamina-regen-in-air: 0.003
+stamina-remove-per-tick: 0.005
+stamina-remove-while-moving: 0.005
+bar-red: 0.02
+max-fall-dist: 5
+jump-cooldown: 300
+walljump-cooldown: 300
+roof-climb-difficulty: 7.0
+climb-blacklist:
+  - BEACON
+  - BARREL
+  - CAMPFIRE
+  - CARTOGRAPHY_TABLE
+  - CAULDRON
+  - COMMAND_BLOCK
+  - COMPOSTER
+  - CRAFTING_TABLE
+  - BREWING_STAND
+  - DAYLIGHT_DETECTOR
+  - DISPENSER
+  - DROPPER
+  - ENCHANTING_TABLE
+  - ENDER_CHEST
+  - FARMLAND
+  - GRINDSTONE
+  - HOPPER
+  - HOPPER_MINECART
+  - ITEM_FRAME
+  - LANTERN
+  - LECTERN
+  - LEVER
+  - LOOM
+  - NOTE_BLOCK
+  - SCAFFOLDING
+  - SMOKER
+  - SMITHING_TABLE
+  - STONECUTTER
+  - SWEET_BERRY_BUSH
+  - BEEHIVE
+  - BEE_NEST
+  - ANVIL
+  - CHIPPED_ANVIL
+  - DAMAGED_ANVIL
+climb-blacklist-general:
+  - DOOR
+  - FENCE
+  - FURNACE
+  - _BED
+  - BELL
+  - CHEST
+  - BUTTON
+  - SIGN
+  - SHULKER_BOX
+climb-difficulty:
+  SAND: 2
+  BARRIER: -1
+  COBBLESTONE: 0.8
+  ICE: 5
+  PACKED_ICE: 4
+  BLUE_ICE: 4
+  SLIME_BLOCK: 0.5
+  HONEY_BLOCK: -1
+climb-difficulty-general:
+  WOOD: 0.3
+  LOG: 0.3
+  SMOOTH: 5
+  FENCE: 0.5
+  DOOR: -1
+  GLASS: -1

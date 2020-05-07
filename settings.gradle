@@ -1,2 +1,6 @@
 rootProject.name = 'stamina-climb'
 
+if (useLocalIdofront.toBoolean()) {
+    include 'idofront'
+    project(':idofront').projectDir = new File('../idofront')
+}

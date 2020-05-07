@@ -1,8 +1,9 @@
 name: StaminaClimb
-version: 1.0.2
+version: 1.0.3
 author: Offz
-api-version: 1.13
+api-version: 1.15
 main: com.offz.spigot.staminaclimb.StaminaClimb
+depend: [KotlinSpice]
 
 prefix: SnC
 description: A mod that lets you climb and get exhausted
