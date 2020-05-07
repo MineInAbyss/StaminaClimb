@@ -89,7 +89,7 @@ dependencies {
     compileOnly "org.cultofclang.minecraft:kotlinspice:$kotlin_version+"
 
     if (useLocalIdofront.toBoolean()) implementation project(':idofront')
-    else implementation "com.mineinabyss:idofront:0.1.2-alpha.14"
+    else implementation "com.mineinabyss:idofront:0.1.2-alpha.13"
     // The Spigot API with no shadowing. Requires the OSS repo.
 }
 
