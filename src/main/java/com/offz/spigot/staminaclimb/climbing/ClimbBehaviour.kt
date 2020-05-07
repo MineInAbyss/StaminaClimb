@@ -77,7 +77,7 @@ object ClimbBehaviour : Listener {
                     player.allowFlight = true
                     player.isFlying = true
                 } else {
-                    uuid.isClimbing = false
+                    isClimbing.remove(uuid)
                     uuid.restartCooldown()
                 }
             player.flySpeed = 0.03f
