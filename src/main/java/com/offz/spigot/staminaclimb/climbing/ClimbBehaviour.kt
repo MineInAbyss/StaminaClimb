@@ -1,6 +1,5 @@
 package com.offz.spigot.staminaclimb.climbing
 
-import com.mineinabyss.idofront.messaging.logVal
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.GameMode
@@ -97,7 +96,7 @@ object ClimbBehaviour : Listener {
 
             //find left clicked block (in adventure mode)
             val blocks = player.getLastTwoTargetBlocks(null, 4) //Get two connected blocks player is looking at
-            if (blocks.size < 2 || blocks[0].isLiquid || blocks[0].location.distanceSquared(player.location).logVal("Dist ") < 4) return
+            if (blocks.size < 2 || blocks[0].isLiquid || blocks[0].location.distanceSquared(player.location) < 4) return
 
             //leap
             val blockType = blocks[1].type
@@ -142,7 +141,7 @@ object ClimbBehaviour : Listener {
         val player = e.player
         val block = e.clickedBlock!!.type
         val heldItem = player.inventory.itemInMainHand.type
-        if(heldItem.isBlock && heldItem != Material.AIR){
+        if (heldItem.isBlock && heldItem != Material.AIR) {
             player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
             return false
         }

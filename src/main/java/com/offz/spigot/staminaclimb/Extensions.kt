@@ -1,6 +1,5 @@
 package com.offz.spigot.staminaclimb
 
-import com.mineinabyss.idofront.messaging.logVal
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
@@ -69,7 +68,7 @@ val Player.wallDifficulty: Double
                 climbDifficultyCount++
             }
         }
-        if (climbDifficultyCount > 0) return (totalClimbDifficulty / climbDifficultyCount).logVal("Total diff ")
+        if (climbDifficultyCount > 0) return (totalClimbDifficulty / climbDifficultyCount)
 
         if ((uniqueId.isClimbing || location.direction.y > 0.5)) {
             val climbModifier = loc.clone().add(0.0, 2.2, 0.0).block.type.climbDifficulty
