@@ -112,7 +112,7 @@ object StaminaBar : Listener {
 
     /** Removes [amount] progress from [bossBar]'s progress */
     internal fun removeProgress(amount: Double, bossBar: BossBar) {
-        bossBar.progress = (bossBar.progress - amount).coerceAtLeast(0.0)
+        bossBar.progress = (bossBar.progress - amount).coerceIn(0.0..1.0)
     }
 
     /** Removes [amount] progress from [uuid]'s associated BossBar's progress */
