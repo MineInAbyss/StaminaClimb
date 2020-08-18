@@ -9,9 +9,6 @@ import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import com.offz.spigot.staminaclimb.stamina.StaminaBar.registerBar
 import com.offz.spigot.staminaclimb.stamina.StaminaTask
 import org.bukkit.Bukkit
-import org.bukkit.command.Command
-import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
@@ -25,7 +22,7 @@ class StaminaClimb : JavaPlugin() {
     override fun onEnable() {
         logger.info("On enable has been called")
         saveDefaultConfig()
-        climbyConfig = Yaml.default.parse(Config.serializer(), config.saveToString())
+        climbyConfig = Yaml.default.decodeFromString(Config.serializer(), config.saveToString())
         //toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
 
