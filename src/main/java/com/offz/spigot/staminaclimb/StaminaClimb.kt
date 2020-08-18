@@ -1,6 +1,7 @@
 package com.offz.spigot.staminaclimb
 
 import com.charleskorn.kaml.Yaml
+import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.offz.spigot.staminaclimb.config.Config
@@ -20,24 +21,7 @@ val climbyConfig get() = staminaClimb.climbyConfig
 class StaminaClimb : JavaPlugin() {
     lateinit var climbyConfig: Config private set
 
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
-        if (label.equals("toggleStamina", ignoreCase = true) || label.equals("climb", ignoreCase = true)) { //Stamina toggle
-            if (sender.hasPermission("staminaclimb.toggle")) {
-                if (sender is Player) {
-                    if (!sender.climbEnabled) {
-                        sender.sendMessage("Stamina and climbing system: ON!")
-                        sender.climbEnabled = true
-                    } else {
-                        sender.sendMessage("Stamina and climbing system: OFF!")
-                        sender.climbEnabled = false
-                    }
-                    return true
-                }
-            } else sender.sendMessage("You do not have the permission to use this command")
-        }
-        return false
-    }
-
+    @ExperimentalCommandDSL
     override fun onEnable() {
         logger.info("On enable has been called")
         saveDefaultConfig()
@@ -49,6 +33,7 @@ class StaminaClimb : JavaPlugin() {
         server.pluginManager.registerEvents(ClimbBehaviour, this)
         server.pluginManager.registerEvents(StaminaBar, this)
 
+        StaminaClimbCommands
     }
 
     override fun onDisable() {

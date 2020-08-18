@@ -1,96 +1,38 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
-    }
-}
+import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
+    id 'io.github.0ffz.github-packages' version '1.0.3'
 }
-
-apply plugin: 'kotlin'
-apply plugin: 'com.github.johnrengelman.shadow'
-
 
 group = 'com.mineinabyss'
 version = plugin_version
 
 if (project.hasProperty("buildNo")) version += ".$buildNo"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-def github_username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-def github_password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+java {
+    setSourceCompatibility(1.8)
+    withSourcesJar()
+    withJavadocJar()
+}
 
 repositories {
     mavenCentral()
     jcenter()
-    maven {
-        name = 'spigotmc-repo'
-        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
-    }
-    maven {
-        name = "MineInAbyss"
-        url = uri("https://maven.pkg.github.com/MineInAbyss/Idofront")
-        credentials {
-            username = github_username
-            password = github_password
-        }
-    }
-    maven {
-        name = "CultOfClang"
-        url = uri("https://maven.pkg.github.com/CultOfClang/Minecraft/")
-        credentials {
-            username = github_username
-            password = github_password
-        }
-    }
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    getArchiveClassifier().set('sources')
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    getArchiveClassifier().set('javadoc')
-    from javadoc.destinationDir
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/MineInAbyss/StaminaClimb")
-            credentials {
-                username = github_username
-                password = github_password
-            }
-        }
-    }
-    publications {
-        gpr(MavenPublication) {
-            from(components.java)
-            artifact sourcesJar
-            artifact javadocJar
-        }
-    }
+    maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
+    maven githubPackage.invoke("MineInAbyss/Idofront")
+    maven githubPackage.invoke("MineInAbyss/KotlinSpice")
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.15-R0.1-SNAPSHOT'
+    compileOnly "org.spigotmc:spigot-api:$server_version"
     compileOnly "org.cultofclang.minecraft:kotlinspice:$kotlin_version+"
 
-    if (useLocalIdofront.toBoolean()) implementation project(':idofront')
-    else implementation "com.mineinabyss:idofront:0.1.+"
-    // The Spigot API with no shadowing. Requires the OSS repo.
+    implementation "com.mineinabyss:idofront:0.2.1-alpha.18"
 }
 
 shadowJar {
@@ -102,6 +44,21 @@ shadowJar {
     minimize()
 }
 build.dependsOn shadowJar
+
+publishing {
+    repositories {
+        maven githubPackage.invoke("MineInAbyss/StaminaClimb")
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
+
+processResources {
+    filter ReplaceTokens, tokens: [plugin_version: plugin_version]
+}
 
 //Move into plugins folder
 if (project.hasProperty("plugin_path") && plugin_path) {

@@ -1,7 +1,7 @@
 name: StaminaClimb
-version: 1.0.3
+version: @plugin_version@
 author: Offz
-api-version: 1.15
+api-version: 1.16
 main: com.offz.spigot.staminaclimb.StaminaClimb
 depend: [KotlinSpice]
 

@@ -139,7 +139,7 @@ object ClimbBehaviour : Listener {
     private fun rightClicked(e: PlayerInteractEvent): Boolean { //did player do a valid right click
         if (e.clickedBlock == null) return false
         val player = e.player
-        val block = e.clickedBlock!!.type
+        val block = e.clickedBlock?.type ?: return false
         val heldItem = player.inventory.itemInMainHand.type
         if (heldItem.isBlock && heldItem != Material.AIR) {
             player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN

@@ -25,7 +25,7 @@ object StaminaBar : Listener {
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
 
-    fun registerBar(player: Player) {
+    fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
         uuid.restartCooldown()
         uuid.canClimb = true
@@ -33,6 +33,7 @@ object StaminaBar : Listener {
         val bossBar = Bukkit.createBossBar("&lStamina".color(), BarColor.GREEN, BarStyle.SEGMENTED_10)
         bossBar.addPlayer(player)
         registeredBars[uuid] = bossBar
+        return bossBar
     }
 
     @EventHandler
@@ -71,13 +72,12 @@ object StaminaBar : Listener {
         val uuid = player.uniqueId
         if (e.cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
-        val bossBar = registeredBars[uuid]
+        val bossBar = registeredBars[uuid] ?: return
         val threshold = 0.6 //TODO make config and not dumb calculations
         val multiplier = 11.0
         val exponent = 1.1
-        val vel = velocities[uuid]!!
-
-        bossBar!!.isVisible = true
+        val vel = velocities[uuid] ?: return //TODO put this damage system into bonehurtingjuice
+        bossBar.isVisible = true
         if (vel > -threshold) {
             bossBar.removeProgress(0.1 / 15)
             return
@@ -92,8 +92,7 @@ object StaminaBar : Listener {
         val player = e.entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
-        val bossBar = registeredBars[uuid]
-        bossBar!!.progress = 1.0
+        registeredBars[uuid]?.progress = 1.0
     }
 
     @EventHandler

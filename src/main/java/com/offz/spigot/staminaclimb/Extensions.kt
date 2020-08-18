@@ -5,6 +5,7 @@ import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
 import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
+import org.bukkit.event.player.PlayerBedEnterEvent
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -103,6 +104,8 @@ var Player.climbEnabled: Boolean
             }
         } else if (enable) {
             StaminaBar.disabledPlayers.remove(uniqueId)
-            StaminaBar.registerBar(this)
+            StaminaBar.registerBar(this).apply {
+                progress = 0.0
+            }
         }
     }
