@@ -13,7 +13,7 @@ object StaminaClimbCommands: IdofrontCommandExecutor() {
             permission = "staminaclimb.toggle"
             playerAction {
                 player.climbEnabled = !player.climbEnabled
-                player.info("・ §bStamina and climbing system:§r ${if(player.climbEnabled) "§aON" else "§cOFF"}§b!")
+                player.info("§f・ §bStamina and climbing system:§r ${if(player.climbEnabled) "§aON" else "§cOFF"}§b!")
             }
         }
     }
