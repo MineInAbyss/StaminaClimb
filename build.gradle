@@ -6,7 +6,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.0.0'
     id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
-    id 'io.github.0ffz.github-packages' version '1.0.3'
+    id 'io.github.0ffz.github-packages' version '1.0.5'
 }
 
 group = 'com.mineinabyss'
@@ -15,9 +15,8 @@ version = plugin_version
 if (project.hasProperty("buildNo")) version += ".$buildNo"
 
 java {
-    setSourceCompatibility(1.8)
+    sourceCompatibility(JavaVersion.VERSION_1_8)
     withSourcesJar()
-    withJavadocJar()
 }
 
 repositories {
@@ -39,6 +38,11 @@ shadowJar {
     getArchiveBaseName().set("stamina-climb")
     getArchiveClassifier().set(null)
 
+    dependencies {
+        exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib:.*'))
+        exclude(dependency('org.jetbrains.kotlin:kotlin-stdlib-jdk8:.*'))
+    }
+
     relocate 'com.mineinabyss.idofront', "${project.group}.${project.name}.idofront".toLowerCase()
 
     minimize()
@@ -47,7 +51,7 @@ build.dependsOn shadowJar
 
 publishing {
     repositories {
-        maven githubPackage.invoke("MineInAbyss/StaminaClimb")
+        maven githubPackagePublish.invoke("MineInAbyss/StaminaClimb")
     }
     publications {
         gpr(MavenPublication) {
