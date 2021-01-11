@@ -3,21 +3,16 @@ import org.apache.tools.ant.filters.ReplaceTokens
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
-    id 'io.github.0ffz.github-packages' version '1.0.5'
+    id 'io.github.0ffz.github-packages' version '1.2.0'
 }
+
+apply from: 'https://raw.githubusercontent.com/MineInAbyss/shared-gradle/master/common.gradle'
 
 group = 'com.mineinabyss'
 version = plugin_version
-
-if (project.hasProperty("buildNo")) version += ".$buildNo"
-
-java {
-    sourceCompatibility(JavaVersion.VERSION_1_8)
-    withSourcesJar()
-}
 
 repositories {
     mavenCentral()
@@ -29,9 +24,11 @@ repositories {
 
 dependencies {
     compileOnly "org.spigotmc:spigot-api:$server_version"
-    compileOnly "org.cultofclang.minecraft:kotlinspice:$kotlin_version+"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 
-    implementation "com.mineinabyss:idofront:0.2.1-alpha.18"
+    compileOnly platform("com.mineinabyss:kotlinspice:$kotlin_version+")
+
+    implementation "com.mineinabyss:idofront:0.4.3"
 }
 
 shadowJar {
@@ -58,20 +55,6 @@ publishing {
             from(components.java)
         }
     }
-}
-
-processResources {
-    filter ReplaceTokens, tokens: [plugin_version: plugin_version]
-}
-
-//Move into plugins folder
-if (project.hasProperty("plugin_path") && plugin_path) {
-    println("Copying to plugin directory $plugin_path")
-    task copyJar(type: Copy) {
-        from shadowJar // here it automatically reads jar file produced from jar task
-        into plugin_path
-    }
-    build.dependsOn copyJar
 }
 
 compileKotlin { kotlinOptions { jvmTarget = "1.8" } }

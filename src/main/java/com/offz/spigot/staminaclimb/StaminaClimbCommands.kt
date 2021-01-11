@@ -7,7 +7,7 @@ import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.info
 
 @ExperimentalCommandDSL
-object StaminaClimbCommands: IdofrontCommandExecutor() {
+class StaminaClimbCommands: IdofrontCommandExecutor() {
     override val commands = commands(staminaClimb){
         "climb" {
             permission = "staminaclimb.toggle"

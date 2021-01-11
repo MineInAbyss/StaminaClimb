@@ -30,7 +30,7 @@ class StaminaClimb : JavaPlugin() {
         server.pluginManager.registerEvents(ClimbBehaviour, this)
         server.pluginManager.registerEvents(StaminaBar, this)
 
-        StaminaClimbCommands
+        StaminaClimbCommands()
     }
 
     override fun onDisable() {
