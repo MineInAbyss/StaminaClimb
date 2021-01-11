@@ -3,6 +3,7 @@ package com.offz.spigot.staminaclimb.stamina
 import com.mineinabyss.idofront.messaging.color
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
+import com.offz.spigot.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.boss.BarColor
@@ -24,13 +25,13 @@ class StaminaTask : BukkitRunnable() {
                 return
             }
 
-            bar.isVisible = progress + climbyConfig.STAMINA_REGEN <= 1 //hide when full
+            bar.isVisible = progress + StaminaConfig.data.staminaRegen <= 1 //hide when full
 
             //regenerate stamina for BossBar
             if (!uuid.isClimbing)
-                bar.progress = (bar.progress + (if (player.isOnGround) climbyConfig.STAMINA_REGEN else climbyConfig.STAMINA_REGEN_IN_AIR)).coerceAtMost(1.0)
+                bar.progress = (bar.progress + (if (player.isOnGround) StaminaConfig.data.staminaRegen else StaminaConfig.data.staminaRegenInAir)).coerceAtMost(1.0)
 
-            if (progress <= climbyConfig.BAR_RED) { //Changing bar colors and effects on player depending on its progress
+            if (progress <= StaminaConfig.data.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color = BarColor.RED
                 bar.setTitle("&c&lStamina".color()) //Make Stamina title red
                 if (uuid.isClimbing) player.stopClimbing()
@@ -59,7 +60,7 @@ class StaminaTask : BukkitRunnable() {
             }
 
             //prevent player from climbing if they have fallen far enough TODO dunno what hte flying check is for
-            if (!player.isFlying && isClimbing || player.fallDistance > climbyConfig.MAX_FALL_DIST) {
+            if (!player.isFlying && isClimbing || player.fallDistance > StaminaConfig.data.maxFallDist) {
                 player.stopClimbing()
                 return@forEach
             }
@@ -78,13 +79,13 @@ class StaminaTask : BukkitRunnable() {
                     player.allowFlight = false
                 }
                 //only prevent air jump after AIR_TIME ms
-                else if (uuid.climbCooldown + climbyConfig.AIR_TIME < 0) {
+                else if (uuid.climbCooldown + StaminaConfig.data.airTime < 0) {
                     player.stopClimbing()
                     return@forEach
                 }
             }
 
-            if (isClimbing) uuid.removeProgress(climbyConfig.STAMINA_REMOVE_PER_TICK * atWallMultiplier)
+            if (isClimbing) uuid.removeProgress(StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
         }
     }
 }

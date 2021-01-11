@@ -1,11 +1,11 @@
 package com.offz.spigot.staminaclimb
 
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
+import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
 import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
-import org.bukkit.event.player.PlayerBedEnterEvent
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -74,18 +74,25 @@ val Player.wallDifficulty: Double
         if ((uniqueId.isClimbing || location.direction.y > 0.5)) {
             val climbModifier = loc.clone().add(0.0, 2.2, 0.0).block.type.climbDifficulty
             if (climbModifier > 0)
-                return climbModifier * climbyConfig.ROOF_CLIMB_DIFFICULTY
+                return climbModifier * StaminaConfig.data.roofClimbDifficulty
         }
         return -1.0
     }
 
 val Material.climbDifficulty: Double
-    get() = climbyConfig.CLIMB_DIFFICULTY.getOrDefault(this,
-            climbyConfig.CLIMB_DIFFICULTY_GENERAL.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
-                    ?: if (isSolid) 1.0 else -1.0)
+    get() = StaminaConfig.data.climbDifficulty.getOrDefault(
+        this,
+        StaminaConfig.data.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
+            ?: if (isSolid) 1.0 else -1.0
+    )
 
 //TODO move to idofront
-inline fun inCube(xRange: IntProgression, yRange: IntProgression, zRange: IntProgression, execute: (x: Int, y: Int, z: Int) -> Unit) {
+inline fun inCube(
+    xRange: IntProgression,
+    yRange: IntProgression,
+    zRange: IntProgression,
+    execute: (x: Int, y: Int, z: Int) -> Unit
+) {
     for (x in xRange) for (y in yRange) for (z in zRange) execute(x, y, z)
 }
 

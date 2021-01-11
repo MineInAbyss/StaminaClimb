@@ -1,6 +1,7 @@
 package com.offz.spigot.staminaclimb.climbing
 
 import com.offz.spigot.staminaclimb.*
+import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -38,14 +39,14 @@ object ClimbBehaviour : Listener {
         val p = e.player
         val uuid = p.uniqueId
         if (!p.isSneaking && uuid.isClimbing) e.isCancelled = true
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = climbyConfig.WALLJUMP_COOLDOWN
+        if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
     }
 
     @EventHandler
     fun onBlockBreak(e: BlockBreakEvent) {
         val player = e.player
         val uuid = player.uniqueId
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = climbyConfig.WALLJUMP_COOLDOWN
+        if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
     }
 
     @EventHandler
@@ -91,7 +92,7 @@ object ClimbBehaviour : Listener {
         //don't even ask ok
         if (allowClimb(player) && isClimbing.containsKey(uuid)) {
             //set a cooldown for player not to be able to wall jump right away
-            uuid.climbCooldown = climbyConfig.WALLJUMP_COOLDOWN
+            uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
 
             //find left clicked block (in adventure mode)
@@ -113,7 +114,7 @@ object ClimbBehaviour : Listener {
                         this.y = y / 2 + 0.3
                         this.z = z / 1.8
                     }
-                    uuid.climbCooldown = -climbyConfig.AIR_TIME
+                    uuid.climbCooldown = -StaminaConfig.data.airTime
                 } else {
                     bossBar.removeProgress(0.2)
                     player.velocity = player.velocity.apply {
@@ -142,16 +143,16 @@ object ClimbBehaviour : Listener {
         val block = e.clickedBlock?.type ?: return false
         val heldItem = player.inventory.itemInMainHand.type
         if (heldItem.isBlock && heldItem != Material.AIR) {
-            player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
+            player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
             return false
         }
-        if (climbyConfig.PREVENT_CLIMB_START.contains(block)) {
-            player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
+        if (StaminaConfig.data.climbBlacklist.contains(block)) {
+            player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
             return false
         } else {
-            for (interactable in climbyConfig.PREVENT_CLIMB_START_GENERAL) {
+            for (interactable in StaminaConfig.data.climbBlacklistGeneral) {
                 if (block.toString().contains(interactable)) {
-                    player.uniqueId.climbCooldown = climbyConfig.JUMP_COOLDOWN
+                    player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
                     return false
                 }
             }
@@ -162,7 +163,7 @@ object ClimbBehaviour : Listener {
     //TODO dont make checks like this separate for left/right click if they do basically the same thing
     private fun leftClicked(block: Material): Boolean { //did player do a valid left click
         //If clicked block is in blacklist, return false
-        return !climbyConfig.PREVENT_CLIMB_START.contains(block)
+        return !StaminaConfig.data.climbBlacklist.contains(block)
     }
 
     private fun cooldownComplete(uuid: UUID): Boolean { //is the click cooldown complete

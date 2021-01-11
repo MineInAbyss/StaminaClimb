@@ -1,14 +1,14 @@
-air-time: 400
-stamina-regen: 0.01
-stamina-regen-in-air: 0.003
-stamina-remove-per-tick: 0.005
-stamina-remove-while-moving: 0.005
-bar-red: 0.02
-max-fall-dist: 5
-jump-cooldown: 300
-walljump-cooldown: 300
-roof-climb-difficulty: 7.0
-climb-blacklist:
+airTime: 400
+staminaRegen: 0.01
+staminaRegenInAir: 0.003
+staminaRemovePerTick: 0.005
+staminaRemoveWhileMoving: 0.005
+barRed: 0.02
+maxFallDist: 5
+jumpCooldown: 300
+walljumpCooldown: 300
+roofClimbDifficulty: 7.0
+climbBlacklist:
   - BEACON
   - BARREL
   - CAMPFIRE
@@ -43,7 +43,7 @@ climb-blacklist:
   - ANVIL
   - CHIPPED_ANVIL
   - DAMAGED_ANVIL
-climb-blacklist-general:
+climbBlacklistGeneral:
   - DOOR
   - FENCE
   - FURNACE
@@ -53,7 +53,7 @@ climb-blacklist-general:
   - BUTTON
   - SIGN
   - SHULKER_BOX
-climb-difficulty:
+climbDifficulty:
   SAND: 2
   BARRIER: -1
   COBBLESTONE: 0.8
@@ -62,7 +62,7 @@ climb-difficulty:
   BLUE_ICE: 4
   SLIME_BLOCK: 0.5
   HONEY_BLOCK: -1
-climb-difficulty-general:
+climbDifficultyGeneral:
   WOOD: 0.3
   LOG: 0.3
   SMOOTH: 5

@@ -9,9 +9,8 @@ prefix: SnC
 description: A mod that lets you climb and get exhausted
 
 commands:
-  toggleStamina:
-    description: Toggles stamina and climbing system for player
-    usage: /toggleStamina
+  staminaclimb:
+    description: Main command for configuring the Stamina Climb plugin.
   climb:
-    description: Toggles stamina and climbing system for player
-    usage: /climb (same as /togglestamina)
+    description: Toggles stamina and climbing system for player.
+    usage: /climb

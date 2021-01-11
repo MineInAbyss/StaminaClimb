@@ -3,6 +3,7 @@ package com.offz.spigot.staminaclimb.stamina
 import com.mineinabyss.idofront.messaging.color
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
+import com.offz.spigot.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.boss.BarColor
@@ -63,7 +64,7 @@ object StaminaBar : Listener {
 
         //if player is climbing and has moved
         if (uuid.isClimbing && loc.distanceSquared(to) > 0.007)
-            uuid.removeProgress(climbyConfig.STAMINA_REMOVE_WHILE_MOVING)
+            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
     }
 
     @EventHandler
