@@ -29,7 +29,12 @@ class StaminaTask : BukkitRunnable() {
 
             //regenerate stamina for BossBar
             if (!uuid.isClimbing)
-                bar.progress = (bar.progress + (if (player.isOnGround) StaminaConfig.data.staminaRegen else StaminaConfig.data.staminaRegenInAir)).coerceAtMost(1.0)
+                bar.progress = (bar.progress +
+                        //TODO this is determined by client and easily spoofable
+                        if (player.isOnGround)
+                            StaminaConfig.data.staminaRegen
+                        else StaminaConfig.data.staminaRegenInAir
+                        ).coerceAtMost(1.0)
 
             if (progress <= StaminaConfig.data.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color = BarColor.RED

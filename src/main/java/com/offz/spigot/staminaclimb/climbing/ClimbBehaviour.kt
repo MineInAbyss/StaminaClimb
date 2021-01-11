@@ -62,7 +62,7 @@ object ClimbBehaviour : Listener {
             bossBar.removeProgress(player.fallDistance / 15.0)
             //reduce fall damage by half heart per feather fall level
             val featherFall = player.equipment?.boots
-                    ?.getEnchantmentLevel(Enchantment.PROTECTION_FALL)?.times(0.5) ?: 0.0
+                ?.getEnchantmentLevel(Enchantment.PROTECTION_FALL)?.times(0.5) ?: 0.0
             val damageAmount = (player.fallDistance - 3) / 1.9 - featherFall
             if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
                 player.damage(damageAmount)

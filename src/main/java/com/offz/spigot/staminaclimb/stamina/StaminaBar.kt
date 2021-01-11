@@ -5,7 +5,8 @@ import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
-import org.bukkit.GameMode
+import org.bukkit.GameMode.ADVENTURE
+import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -98,8 +99,10 @@ object StaminaBar : Listener {
 
     @EventHandler
     fun onGamemodeChange(e: PlayerGameModeChangeEvent) {
-        if (e.player.climbEnabled && (e.newGameMode == GameMode.SURVIVAL || e.newGameMode == GameMode.ADVENTURE)
-                && !registeredBars.containsKey(e.player.uniqueId)) {
+        if (e.player.climbEnabled
+            && (e.newGameMode == SURVIVAL || e.newGameMode == ADVENTURE)
+            && !registeredBars.containsKey(e.player.uniqueId)
+        ) {
             registerBar(e.player)
         }
     }
