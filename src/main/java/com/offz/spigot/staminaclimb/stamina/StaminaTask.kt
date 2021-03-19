@@ -19,28 +19,16 @@ import kotlin.math.abs
 
 class StaminaTask : BukkitRunnable() {
 
-    private var previousTickTime: Long = 0;
-    private val targetDeltaTime = 1.0 / 20.0
-
-    // Not sure how to get the World to make a Location so I'm just doing this | TODO: change to a Location
-    private var prevX = 0.0
-    private var prevY = 0.0
-    private var prevZ = 0.0
+    private var previousTickTime: Long = 0
 
     private var ticksSinceLastColorSwitch = 0
     private val ticksToSwitchColor = 5
 
     private var currentWallMultiplier = 1.0
 
-    internal fun isPlayerMoving(player: Player): Boolean {
-        val minMovementValue = 0.007
-        val isMoving = abs(player.getLocation().getX() - prevX) >= minMovementValue ||
-                       abs(player.getLocation().getY() - prevY) >= minMovementValue ||
-                       abs(player.getLocation().getZ() - prevZ) >= minMovementValue 
-        prevX = player.getLocation().getX()
-        prevY = player.getLocation().getY()
-        prevZ = player.getLocation().getZ()
-        return isMoving
+    internal fun isPlayerMoving(uuid: UUID): Boolean {
+        val vel = StaminaBar.velocities[uuid] ?: return false
+        return vel > StaminaConfig.data.minMovementValue
     }
 
     override fun run() {
@@ -48,18 +36,23 @@ class StaminaTask : BukkitRunnable() {
             val player = Bukkit.getPlayer(uuid) ?: StaminaBar.registeredBars.remove(uuid).let { return@forEach }
             val bar = StaminaBar.registeredBars[uuid] ?: return@forEach
             val progress = bar.progress
+          
+            if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+                StaminaBar.unregisterBar(uuid)
+                player.stopClimbing()
+                player.allowFlight = true
+                return
+            }
 
-            bar.isVisible = progress + StaminaConfig.data.staminaRegen <= StaminaConfig.data.barMax //hide when full
+            bar.isVisible = progress + StaminaConfig.data.staminaRegen <= 1.0 //hide when full
 
             if (!uuid.isClimbing) { //Regenerate stamina
                 if(player.isOnGround)
-                    StaminaBar.addProgressWithDeltaTime(StaminaConfig.data.staminaRegen
-                        .coerceAtMost(StaminaConfig.data.barMax), uuid)
+                    StaminaBar.addProgressWithDeltaTime(StaminaConfig.data.staminaRegen.coerceAtMost(1.0), uuid)
                 else 
-                    StaminaBar.addProgressWithDeltaTime(StaminaConfig.data.staminaRegenInAir
-                        .coerceAtMost(StaminaConfig.data.barMax), uuid)
+                    StaminaBar.addProgressWithDeltaTime(StaminaConfig.data.staminaRegenInAir.coerceAtMost(1.0), uuid)
             } else { //Lose stamina
-                if(isPlayerMoving(player)) {
+                if(isPlayerMoving(uuid)) {
                     StaminaBar.removeProgressWithDeltaTime(StaminaConfig.data.staminaRemoveWhileMoving * currentWallMultiplier, uuid)
                 }
                 else {
@@ -67,43 +60,33 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            if (progress <= StaminaConfig.data.barMin) { //Changing bar colors and effects on player depending on its progress
+            if (progress <= StaminaConfig.data.barRedZone) { //Changing bar colors and effects on player depending on its progress
                 bar.color = BarColor.RED
-                bar.setTitle("&c&lStamina".color()) //Make Stamina title red
                 if (uuid.isClimbing) {
                     player.stopClimbing()
                     uuid.canClimb = false //If player reaches red zone, they can't climb until they get back in green zone
                     player.addPotionEffect(PotionEffect(PotionEffectType.SLOW, 110, 2, false, false))
                     player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false))
                 }
-            } else if (progress < StaminaConfig.data.barMax && !uuid.canClimb) {
+            } else if (progress < 1.0 && !uuid.canClimb) {
                 bar.color = BarColor.RED //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if (uuid.isClimbing && progress < StaminaConfig.data.barFlashPoint / 2.0) {
+            } else if (uuid.isClimbing && progress < StaminaConfig.data.barFlashPoint) { //Flash green-red
                 ticksSinceLastColorSwitch++
-                if (ticksSinceLastColorSwitch >= ticksToSwitchColor / 2) {
+                if (ticksSinceLastColorSwitch >= if(progress < StaminaConfig.data.barFlashPoint / 2) ticksToSwitchColor / 2 else ticksToSwitchColor) {
                     if(bar.color == BarColor.RED)
-                        bar.color = BarColor.YELLOW
-                    else
-                        bar.color = BarColor.RED
-                    ticksSinceLastColorSwitch = 0
-                }
-            } else if (uuid.isClimbing && progress < StaminaConfig.data.barFlashPoint) {
-                ticksSinceLastColorSwitch++
-                if (ticksSinceLastColorSwitch >= ticksToSwitchColor) {
-                    if(bar.color == BarColor.RED)
-                        bar.color = BarColor.GREEN
+                        bar.color = if(progress < StaminaConfig.data.barFlashPoint) BarColor.YELLOW else BarColor.GREEN
                     else
                         bar.color = BarColor.RED
                     ticksSinceLastColorSwitch = 0
                 }
             } else {
                 bar.color = BarColor.GREEN
-                bar.setTitle("&lStamina".color())
                 uuid.canClimb = true
             }
+            bar.setTitle(if(!uuid.canClimb) "&c&lStamina".color() else "&lStamina".color()) //Color Stamina title
         }
 
-        // --------------------------------------
+
 
         var specialWall = false
 
@@ -144,7 +127,6 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            //if (isClimbing) StaminaBar.removeProgressWithDeltaTime(StaminaConfig.data.staminaRemovePerTick * atWallMultiplier, uuid)
             specialWall = true
             currentWallMultiplier = atWallMultiplier
         }

@@ -1,13 +1,12 @@
 airTime: 400
 staminaRegen: 0.01
 staminaRegenInAir: 0.003
-staminaRemovePerTick: 0.002
-staminaRemoveWhileMoving: 0.005
-barMin: 0.02
+staminaRemovePerTick: 0.004
+staminaRemoveWhileMoving: 0.01
+barRedZone: 0.02
 barFlashPoint: 0.4
-barTrueMin: 0.0
-barMax: 1.0
 maxFallDist: 5
+minMovementValue: 0.007
 jumpCooldown: 300
 walljumpCooldown: 300
 roofClimbDifficulty: 7.0
