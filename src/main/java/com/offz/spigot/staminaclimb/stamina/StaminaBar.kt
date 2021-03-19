@@ -23,9 +23,13 @@ import java.util.*
 import kotlin.math.pow
 
 object StaminaBar : Listener {
+
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
+
+    private var previousTickTime: Long = 0
+    private val targetDeltaTime: Double = 1.0 / 20.0 //20 ticks per second
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -51,6 +55,7 @@ object StaminaBar : Listener {
         if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
 
+    /*
     @EventHandler
     fun onPlayerMove(e: PlayerMoveEvent) {
         val player = e.player
@@ -65,8 +70,9 @@ object StaminaBar : Listener {
 
         //if player is climbing and has moved
         if (uuid.isClimbing && loc.distanceSquared(to) > 0.007)
-            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
+            removeProgressWithDeltaTime(StaminaConfig.data.staminaRemoveWhileMoving, uuid)
     }
+    */
 
     @EventHandler
     fun onPlayerFall(e: EntityDamageEvent) { //Remove stamina from player falls
@@ -94,7 +100,7 @@ object StaminaBar : Listener {
         val player = e.entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
-        registeredBars[uuid]?.progress = 1.0
+        registeredBars[uuid]?.progress = StaminaConfig.data.barMax
     }
 
     @EventHandler
@@ -115,11 +121,52 @@ object StaminaBar : Listener {
 
     /** Removes [amount] progress from [bossBar]'s progress */
     internal fun removeProgress(amount: Double, bossBar: BossBar) {
-        bossBar.progress = (bossBar.progress - amount).coerceIn(0.0..1.0)
+        bossBar.progress = (bossBar.progress - amount).coerceIn(StaminaConfig.data.barTrueMin..StaminaConfig.data.barMax)
     }
 
     /** Removes [amount] progress from [uuid]'s associated BossBar's progress */
     internal fun removeProgress(amount: Double, uuid: UUID) {
         removeProgress(amount, registeredBars[uuid] ?: return)
+    }
+
+    public fun removeProgressWithDeltaTime(amount: Double, uuid: UUID) {
+        // Get multiplier based on delta time. Multiplier accounts for server lag
+        var timeMultiplier = 1.0;
+        var extraMultiplier = 2.0; // Makes the decreasing speed correct.
+        if (previousTickTime == 0.toLong()) {
+            previousTickTime = System.currentTimeMillis();
+        }
+        else {
+            val deltaTime = (System.currentTimeMillis() - previousTickTime) / 1000.0;
+            timeMultiplier = deltaTime / targetDeltaTime;
+            previousTickTime = System.currentTimeMillis();
+        }
+
+        removeProgress(amount * timeMultiplier * extraMultiplier, uuid)
+    }
+
+    /** Adds [amount] progress from [bossBar]'s progress */
+    internal fun addProgress(amount: Double, bossBar: BossBar) {
+        bossBar.progress = (bossBar.progress + amount).coerceIn(0.0..1.0)
+    }
+
+    /** Adds [amount] progress from [uuid]'s associated BossBar's progress */
+    internal fun addProgress(amount: Double, uuid: UUID) {
+        addProgress(amount, registeredBars[uuid] ?: return)
+    }
+
+    public fun addProgressWithDeltaTime(amount: Double, uuid: UUID) {
+        // Get multiplier based on delta time. Multiplier accounts for server lag
+        var timeMultiplier = 1.0;
+        if (previousTickTime == 0.toLong()) {
+            previousTickTime = System.currentTimeMillis();
+        }
+        else {
+            val deltaTime = (System.currentTimeMillis() - previousTickTime) / 1000.0;
+            timeMultiplier = deltaTime / targetDeltaTime;
+            previousTickTime = System.currentTimeMillis();
+        }
+
+        addProgress(amount * timeMultiplier, uuid)
     }
 }
