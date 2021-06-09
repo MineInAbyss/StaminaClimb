@@ -1,7 +1,6 @@
 package com.offz.spigot.staminaclimb.stamina
 
 import com.mineinabyss.idofront.messaging.color
-import com.mineinabyss.idofront.messaging.info
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.config.StaminaConfig
@@ -99,10 +98,7 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            if (isClimbing) {
-                player.info(tickDuration)
-                uuid.removeProgress(tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
-            }
+            if (isClimbing) uuid.removeProgress(tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
         }
     }
 
