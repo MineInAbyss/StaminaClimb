@@ -26,5 +26,5 @@ object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.ser
 
     private const val SERVER_TPS = 20
     private const val NANO_IN_SECOND = 1000000000
-    const val NANO_PER_TICK = (NANO_IN_SECOND / SERVER_TPS).toFloat()
+    const val NANO_PER_TICK = NANO_IN_SECOND / SERVER_TPS
 }
