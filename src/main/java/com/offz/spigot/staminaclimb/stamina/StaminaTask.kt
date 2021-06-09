@@ -1,9 +1,11 @@
 package com.offz.spigot.staminaclimb.stamina
 
 import com.mineinabyss.idofront.messaging.color
+import com.mineinabyss.idofront.messaging.info
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.config.StaminaConfig
+import com.offz.spigot.staminaclimb.config.StaminaConfig.NANO_PER_TICK
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.boss.BarColor
@@ -12,7 +14,15 @@ import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
 
 class StaminaTask : BukkitRunnable() {
+    var lastTickNano = 0L
+
     override fun run() {
+        val currentNano = System.nanoTime()
+        val lastTickNanoBackup = lastTickNano
+        lastTickNano = currentNano
+
+        val tickDuration = calculateTickDuration(currentNano, lastTickNanoBackup)
+
         StaminaBar.registeredBars.keys.forEach { uuid ->
             val player = Bukkit.getPlayer(uuid) ?: StaminaBar.registeredBars.remove(uuid).let { return@forEach }
             val bar = StaminaBar.registeredBars[uuid] ?: return@forEach
@@ -55,7 +65,6 @@ class StaminaTask : BukkitRunnable() {
 
         ClimbBehaviour.isClimbing.entries.forEach { (uuid, isClimbing) ->
             val player = Bukkit.getPlayer(uuid) ?: ClimbBehaviour.isClimbing.remove(uuid).let { return }
-
             //if climbing in creative, stop climbing but keep flight
             if (player.gameMode == GameMode.CREATIVE) {
                 player.stopClimbing()
@@ -64,7 +73,7 @@ class StaminaTask : BukkitRunnable() {
                 return@forEach
             }
 
-            //prevent player from climbing if they have fallen far enough TODO dunno what hte flying check is for
+            //prevent player from climbing if they have fallen far enough or in a invalid state
             if (!player.isFlying && isClimbing || player.fallDistance > StaminaConfig.data.maxFallDist) {
                 player.stopClimbing()
                 return@forEach
@@ -90,7 +99,19 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            if (isClimbing) uuid.removeProgress(StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
+            if (isClimbing) {
+                player.info(tickDuration)
+                uuid.removeProgress(tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
+            }
         }
+    }
+
+    private fun calculateTickDuration(currentNano: Long, lastTickNano: Long): Float {
+        if (lastTickNano == 0L) {
+            return 1f
+        }
+
+        val nanoDiff = (currentNano - lastTickNano).toFloat()
+        return nanoDiff / NANO_PER_TICK
     }
 }
