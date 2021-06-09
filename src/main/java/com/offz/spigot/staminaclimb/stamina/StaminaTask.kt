@@ -4,7 +4,6 @@ import com.mineinabyss.idofront.messaging.color
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.config.StaminaConfig
-import com.offz.spigot.staminaclimb.config.StaminaConfig.NANO_PER_TICK
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.boss.BarColor
@@ -13,7 +12,7 @@ import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
 
 class StaminaTask : BukkitRunnable() {
-    var lastTickNano = 0L
+    var lastTickNano = System.nanoTime()
 
     override fun run() {
         val currentNano = System.nanoTime()
@@ -103,11 +102,7 @@ class StaminaTask : BukkitRunnable() {
     }
 
     private fun calculateTickDuration(currentNano: Long, lastTickNano: Long): Float {
-        if (lastTickNano == 0L) {
-            return 1f
-        }
-
         val nanoDiff = (currentNano - lastTickNano).toFloat()
-        return nanoDiff / NANO_PER_TICK
+        return nanoDiff / StaminaConfig.NANO_PER_TICK
     }
 }
