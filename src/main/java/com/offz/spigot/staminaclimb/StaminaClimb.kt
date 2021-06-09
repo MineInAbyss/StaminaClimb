@@ -7,6 +7,7 @@ import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import com.offz.spigot.staminaclimb.stamina.StaminaBar.registerBar
 import com.offz.spigot.staminaclimb.stamina.StaminaTask
+import io.github.slimjar.app.builder.ApplicationBuilder
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -16,7 +17,9 @@ val staminaClimb: StaminaClimb by lazy { JavaPlugin.getPlugin(StaminaClimb::clas
 class StaminaClimb : JavaPlugin() {
     @ExperimentalCommandDSL
     override fun onEnable() {
-        logger.info("On enable has been called")
+        logger.info("Downloading dependencies")
+        ApplicationBuilder.appending("StaminaClimb").build()
+
         saveDefaultConfig()
 
         // toggle system on for all online players (for plugin reload)
