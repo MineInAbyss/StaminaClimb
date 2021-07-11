@@ -1,28 +1,34 @@
 package com.offz.spigot.staminaclimb.stamina
 
+import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.messaging.color
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.config.StaminaConfig
+import com.okkero.skedule.BukkitSchedulerController
+import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.boss.BarColor
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
-import org.bukkit.scheduler.BukkitRunnable
 
-class StaminaTask : BukkitRunnable() {
+class StaminaTask {
     var lastTickNano = System.nanoTime()
 
-    override fun run() {
-        val currentNano = System.nanoTime()
-        val lastTickNanoBackup = lastTickNano
-        lastTickNano = currentNano
+    fun startTask() {
+        staminaClimb.schedule {
+            repeating(1)
+            while (true) {
+                run()
+                yield()
+            }
+        }
+    }
 
-        val tickDuration = calculateTickDuration(currentNano, lastTickNanoBackup)
-
+    fun regenerateBars() {
         StaminaBar.registeredBars.keys.forEach { uuid ->
-            val player = Bukkit.getPlayer(uuid) ?: StaminaBar.registeredBars.remove(uuid).let { return@forEach }
+            val player = uuid.toPlayer() ?: StaminaBar.registeredBars.remove(uuid).let { return@forEach }
             val bar = StaminaBar.registeredBars[uuid] ?: return@forEach
             val progress = bar.progress
 
@@ -60,6 +66,15 @@ class StaminaTask : BukkitRunnable() {
                 uuid.canClimb = true
             }
         }
+    }
+
+    suspend fun BukkitSchedulerController.run() {
+        val currentNano = System.nanoTime()
+        val lastTickNanoBackup = lastTickNano
+        lastTickNano = currentNano
+
+        val tickDuration = calculateTickDuration(currentNano, lastTickNanoBackup)
+
 
         ClimbBehaviour.isClimbing.entries.forEach { (uuid, isClimbing) ->
             val player = Bukkit.getPlayer(uuid) ?: ClimbBehaviour.isClimbing.remove(uuid).let { return }

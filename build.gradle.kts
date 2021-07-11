@@ -16,6 +16,7 @@ repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/groups/public/")
     maven("https://repo.mineinabyss.com/")
+    maven("https://jitpack.io/")
 }
 
 val serverVersion: String by project
@@ -23,11 +24,13 @@ val serverVersion: String by project
 dependencies {
     compileOnly("org.spigotmc:spigot-api:$serverVersion")
 
-    slim("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    slim(kotlin("stdlib-jdk8"))
     slim("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
     slim("com.charleskorn.kaml:kaml:0.34.0") {
         exclude(group = "org.jetbrains.kotlin")
     }
+    slim("com.github.okkero:skedule:1.2.6")
+    compileOnly("com.mineinabyss:geary-spigot:0.4.42")
 
     implementation("com.mineinabyss:idofront:0.6.14")
 }

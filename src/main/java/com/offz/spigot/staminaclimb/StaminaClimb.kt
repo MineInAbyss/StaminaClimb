@@ -1,12 +1,14 @@
 package com.offz.spigot.staminaclimb
 
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
+import com.mineinabyss.idofront.plugin.registerEvents
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
 import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import com.offz.spigot.staminaclimb.stamina.StaminaBar.registerBar
 import com.offz.spigot.staminaclimb.stamina.StaminaTask
+import com.okkero.skedule.schedule
 import io.github.slimjar.app.builder.ApplicationBuilder
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
@@ -25,9 +27,12 @@ class StaminaClimb : JavaPlugin() {
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
 
-        StaminaTask().runTaskTimer(this, 0, 1)
-        server.pluginManager.registerEvents(ClimbBehaviour, this)
-        server.pluginManager.registerEvents(StaminaBar, this)
+        StaminaTask().startTask()
+
+        registerEvents(
+            ClimbBehaviour,
+            StaminaBar,
+        )
 
         StaminaCommands()
 
