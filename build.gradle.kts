@@ -1,16 +1,13 @@
-import com.mineinabyss.sharedSetup
-
 plugins {
     java
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.0.0"
-    kotlin("jvm")
+//    id("com.github.johnrengelman.shadow") version "7.0.0"
+//    kotlin("jvm")
     kotlin("plugin.serialization")
-    id("io.github.slimjar") version "1.2.0"
-    id("com.mineinabyss.shared-gradle") version "0.0.6"
+//    id("com.mineinabyss.shared-gradle") version "0.0.6"
+    id("com.mineinabyss.conventions.kotlin") version "1.5.21-14"
+    id("com.mineinabyss.conventions.copyjar") version "1.5.21-14"
 }
-
-sharedSetup()
 
 repositories {
     mavenCentral()
@@ -23,13 +20,20 @@ val serverVersion: String by project
 dependencies {
     compileOnly("org.spigotmc:spigot-api:$serverVersion")
 
-    slim("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    slim("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
-    slim("com.charleskorn.kaml:kaml:0.34.0") {
+    compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
+    compileOnly("com.charleskorn.kaml:kaml:0.34.0") {
         exclude(group = "org.jetbrains.kotlin")
     }
 
     implementation("com.mineinabyss:idofront:0.6.14")
+}
+
+tasks {
+    shadowJar {
+        relocate("com.mineinabyss.idofront", "${project.group}.${project.name}.idofront".toLowerCase())
+        relocate("io.github.slimjar.app", "io.github.slimjar.app.${project.group}.${project.name}".toLowerCase())
+    }
 }
 
 publishing {
