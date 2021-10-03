@@ -67,17 +67,17 @@ object StaminaBar : Listener {
         val blockBelow: Location = player.location.subtract(0.0, 1.0, 0.0)
         val blockBelowBelow: Location = player.location.subtract(0.0, 2.0, 0.0)
         val blockAbove: Location = player.location.add(0.0, 1.0, 0.0)
-        val ladderBelow: Boolean = (blockBelow.block.type == Material.LADDER)
+        val blockAboveAbove: Location = player.location.add(0.0, 2.0, 0.0)
         val ladderBelowBelow: Boolean = (blockBelowBelow.block.type == Material.LADDER)
+        val ladderData = player.location.block.blockData
 
 
-        if (onLadder && !uuid.canClimb) {
-            val ladderData = player.location.block.blockData
-            if (!ladderBelow || !ladderBelowBelow) return
+        if (onLadder && !uuid.canClimb && ladderBelowBelow) {
             player.sendBlockChange(player.location, Material.AIR.createBlockData())
             player.sendBlockChange(blockBelow, Material.AIR.createBlockData())
             player.sendBlockChange(blockBelowBelow, Material.AIR.createBlockData())
             player.sendBlockChange(blockAbove, ladderData)
+            player.sendBlockChange(blockAboveAbove, ladderData)
         }
 
         if (onLadder && uuid.canClimb && loc.distanceSquared(to) > 0.007) {
