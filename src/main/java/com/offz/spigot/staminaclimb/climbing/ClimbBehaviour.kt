@@ -6,7 +6,6 @@ import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
 import org.bukkit.GameMode
 import org.bukkit.Material
-import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -59,9 +58,7 @@ object ClimbBehaviour : Listener {
             //remove stamina progress based on how long the player's already fallen
             bossBar.removeProgress(player.fallDistance / 15.0)
             //reduce fall damage by half heart per feather fall level
-            val featherFall = player.equipment?.boots
-                ?.getEnchantmentLevel(Enchantment.PROTECTION_FALL)?.times(0.5) ?: 0.0
-            val damageAmount = (player.fallDistance - 3) / 1.9 - featherFall
+            val damageAmount = (player.fallDistance - 3) / 1.9
             if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
                 player.damage(damageAmount)
 
