@@ -7,6 +7,8 @@ import com.offz.spigot.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
+import org.bukkit.Location
+import org.bukkit.Material
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -39,40 +41,58 @@ object StaminaBar : Listener {
     }
 
     @EventHandler
-    fun onPlayerJoin(e: PlayerJoinEvent) {
-        registerBar(e.player)
+    fun PlayerJoinEvent.onPlayerJoin() {
+        registerBar(player)
     }
 
     @EventHandler
-    fun onPlayerQuit(e: PlayerQuitEvent) {
-        val player = e.player
+    fun PlayerQuitEvent.onPlayerQuit() {
+        val player = player
         val uuid = player.uniqueId
         unregisterBar(uuid)
         if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
 
     @EventHandler
-    fun onPlayerMove(e: PlayerMoveEvent) {
-        val player = e.player
+    fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
+        val onLadder: Boolean = (player.location.block.type == Material.LADDER)
         if (!player.climbEnabled) return  //Only run if player has system turned on
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
-        val loc = e.from
-        val to = e.to ?: return
+        val loc = from
+        val to = to ?: return
+        val blockBelow: Location = player.location.subtract(0.0, 1.0, 0.0)
+        val blockBelowBelow: Location = player.location.subtract(0.0, 2.0, 0.0)
+        val blockAbove: Location = player.location.add(0.0, 1.0, 0.0)
+        val ladderBelow: Boolean = (blockBelow.block.type == Material.LADDER)
+        val ladderBelowBelow: Boolean = (blockBelowBelow.block.type == Material.LADDER)
 
-        //if player is climbing and has moved
-        if (uuid.isClimbing && loc.distanceSquared(to) > 0.007)
+
+        if (onLadder && !uuid.canClimb) {
+            val ladderData = player.location.block.blockData
+            if (!ladderBelow || !ladderBelowBelow) return
+            player.sendBlockChange(player.location, Material.AIR.createBlockData())
+            player.sendBlockChange(blockBelow, Material.AIR.createBlockData())
+            player.sendBlockChange(blockBelowBelow, Material.AIR.createBlockData())
+            player.sendBlockChange(blockAbove, ladderData)
+        }
+
+        if (onLadder && uuid.canClimb && loc.distanceSquared(to) > 0.007) {
+            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileOnLadder)
+        }
+
+        if (!onLadder && uuid.isClimbing && loc.distanceSquared(to) > 0.007)
             uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
     }
 
     @EventHandler
-    fun onPlayerFall(e: EntityDamageEvent) { //Remove stamina from player falls
-        val player = e.entity as? Player ?: return
+    fun EntityDamageEvent.onPlayerFall() { //Remove stamina from player falls
+        val player = entity as? Player ?: return
         val uuid = player.uniqueId
-        if (e.cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
+        if (cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
         val bossBar = registeredBars[uuid] ?: return
         val threshold = 0.6 //TODO make config and not dumb calculations
@@ -84,26 +104,26 @@ object StaminaBar : Listener {
             bossBar.removeProgress(0.1 / 15)
             return
         }
-        val damage = ((vel + threshold) * -multiplier).pow(exponent)
-        e.damage = damage
+        val damaged = ((vel + threshold) * -multiplier).pow(exponent)
+        damage = damaged
         bossBar.removeProgress(damage / 15) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
-    fun onPlayerDeath(e: PlayerDeathEvent) {
-        val player = e.entity
+    fun PlayerDeathEvent.onPlayerDeath() {
+        val player = entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
         registeredBars[uuid]?.progress = 1.0
     }
 
     @EventHandler
-    fun onGamemodeChange(e: PlayerGameModeChangeEvent) {
-        if (e.player.climbEnabled
-            && (e.newGameMode == SURVIVAL || e.newGameMode == ADVENTURE)
-            && !registeredBars.containsKey(e.player.uniqueId)
+    fun PlayerGameModeChangeEvent.onGamemodeChange() {
+        if (player.climbEnabled
+            && (newGameMode == SURVIVAL || newGameMode == ADVENTURE)
+            && !registeredBars.containsKey(player.uniqueId)
         ) {
-            registerBar(e.player)
+            registerBar(player)
         }
     }
 

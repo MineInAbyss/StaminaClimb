@@ -1,5 +1,6 @@
 package com.offz.spigot.staminaclimb.climbing
 
+import com.mineinabyss.idofront.entities.rightClicked
 import com.offz.spigot.staminaclimb.*
 import com.offz.spigot.staminaclimb.config.StaminaConfig
 import com.offz.spigot.staminaclimb.stamina.StaminaBar
@@ -35,28 +36,25 @@ object ClimbBehaviour : Listener {
     }
 
     @EventHandler
-    fun onBlockPlace(e: BlockPlaceEvent) {
-        val p = e.player
-        val uuid = p.uniqueId
-        if (!p.isSneaking && uuid.isClimbing) e.isCancelled = true
+    fun BlockPlaceEvent.onBlockPlace() {
+        val uuid = player.uniqueId
+        if (!player.isSneaking && uuid.isClimbing) isCancelled = true
         if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
     }
 
     @EventHandler
-    fun onBlockBreak(e: BlockBreakEvent) {
-        val player = e.player
+    fun BlockBreakEvent.onBlockBreak() {
         val uuid = player.uniqueId
         if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
     }
 
     @EventHandler
-    fun onRightClick(e: PlayerInteractEvent) {
-        val player = e.player
+    fun PlayerInteractEvent.onRightClick() {
         val uuid = player.uniqueId
         val velocity = player.velocity
 
         //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(player) && rightClicked(e) && !isClimbing.containsKey(uuid)) {
+        if (allowClimb(player) && rightClicked && !isClimbing.containsKey(uuid)) {
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
             bossBar.removeProgress(player.fallDistance / 15.0)
@@ -85,8 +83,7 @@ object ClimbBehaviour : Listener {
     }
 
     @EventHandler
-    fun onLeftClick(e: PlayerAnimationEvent) {
-        val player = e.player
+    fun PlayerAnimationEvent.onLeftClick() {
         val uuid = player.uniqueId
         //when isClimbing is false, it means player can still do the jump, once it's actually removed from the hashmap, that's when we can't climb
         //don't even ask ok
@@ -137,10 +134,9 @@ object ClimbBehaviour : Listener {
         //              && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand
     }
 
-    private fun rightClicked(e: PlayerInteractEvent): Boolean { //did player do a valid right click
-        if (e.clickedBlock == null) return false
-        val player = e.player
-        val block = e.clickedBlock?.type ?: return false
+    private fun PlayerInteractEvent.rightClicked(): Boolean { //did player do a valid right click
+        if (clickedBlock == null) return false
+        val block = clickedBlock?.type ?: return false
         val heldItem = player.inventory.itemInMainHand.type
         if (heldItem.isBlock && heldItem != Material.AIR) {
             player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
@@ -157,7 +153,7 @@ object ClimbBehaviour : Listener {
                 }
             }
         }
-        return e.action == Action.RIGHT_CLICK_BLOCK && e.hand == EquipmentSlot.HAND && block.isSolid
+        return action == Action.RIGHT_CLICK_BLOCK && hand == EquipmentSlot.HAND && block.isSolid
     }
 
     //TODO dont make checks like this separate for left/right click if they do basically the same thing

@@ -1,9 +1,7 @@
 name: StaminaClimb
-version: ${plugin_version}
+version: 0.3
 author: Offz
 api-version: 1.16
-//TODO WE DONT WANT TO DEPEND ON GEARY
-// THIS IS JUST A TEMP FIX UNTIL I FIX OUR SLIMJAR STUFF
 depend: [Geary]
 main: com.offz.spigot.staminaclimb.StaminaClimb
 
