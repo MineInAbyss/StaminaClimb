@@ -1,9 +1,9 @@
-package com.offz.spigot.staminaclimb.stamina
+package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.idofront.messaging.color
-import com.offz.spigot.staminaclimb.*
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
-import com.offz.spigot.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.*
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL

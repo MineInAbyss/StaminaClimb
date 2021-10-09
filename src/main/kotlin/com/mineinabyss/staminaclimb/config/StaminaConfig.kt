@@ -1,7 +1,7 @@
-package com.offz.spigot.staminaclimb.config
+package com.mineinabyss.staminaclimb.config
 
 import com.mineinabyss.idofront.config.IdofrontConfig
-import com.offz.spigot.staminaclimb.staminaClimb
+import com.mineinabyss.staminaclimb.staminaClimb
 import kotlinx.serialization.Serializable
 import org.bukkit.Material
 
