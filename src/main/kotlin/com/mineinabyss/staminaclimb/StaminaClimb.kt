@@ -2,6 +2,7 @@ package com.mineinabyss.staminaclimb
 
 
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
+import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.config.StaminaConfig
@@ -18,6 +19,7 @@ class StaminaClimb : JavaPlugin() {
     @ExperimentalCommandDSL
     override fun onEnable() {
         logger.info("On enable has been called")
+        IdofrontSlimjar.loadToLibraryLoader(this)
         saveDefaultConfig()
 
         // toggle system on for all online players (for plugin reload)
