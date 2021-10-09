@@ -1,8 +1,8 @@
 name: StaminaClimb
-version: @plugin_version@
+version: ${plugin_version}
 author: Offz
 api-version: 1.16
-main: com.offz.spigot.staminaclimb.StaminaClimb
+main: com.mineinabyss.staminaclimb.StaminaClimb
 depend: [KotlinSpice]
 
 prefix: SnC

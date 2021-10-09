@@ -1,12 +1,13 @@
-package com.offz.spigot.staminaclimb
+package com.mineinabyss.staminaclimb
+
 
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour.stopClimbing
-import com.offz.spigot.staminaclimb.config.StaminaConfig
-import com.offz.spigot.staminaclimb.stamina.StaminaBar
-import com.offz.spigot.staminaclimb.stamina.StaminaBar.registerBar
-import com.offz.spigot.staminaclimb.stamina.StaminaTask
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
+import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.stamina.StaminaBar
+import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
+import com.mineinabyss.staminaclimb.stamina.StaminaTask
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 

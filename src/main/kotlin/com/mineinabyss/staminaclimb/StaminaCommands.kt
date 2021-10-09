@@ -1,10 +1,10 @@
-package com.offz.spigot.staminaclimb
+package com.mineinabyss.staminaclimb
 
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.info
-import com.offz.spigot.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.config.StaminaConfig
 
 @ExperimentalCommandDSL
 class StaminaCommands : IdofrontCommandExecutor() {
