@@ -1,8 +1,12 @@
-![CI](https://github.com/MineInAbyss/StaminaClimb/workflows/Java%20CI/badge.svg)
+<div align="center">
 
 # StaminaClimb
+![CI](https://github.com/MineInAbyss/StaminaClimb/workflows/Java%20CI/badge.svg)
+[![Maven](https://badgen.net/maven/v/metadata-url/repo.mineinabyss.com/releases/com/mineinabyss/stamina-climb/maven-metadata.xml)](https://repo.mineinabyss.com/releases/com/mineinabyss/stamina-climb)
+[![Contribute](https://shields.io/badge/Contribute-e57be5?logo=github%20sponsors&style=flat&logoColor=white)](https://wiki.mineinabyss.com/contribute)
+</div>
 
-Spigot plugin that allows for a basic stamina and climbing system. Originally intended for [Mine in Abyss](https://github.com/MineInAbyss/MineInAbyss)
+A Spigot plugin that allows for a basic stamina and climbing system.
 
 ## Stamina
 * Turns on in Survival or Adventure mode. Toggle with /climb
