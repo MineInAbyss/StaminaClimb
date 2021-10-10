@@ -13,9 +13,9 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
-val staminaClimb: StaminaClimb by lazy { JavaPlugin.getPlugin(StaminaClimb::class.java) }
+val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
 
-class StaminaClimb : JavaPlugin() {
+class StaminaClimbPlugin : JavaPlugin() {
     @ExperimentalCommandDSL
     override fun onEnable() {
         logger.info("On enable has been called")

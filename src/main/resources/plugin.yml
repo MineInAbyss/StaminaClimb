@@ -2,8 +2,7 @@ name: StaminaClimb
 version: ${plugin_version}
 author: Offz
 api-version: 1.16
-main: com.mineinabyss.staminaclimb.StaminaClimb
-depend: [KotlinSpice]
+main: com.mineinabyss.staminaclimb.StaminaClimbPlugin
 
 prefix: SnC
 description: A mod that lets you climb and get exhausted

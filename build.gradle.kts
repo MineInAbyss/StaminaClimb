@@ -12,6 +12,7 @@ plugins {
 }
 
 dependencies {
+    slim(kotlin("stdlib-jdk8"))
     slim(Deps.kotlinx.serialization.kaml) {
         exclude(group = "org.jetbrains.kotlin")
     }
