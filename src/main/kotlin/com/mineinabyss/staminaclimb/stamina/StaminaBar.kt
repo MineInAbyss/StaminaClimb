@@ -1,14 +1,16 @@
 package com.mineinabyss.staminaclimb.stamina
 
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.color
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.nms.Tags
+import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
-import org.bukkit.Location
-import org.bukkit.Material
+import org.bukkit.Tag
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -28,6 +30,7 @@ object StaminaBar : Listener {
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
+    private var fallDist: MutableMap<UUID, Int> = mutableMapOf()
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -56,35 +59,40 @@ object StaminaBar : Listener {
     @EventHandler
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
-        val onLadder: Boolean = (player.location.block.type == Material.LADDER)
+        val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
         if (!player.climbEnabled) return  //Only run if player has system turned on
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
-        val loc = from
-        val to = to ?: return
-        val blockBelow: Location = player.location.subtract(0.0, 1.0, 0.0)
-        val blockBelowBelow: Location = player.location.subtract(0.0, 2.0, 0.0)
-        val blockAbove: Location = player.location.add(0.0, 1.0, 0.0)
-        val blockAboveAbove: Location = player.location.add(0.0, 2.0, 0.0)
-        val ladderBelowBelow: Boolean = (blockBelowBelow.block.type == Material.LADDER)
-        val ladderData = player.location.block.blockData
 
-
-        if (onLadder && !uuid.canClimb && ladderBelowBelow) {
-            player.sendBlockChange(player.location, Material.AIR.createBlockData())
-            player.sendBlockChange(blockBelow, Material.AIR.createBlockData())
-            player.sendBlockChange(blockBelowBelow, Material.AIR.createBlockData())
-            player.sendBlockChange(blockAbove, ladderData)
-            player.sendBlockChange(blockAboveAbove, ladderData)
+        if (onClimbable && !uuid.canClimb) {
+            fallDist[uuid] = fallDist[uuid]?.plus(1) ?: 1
+            fallDist[uuid].broadcastVal("dist: ") //
+            if (!Tags.disabledPlayers.contains(player)) {
+                Tags.disableClimb(player)
+                staminaClimb.schedule {
+                    while (!uuid.canClimb) {
+                        waitFor(20)
+                    }
+                    Tags.enableClimb(player)
+                }
+                staminaClimb.schedule {
+                    while (!player.location.apply { y -= 1 }.block.isSolid) {
+                        waitFor(1)
+                    }
+                    // player.hurtBones(fallDist[uuid]) // depend on bonehurtjuice
+                    player.fallDistance = fallDist[uuid]?.toFloat() ?: 1.0f
+                    fallDist.remove(uuid)
+                }
+            }
         }
 
-        if (onLadder && uuid.canClimb && loc.distanceSquared(to) > 0.007) {
+        if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007) {
             uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileOnLadder)
         }
 
-        if (!onLadder && uuid.isClimbing && loc.distanceSquared(to) > 0.007)
+        if (!onClimbable && uuid.isClimbing && from.distanceSquared(to) > 0.007)
             uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
     }
 

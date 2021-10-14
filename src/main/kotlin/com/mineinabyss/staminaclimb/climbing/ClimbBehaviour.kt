@@ -24,13 +24,13 @@ object ClimbBehaviour : Listener {
     val isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
     val cooldown: MutableMap<UUID, Long> = HashMap()
 
-    fun stopClimbing(p: Player) {
-        if (p.gameMode == GameMode.SURVIVAL || p.gameMode == GameMode.ADVENTURE) {
-            p.allowFlight = false
-            p.isFlying = false
+    fun stopClimbing(player: Player) {
+        if (player.gameMode == GameMode.SURVIVAL || player.gameMode == GameMode.ADVENTURE) {
+            player.allowFlight = false
+            player.isFlying = false
         }
-        p.flySpeed = 0.1f
-        val uuid = p.uniqueId
+        player.flySpeed = 0.1f
+        val uuid = player.uniqueId
         isClimbing.remove(uuid)
     }
 

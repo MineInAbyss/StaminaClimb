@@ -6,6 +6,7 @@ import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
+import org.bukkit.Tag
 import org.bukkit.boss.BarColor
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -38,11 +39,10 @@ class StaminaTask : BukkitRunnable() {
             //regenerate stamina for BossBar
             if (!uuid.isClimbing)
                 bar.progress = (bar.progress +
-                        //TODO this is determined by client and easily spoofable
-                        if (player.isOnGround)
+                        if (player.location.apply { y -= 1 }.block.isSolid)
                             StaminaConfig.data.staminaRegen
-                        else StaminaConfig.data.staminaRegenInAir
-                        ).coerceAtMost(1.0)
+                        else if (!Tag.CLIMBABLE.isTagged(player.location.block.type)) StaminaConfig.data.staminaRegenInAir else 0.0
+                        ).coerceAtMost(1.0) //
 
             if (progress <= StaminaConfig.data.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color = BarColor.RED
