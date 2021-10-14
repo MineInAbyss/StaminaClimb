@@ -1,8 +1,8 @@
-package com.offz.spigot.staminaclimb
+package com.mineinabyss.staminaclimb
 
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
-import com.offz.spigot.staminaclimb.config.StaminaConfig
-import com.offz.spigot.staminaclimb.stamina.StaminaBar
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
 import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player

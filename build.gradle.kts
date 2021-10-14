@@ -1,43 +1,27 @@
+import Com_mineinabyss_conventions_platform_gradle.Deps
+
+val idofrontVersion: String by project
+
 plugins {
-    java
-    `maven-publish`
-//    id("com.github.johnrengelman.shadow") version "7.0.0"
-//    kotlin("jvm")
+    id("com.mineinabyss.conventions.kotlin")
+    id("com.mineinabyss.conventions.papermc")
+    id("com.mineinabyss.conventions.slimjar")
+    id("com.mineinabyss.conventions.publication")
+    id("com.mineinabyss.conventions.copyjar")
     kotlin("plugin.serialization")
-//    id("com.mineinabyss.shared-gradle") version "0.0.6"
-    id("com.mineinabyss.conventions.kotlin") version "1.5.21-14"
-    id("com.mineinabyss.conventions.copyjar") version "1.5.21-14"
 }
-
-repositories {
-    mavenCentral()
-    maven("https://hub.spigotmc.org/nexus/content/groups/public/")
-    maven("https://repo.mineinabyss.com/")
-}
-
-val serverVersion: String by project
 
 dependencies {
-    compileOnly("org.spigotmc:spigot-api:$serverVersion")
-
-    compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.1")
-    compileOnly("com.charleskorn.kaml:kaml:0.34.0") {
+    slim(kotlin("stdlib-jdk8"))
+    slim(Deps.kotlinx.serialization.kaml) {
         exclude(group = "org.jetbrains.kotlin")
     }
 
-    implementation("com.mineinabyss:idofront:0.6.14")
+    implementation("com.mineinabyss:idofront:$idofrontVersion")
 }
 
 tasks {
     shadowJar {
-        relocate("com.mineinabyss.idofront", "${project.group}.${project.name}.idofront".toLowerCase())
-        relocate("io.github.slimjar.app", "io.github.slimjar.app.${project.group}.${project.name}".toLowerCase())
-    }
-}
-
-publishing {
-    mineInAbyss(project) {
-        from(components["java"])
+        archiveBaseName.set("StaminaClimb")
     }
 }

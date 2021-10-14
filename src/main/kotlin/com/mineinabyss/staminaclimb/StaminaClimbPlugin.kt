@@ -1,25 +1,25 @@
-package com.offz.spigot.staminaclimb
+package com.mineinabyss.staminaclimb
+
 
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour
-import com.offz.spigot.staminaclimb.climbing.ClimbBehaviour.stopClimbing
-import com.offz.spigot.staminaclimb.config.StaminaConfig
-import com.offz.spigot.staminaclimb.stamina.StaminaBar
-import com.offz.spigot.staminaclimb.stamina.StaminaBar.registerBar
-import com.offz.spigot.staminaclimb.stamina.StaminaTask
-import io.github.slimjar.app.builder.ApplicationBuilder
+import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
+import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.stamina.StaminaBar
+import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
+import com.mineinabyss.staminaclimb.stamina.StaminaTask
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
-val staminaClimb: StaminaClimb by lazy { JavaPlugin.getPlugin(StaminaClimb::class.java) }
+val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
 
-class StaminaClimb : JavaPlugin() {
+class StaminaClimbPlugin : JavaPlugin() {
     @ExperimentalCommandDSL
     override fun onEnable() {
-        logger.info("Downloading dependencies")
-        ApplicationBuilder.appending("StaminaClimb").build()
-
+        logger.info("On enable has been called")
+        IdofrontSlimjar.loadToLibraryLoader(this)
         saveDefaultConfig()
 
         // toggle system on for all online players (for plugin reload)
