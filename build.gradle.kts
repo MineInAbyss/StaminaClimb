@@ -22,7 +22,7 @@ dependencies {
     }
 
     slim(Deps.minecraft.skedule)
-    // depend on bone hurt juice
+    compileOnly("com.mineinabyss:bonehurtingjuice:1.2.4")
 
     implementation("com.mineinabyss:idofront:$idofrontVersion")
 }

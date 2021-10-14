@@ -1,7 +1,7 @@
 package com.mineinabyss.staminaclimb.stamina
 
-import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.color
+import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
@@ -10,6 +10,7 @@ import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
+import org.bukkit.Location
 import org.bukkit.Tag
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
@@ -23,6 +24,7 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import kotlin.math.pow
 
@@ -30,7 +32,7 @@ object StaminaBar : Listener {
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
-    private var fallDist: MutableMap<UUID, Int> = mutableMapOf()
+    private var fallDist: MutableMap<UUID, Location> = mutableMapOf()
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -67,9 +69,8 @@ object StaminaBar : Listener {
         }
 
         if (onClimbable && !uuid.canClimb) {
-            fallDist[uuid] = fallDist[uuid]?.plus(1) ?: 1
-            fallDist[uuid].broadcastVal("dist: ") //
             if (!Tags.disabledPlayers.contains(player)) {
+                fallDist[uuid] = player.location
                 Tags.disableClimb(player)
                 staminaClimb.schedule {
                     while (!uuid.canClimb) {
@@ -81,8 +82,11 @@ object StaminaBar : Listener {
                     while (!player.location.apply { y -= 1 }.block.isSolid) {
                         waitFor(1)
                     }
-                    // player.hurtBones(fallDist[uuid]) // depend on bonehurtjuice
-                    player.fallDistance = fallDist[uuid]?.toFloat() ?: 1.0f
+                    if (isPluginEnabled("BoneHurtingJuice")) {
+                        if (fallDist.containsKey(uuid)) {
+                            player.hurtBones((fallDist[uuid]!!.y - player.location.y).toFloat())
+                        }
+                    }
                     fallDist.remove(uuid)
                 }
             }
