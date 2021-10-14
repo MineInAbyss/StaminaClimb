@@ -13,6 +13,7 @@ object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.ser
         val staminaRegenInAir: Double,
         val staminaRemovePerTick: Double,
         val staminaRemoveWhileMoving: Double,
+        val staminaRemoveWhileOnLadder: Double,
         val barRed: Double,
         val maxFallDist: Double,
         val jumpCooldown: Long,

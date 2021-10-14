@@ -1,12 +1,17 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.idofront.messaging.color
+import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.nms.Tags
+import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
+import org.bukkit.Location
+import org.bukkit.Tag
 import org.bukkit.boss.BarColor
 import org.bukkit.boss.BarStyle
 import org.bukkit.boss.BossBar
@@ -19,6 +24,7 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import kotlin.math.pow
 
@@ -26,6 +32,7 @@ object StaminaBar : Listener {
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
+    private var fallDist: MutableMap<UUID, Location> = mutableMapOf()
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -39,40 +46,65 @@ object StaminaBar : Listener {
     }
 
     @EventHandler
-    fun onPlayerJoin(e: PlayerJoinEvent) {
-        registerBar(e.player)
+    fun PlayerJoinEvent.onPlayerJoin() {
+        registerBar(player)
     }
 
     @EventHandler
-    fun onPlayerQuit(e: PlayerQuitEvent) {
-        val player = e.player
+    fun PlayerQuitEvent.onPlayerQuit() {
+        val player = player
         val uuid = player.uniqueId
         unregisterBar(uuid)
         if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
 
     @EventHandler
-    fun onPlayerMove(e: PlayerMoveEvent) {
-        val player = e.player
+    fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
+        val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
         if (!player.climbEnabled) return  //Only run if player has system turned on
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
-        val loc = e.from
-        val to = e.to ?: return
 
-        //if player is climbing and has moved
-        if (uuid.isClimbing && loc.distanceSquared(to) > 0.007)
+        if (onClimbable && !uuid.canClimb) {
+            if (!Tags.disabledPlayers.contains(player)) {
+                fallDist[uuid] = player.location
+                Tags.disableClimb(player)
+                staminaClimb.schedule {
+                    while (!uuid.canClimb) {
+                        waitFor(20)
+                    }
+                    Tags.enableClimb(player)
+                }
+                staminaClimb.schedule {
+                    while (!player.location.apply { y -= 1 }.block.isSolid) {
+                        waitFor(1)
+                    }
+                    if (isPluginEnabled("BoneHurtingJuice")) {
+                        if (fallDist.containsKey(uuid)) {
+                            player.hurtBones((fallDist[uuid]!!.y - player.location.y).toFloat())
+                        }
+                    }
+                    fallDist.remove(uuid)
+                }
+            }
+        }
+
+        if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007) {
+            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileOnLadder)
+        }
+
+        if (!onClimbable && uuid.isClimbing && from.distanceSquared(to) > 0.007)
             uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
     }
 
     @EventHandler
-    fun onPlayerFall(e: EntityDamageEvent) { //Remove stamina from player falls
-        val player = e.entity as? Player ?: return
+    fun EntityDamageEvent.onPlayerFall() { //Remove stamina from player falls
+        val player = entity as? Player ?: return
         val uuid = player.uniqueId
-        if (e.cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
+        if (cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
         val bossBar = registeredBars[uuid] ?: return
         val threshold = 0.6 //TODO make config and not dumb calculations
@@ -84,26 +116,26 @@ object StaminaBar : Listener {
             bossBar.removeProgress(0.1 / 15)
             return
         }
-        val damage = ((vel + threshold) * -multiplier).pow(exponent)
-        e.damage = damage
+        val damaged = ((vel + threshold) * -multiplier).pow(exponent)
+        damage = damaged
         bossBar.removeProgress(damage / 15) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
-    fun onPlayerDeath(e: PlayerDeathEvent) {
-        val player = e.entity
+    fun PlayerDeathEvent.onPlayerDeath() {
+        val player = entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
         registeredBars[uuid]?.progress = 1.0
     }
 
     @EventHandler
-    fun onGamemodeChange(e: PlayerGameModeChangeEvent) {
-        if (e.player.climbEnabled
-            && (e.newGameMode == SURVIVAL || e.newGameMode == ADVENTURE)
-            && !registeredBars.containsKey(e.player.uniqueId)
+    fun PlayerGameModeChangeEvent.onGamemodeChange() {
+        if (player.climbEnabled
+            && (newGameMode == SURVIVAL || newGameMode == ADVENTURE)
+            && !registeredBars.containsKey(player.uniqueId)
         ) {
-            registerBar(e.player)
+            registerBar(player)
         }
     }
 

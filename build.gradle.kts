@@ -11,11 +11,18 @@ plugins {
     kotlin("plugin.serialization")
 }
 
+repositories {
+    maven("https://jitpack.io")
+}
+
 dependencies {
     slim(kotlin("stdlib-jdk8"))
     slim(Deps.kotlinx.serialization.kaml) {
         exclude(group = "org.jetbrains.kotlin")
     }
+
+    slim(Deps.minecraft.skedule)
+    compileOnly("com.mineinabyss:bonehurtingjuice:1.2.4")
 
     implementation("com.mineinabyss:idofront:$idofrontVersion")
 }
