@@ -1,6 +1,5 @@
 package com.mineinabyss.staminaclimb.climbing
 
-import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
@@ -53,7 +52,7 @@ object ClimbBehaviour : Listener {
         val velocity = player.velocity
 
         //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(player) && rightClicked && !isClimbing.containsKey(uuid)) {
+        if (allowClimb(player) && rightClicked() && !isClimbing.containsKey(uuid)) {
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
             bossBar.removeProgress(player.fallDistance / 15.0)
