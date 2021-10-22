@@ -62,7 +62,6 @@ val Player.wallDifficulty: Double
 
             //fix some issues with half slabs by checking half a block higher when the player isn't yet climbing
             if (!ClimbBehaviour.isClimbing.containsKey(uniqueId)) to.add(0.0, 0.5, 0.0)
-            val type = to.block.type
             val climbDifficulty = to.block.type.climbDifficulty
             if (climbDifficulty >= 0) {
                 totalClimbDifficulty += climbDifficulty
