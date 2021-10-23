@@ -8,17 +8,21 @@ import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Tag
 import org.bukkit.boss.BarColor
+import org.bukkit.boss.BossBar
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
 
 class StaminaTask : BukkitRunnable() {
     var lastTickNano = System.nanoTime()
+    var timeSinceLastColorFlip = 0L
+    var lastTime = System.currentTimeMillis()
 
     override fun run() {
         val currentNano = System.nanoTime()
         val lastTickNanoBackup = lastTickNano
         lastTickNano = currentNano
+
 
         val tickDuration = calculateTickDuration(currentNano, lastTickNanoBackup)
 
@@ -49,11 +53,46 @@ class StaminaTask : BukkitRunnable() {
                 bar.setTitle("&c&lStamina".color()) //Make Stamina title red
                 if (uuid.isClimbing) player.stopClimbing()
 
-                uuid.canClimb = false //If player reaches red zone, they can't climb until they get back in green zone
-                player.addPotionEffect(PotionEffect(PotionEffectType.SLOW, 110, 2, false, false))
-                player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false))
+                uuid.canClimb =
+                    false //If player reaches red zone, they can't climb until they get back in green zone
+                player.addPotionEffect(
+                    PotionEffect(
+                        PotionEffectType.SLOW,
+                        110,
+                        2,
+                        false,
+                        false
+                    )
+                )
+                player.addPotionEffect(
+                    PotionEffect(
+                        PotionEffectType.WEAKNESS,
+                        110,
+                        2,
+                        false,
+                        false
+                    )
+                )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color = BarColor.RED //Keep Stamina Bar red even in yellow zone while it's regenerating
+            } else if (uuid.isClimbing && progress <= StaminaConfig.data.barBlink2) {
+                val deltaTime = System.currentTimeMillis() - lastTime
+                lastTime = System.currentTimeMillis()
+                if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed2)
+                    timeSinceLastColorFlip += deltaTime
+                else {
+                    flipColor(bar)
+                    timeSinceLastColorFlip = 0
+                }
+            } else if (uuid.isClimbing && progress <= StaminaConfig.data.barBlink1) {
+                val deltaTime = System.currentTimeMillis() - lastTime
+                lastTime = System.currentTimeMillis()
+                if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed1)
+                    timeSinceLastColorFlip += deltaTime
+                else {
+                    flipColor(bar)
+                    timeSinceLastColorFlip = 0
+                }
             } else {
                 bar.color = BarColor.GREEN
                 bar.setTitle("&lStamina".color())
@@ -98,6 +137,16 @@ class StaminaTask : BukkitRunnable() {
             }
 
             if (isClimbing) uuid.removeProgress(tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
+        }
+    }
+
+    private fun flipColor(bar: BossBar) {
+        if (bar.color == BarColor.RED) {
+            bar.color = BarColor.GREEN
+            bar.setTitle("&lStamina".color())
+        } else {
+            bar.color = BarColor.RED
+            bar.setTitle("&c&lStamina".color()) //Make Stamina title red
         }
     }
 
