@@ -152,6 +152,16 @@ class StaminaTask : BukkitRunnable() {
         }
     }
 
+    private fun flipColor(bar: BossBar) {
+        if (bar.color == BarColor.RED) {
+            bar.color = BarColor.GREEN
+            bar.setTitle("&lStamina".color())
+        } else {
+            bar.color = BarColor.RED
+            bar.setTitle("&c&lStamina".color()) //Make Stamina title red
+        }
+    }
+
     private fun calculateTickDuration(currentNano: Long, lastTickNano: Long): Float {
         val nanoDiff = (currentNano - lastTickNano).toFloat()
         return nanoDiff / StaminaConfig.NANO_PER_TICK
