@@ -30,6 +30,7 @@ class StaminaTask : BukkitRunnable() {
             val player = Bukkit.getPlayer(uuid) ?: StaminaBar.registeredBars.remove(uuid).let { return@forEach }
             val bar = StaminaBar.registeredBars[uuid] ?: return@forEach
             val progress = bar.progress
+            val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
 
             if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
                 StaminaBar.unregisterBar(uuid)
@@ -45,8 +46,8 @@ class StaminaTask : BukkitRunnable() {
                 bar.progress = (bar.progress +
                         if (player.location.apply { y -= 1 }.block.isSolid)
                             StaminaConfig.data.staminaRegen
-                        else if (!Tag.CLIMBABLE.isTagged(player.location.block.type)) StaminaConfig.data.staminaRegenInAir else 0.0
-                        ).coerceAtMost(1.0) //
+                        else if (!onClimbable) StaminaConfig.data.staminaRegenInAir else 0.0
+                        ).coerceAtMost(1.0)
 
             if (progress <= StaminaConfig.data.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color = BarColor.RED
@@ -75,7 +76,7 @@ class StaminaTask : BukkitRunnable() {
                 )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color = BarColor.RED //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if (uuid.isClimbing && progress <= StaminaConfig.data.barBlink2) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= StaminaConfig.data.barBlink2) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
                 if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed2)
@@ -84,7 +85,7 @@ class StaminaTask : BukkitRunnable() {
                     flipColor(bar)
                     timeSinceLastColorFlip = 0
                 }
-            } else if (uuid.isClimbing && progress <= StaminaConfig.data.barBlink1) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= StaminaConfig.data.barBlink1) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
                 if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed1)
@@ -137,6 +138,7 @@ class StaminaTask : BukkitRunnable() {
             }
 
             if (isClimbing) uuid.removeProgress(tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
+
         }
     }
 
