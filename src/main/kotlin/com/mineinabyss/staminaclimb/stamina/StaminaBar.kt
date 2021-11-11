@@ -60,16 +60,16 @@ object StaminaBar : Listener {
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
         val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
-        //if (!player.climbEnabled) return  //Only run if player has system turned on
+        val climbDisabled = Tags.disabledPlayers.contains(player)
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
 
-        if (Tags.disabledPlayers.contains(player) && !onClimbable) Tags.enableClimb(player)
+        if (climbDisabled && !onClimbable) Tags.enableClimb(player)
 
         if (onClimbable && !player.climbEnabled) {
-            if (!Tags.disabledPlayers.contains(player)) {
+            if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
                 applyClimbDamage(player)
@@ -77,7 +77,7 @@ object StaminaBar : Listener {
         }
 
         if (onClimbable && !uuid.canClimb) {
-            if (!Tags.disabledPlayers.contains(player)) {
+            if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
                 staminaClimb.schedule {
