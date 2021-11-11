@@ -1,11 +1,14 @@
 package com.mineinabyss.staminaclimb
 
+import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
+import com.okkero.skedule.schedule
 import org.bukkit.Material
 import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
+import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -115,3 +118,17 @@ var Player.climbEnabled: Boolean
             }
         }
     }
+
+fun applyClimbDamage(player: Player) {
+    staminaClimb.schedule {
+        while (!player.location.apply { y -= 1 }.block.isSolid) {
+            waitFor(1)
+        }
+        if (isPluginEnabled("BoneHurtingJuice")) {
+            if (StaminaBar.fallDist.containsKey(player.uniqueId)) {
+                player.hurtBones((StaminaBar.fallDist[player.uniqueId]!!.y - player.location.y).toFloat())
+            }
+        }
+        StaminaBar.fallDist.remove(player.uniqueId)
+    }
+}
