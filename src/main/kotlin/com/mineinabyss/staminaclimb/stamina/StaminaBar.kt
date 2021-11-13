@@ -1,7 +1,6 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.idofront.messaging.color
-import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
@@ -24,7 +23,6 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
-import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import kotlin.math.pow
 
@@ -32,7 +30,7 @@ object StaminaBar : Listener {
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
-    private var fallDist: MutableMap<UUID, Location> = mutableMapOf()
+    var fallDist: MutableMap<UUID, Location> = mutableMapOf()
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -62,14 +60,24 @@ object StaminaBar : Listener {
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
         val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
-        if (!player.climbEnabled) return  //Only run if player has system turned on
+        val climbDisabled = Tags.disabledPlayers.contains(player)
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
 
+        if (climbDisabled && !onClimbable) Tags.enableClimb(player)
+
+        if (onClimbable && !player.climbEnabled) {
+            if (!climbDisabled) {
+                fallDist[uuid] = player.location
+                Tags.disableClimb(player)
+                applyClimbDamage(player)
+            }
+        }
+
         if (onClimbable && !uuid.canClimb) {
-            if (!Tags.disabledPlayers.contains(player)) {
+            if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
                 staminaClimb.schedule {
@@ -78,17 +86,7 @@ object StaminaBar : Listener {
                     }
                     Tags.enableClimb(player)
                 }
-                staminaClimb.schedule {
-                    while (!player.location.apply { y -= 1 }.block.isSolid) {
-                        waitFor(1)
-                    }
-                    if (isPluginEnabled("BoneHurtingJuice")) {
-                        if (fallDist.containsKey(uuid)) {
-                            player.hurtBones((fallDist[uuid]!!.y - player.location.y).toFloat())
-                        }
-                    }
-                    fallDist.remove(uuid)
-                }
+                applyClimbDamage(player)
             }
         }
 
