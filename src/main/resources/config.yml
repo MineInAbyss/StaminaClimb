@@ -5,6 +5,10 @@ staminaRemovePerTick: 0.005
 staminaRemoveWhileMoving: 0.005
 staminaRemoveWhileOnLadder: 0.01
 barRed: 0.02
+barBlink1: 0.3
+barBlink2: 0.1
+barBlinkSpeed1: 120
+barBlinkSpeed2: 20
 maxFallDist: 5
 jumpCooldown: 300
 walljumpCooldown: 300

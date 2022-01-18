@@ -1,8 +1,6 @@
 package com.mineinabyss.staminaclimb
 
-
-import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
-import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
+import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.config.StaminaConfig
@@ -16,11 +14,15 @@ import org.bukkit.plugin.java.JavaPlugin
 val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
 
 class StaminaClimbPlugin : JavaPlugin() {
-    @ExperimentalCommandDSL
+    override fun onLoad() {
+        IdofrontPlatforms.load(this, "mineinabyss")
+    }
+
     override fun onEnable() {
         logger.info("On enable has been called")
-        IdofrontSlimjar.loadToLibraryLoader(this)
         saveDefaultConfig()
+
+        StaminaConfig.load()
 
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
@@ -31,8 +33,6 @@ class StaminaClimbPlugin : JavaPlugin() {
 
         StaminaCommands()
 
-        // initialize singleton objects
-        StaminaConfig
     }
 
     override fun onDisable() {
