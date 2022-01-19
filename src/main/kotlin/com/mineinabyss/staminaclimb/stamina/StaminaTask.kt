@@ -44,7 +44,7 @@ class StaminaTask : BukkitRunnable() {
             //regenerate stamina for BossBar
             if (!uuid.isClimbing)
                 bar.progress = (bar.progress +
-                        if (player.location.apply { y -= 1 }.block.isSolid)
+                        if (player.location.apply { y -= 0.0625 }.block.isSolid)
                             StaminaConfig.data.staminaRegen
                         else if (!onClimbable) StaminaConfig.data.staminaRegenInAir else 0.0
                         ).coerceAtMost(1.0)
