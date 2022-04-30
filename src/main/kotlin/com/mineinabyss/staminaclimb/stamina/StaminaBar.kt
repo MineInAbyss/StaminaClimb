@@ -66,7 +66,7 @@ object StaminaBar : Listener {
             velocities[uuid] = vel
         }
 
-        if (climbDisabled && !onClimbable) Tags.enableClimb(player)
+//        if (climbDisabled && !onClimbable) Tags.enableClimb(player)
 
         if (onClimbable && !player.climbEnabled) {
             if (!climbDisabled) {

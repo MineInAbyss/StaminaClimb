@@ -2,18 +2,20 @@ package com.mineinabyss.staminaclimb.nms
 
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
-import net.minecraft.core.IRegistry
-import net.minecraft.network.protocol.game.PacketPlayOutTags
-import net.minecraft.resources.MinecraftKey
-import net.minecraft.resources.ResourceKey
-import net.minecraft.server.MinecraftServer
-import net.minecraft.tags.Tags
-import org.bukkit.Bukkit
-import org.bukkit.craftbukkit.v1_17_R1.CraftServer
-import org.bukkit.craftbukkit.v1_17_R1.entity.CraftPlayer
+import net.minecraft.core.Registry
+import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.tags.BlockTags
+import net.minecraft.tags.TagNetworkSerialization.NetworkPayload
+import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 object Tags {
+    fun createPayload(map: Map<ResourceLocation, IntList>): NetworkPayload {
+        return NetworkPayload::class.java.declaredConstructors.first()
+            .also { it.isAccessible = true }
+            .newInstance(map) as NetworkPayload
+    }
 
     val disabledPlayers = mutableSetOf<Player>()
 
@@ -21,30 +23,22 @@ object Tags {
         if (!disabledPlayers.contains(player)) return
         disabledPlayers -= player
 
-        val server: MinecraftServer = (Bukkit.getServer() as CraftServer).server
-        val originalTags = server.tagRegistry.a(server.l) + mapOf<ResourceKey<out IRegistry<*>>, Tags.a>()
-
-        val packet = PacketPlayOutTags(originalTags)
-        (player as CraftPlayer).handle.b.sendPacket(packet)
+        val climbable = Registry.BLOCK.getTag(BlockTags.CLIMBABLE).get()
+        val list: IntList = IntArrayList(climbable.size()).apply {
+            climbable.forEach { add(Registry.BLOCK.getId(it.value())) }
+        }
+        val payload = createPayload(mapOf(BlockTags.CLIMBABLE.location to list))
+        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
+        (player as CraftPlayer).handle.connection.send(packet)
     }
 
     fun disableClimb(player: Player) {
         if (disabledPlayers.contains(player)) return
         disabledPlayers += player
 
-        val server: MinecraftServer = (Bukkit.getServer() as CraftServer).server
-        val newTags = server.tagRegistry.a(server.l) + mapOf<ResourceKey<out IRegistry<*>>, Tags.a>()
-        val blockTags = newTags.filterKeys { it.a().key == "block" }.values.first()
-
-        val tags = (blockTags?.getPrivateProperty("a") as? Map<MinecraftKey, IntList>
-            ?: error("unable to cast")).toMutableMap()
-
-        tags[MinecraftKey("climbable")] = IntArrayList()
-
-        blockTags.setAndReturnPrivateProperty("a", tags)
-
-        val packet = PacketPlayOutTags(newTags)
-        (player as CraftPlayer).handle.b.sendPacket(packet)
+        val payload = createPayload(mapOf(BlockTags.CLIMBABLE.location to IntArrayList()))
+        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
+        (player as CraftPlayer).handle.connection.send(packet)
     }
 
 
