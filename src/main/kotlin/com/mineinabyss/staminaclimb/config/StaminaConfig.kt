@@ -9,24 +9,24 @@ object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.ser
     @Serializable
     class Data(
         val airTime: Long,
-        val staminaRegen: Double,
-        val staminaRegenInAir: Double,
-        val staminaRemovePerTick: Double,
-        val staminaRemoveWhileMoving: Double,
-        val staminaRemoveWhileOnLadder: Double,
-        val barRed: Double,
-        val barBlink1: Double,
-        val barBlink2: Double,
-        val barBlinkSpeed1: Double,
-        val barBlinkSpeed2: Double,
+        val staminaRegen: Float,
+        val staminaRegenInAir: Float,
+        val staminaRemovePerTick: Float,
+        val staminaRemoveWhileMoving: Float,
+        val staminaRemoveWhileOnLadder: Float,
+        val barRed: Float,
+        val barBlink1: Float,
+        val barBlink2: Float,
+        val barBlinkSpeed1: Float,
+        val barBlinkSpeed2: Float,
         val maxFallDist: Double,
         val jumpCooldown: Long,
-        val roofClimbDifficulty: Double,
+        val roofClimbDifficulty: Float,
         val walljumpCooldown: Long,
         val climbBlacklist: List<Material>,
         val climbBlacklistGeneral: List<String>,
-        val climbDifficulty: Map<Material, Double> = mapOf(),
-        val climbDifficultyGeneral: Map<String, Double> = mapOf()
+        val climbDifficulty: Map<Material, Float> = mapOf(),
+        val climbDifficultyGeneral: Map<String, Float> = mapOf()
     )
 
     private const val SERVER_TPS = 20

@@ -1,19 +1,22 @@
 package com.mineinabyss.staminaclimb.stamina
 
-import com.mineinabyss.idofront.messaging.color
+import com.github.shynixn.mccoroutine.bukkit.launch
+import com.mineinabyss.idofront.entities.toPlayer
+import com.mineinabyss.idofront.messaging.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.nms.Tags
-import com.okkero.skedule.schedule
+import kotlinx.coroutines.delay
+import net.kyori.adventure.bossbar.BossBar
+import net.kyori.adventure.bossbar.BossBar.Overlay
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.Location
 import org.bukkit.Tag
-import org.bukkit.boss.BarColor
-import org.bukkit.boss.BarStyle
-import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -25,6 +28,7 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import java.util.*
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.seconds
 
 object StaminaBar : Listener {
     var disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
@@ -37,8 +41,22 @@ object StaminaBar : Listener {
         uuid.restartCooldown()
         uuid.canClimb = true
         disabledPlayers.remove(uuid)
-        val bossBar = Bukkit.createBossBar("&lStamina".color(), BarColor.GREEN, BarStyle.SEGMENTED_10)
-        bossBar.addPlayer(player)
+        val bossBar = BossBar.bossBar(
+            "<b>Stamina".miniMsg(),
+            1f,
+            BossBar.Color.GREEN,
+            Overlay.NOTCHED_10
+        )
+        bossBar.addListener(object : BossBar.Listener {
+            override fun bossBarProgressChanged(bar: BossBar, oldProgress: Float, newProgress: Float) {
+                //Hide when full
+                if (newProgress < 1f)
+                    player.showBossBar(bar)
+                else player.hideBossBar(bar)
+
+            }
+        })
+        player.showBossBar(bossBar)
         registeredBars[uuid] = bossBar
         return bossBar
     }
@@ -66,8 +84,6 @@ object StaminaBar : Listener {
             velocities[uuid] = vel
         }
 
-//        if (climbDisabled && !onClimbable) Tags.enableClimb(player)
-
         if (onClimbable && !player.climbEnabled) {
             if (!climbDisabled) {
                 fallDist[uuid] = player.location
@@ -80,9 +96,9 @@ object StaminaBar : Listener {
             if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
-                staminaClimb.schedule {
+                staminaClimb.launch {
                     while (!uuid.canClimb) {
-                        waitFor(20)
+                        delay(1.seconds)
                     }
                     Tags.enableClimb(player)
                 }
@@ -90,12 +106,11 @@ object StaminaBar : Listener {
             }
         }
 
-        if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007) {
-            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileOnLadder)
-        }
+        if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007)
+            uuid.toPlayer()?.addStamina(-StaminaConfig.data.staminaRemoveWhileOnLadder)
 
         if (!onClimbable && uuid.isClimbing && from.distanceSquared(to) > 0.007)
-            uuid.removeProgress(StaminaConfig.data.staminaRemoveWhileMoving)
+            uuid.toPlayer()?.addStamina(-StaminaConfig.data.staminaRemoveWhileMoving)
     }
 
     @EventHandler
@@ -109,14 +124,14 @@ object StaminaBar : Listener {
         val multiplier = 11.0
         val exponent = 1.1
         val vel = velocities[uuid] ?: return //TODO put this damage system into bonehurtingjuice
-        bossBar.isVisible = true
+        player.hideBossBar(bossBar)
         if (vel > -threshold) {
-            bossBar.removeProgress(0.1 / 15)
+            bossBar.addProgress(-0.1f / 15f)
             return
         }
         val damaged = ((vel + threshold) * -multiplier).pow(exponent)
         damage = damaged
-        bossBar.removeProgress(damage / 15) //taking 15 damage reduces stamina fully
+        bossBar.addProgress(-damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
@@ -124,7 +139,7 @@ object StaminaBar : Listener {
         val player = entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
-        registeredBars[uuid]?.progress = 1.0
+        registeredBars[uuid]?.progress(1.0f)
     }
 
     @EventHandler
@@ -139,17 +154,18 @@ object StaminaBar : Listener {
 
     fun unregisterBar(uuid: UUID) {
         ClimbBehaviour.cooldown.remove(uuid)
-        registeredBars[uuid]?.removeAll()
+        val bar = registeredBars[uuid] ?: return
+        Bukkit.getServer().hideBossBar(bar)
         registeredBars.remove(uuid)
     }
+}
 
-    /** Removes [amount] progress from [bossBar]'s progress */
-    internal fun removeProgress(amount: Double, bossBar: BossBar) {
-        bossBar.progress = (bossBar.progress - amount).coerceIn(0.0..1.0)
-    }
+/** Removes [amount] progress from [bossBar]'s progress */
+internal fun BossBar.addProgress(amount: Float) {
+    progress((progress() + amount).coerceIn(0.0f..1.0f))
+}
 
-    /** Removes [amount] progress from [uuid]'s associated BossBar's progress */
-    internal fun removeProgress(amount: Double, uuid: UUID) {
-        removeProgress(amount, registeredBars[uuid] ?: return)
-    }
+/** Removes [amount] progress from [uuid]'s associated BossBar's progress */
+internal fun Player.addStamina(amount: Float) {
+    StaminaBar.registeredBars[uniqueId]?.addProgress(amount)
 }

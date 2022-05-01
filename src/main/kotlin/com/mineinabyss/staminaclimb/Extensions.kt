@@ -1,12 +1,12 @@
 package com.mineinabyss.staminaclimb
 
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
-import com.okkero.skedule.schedule
+import kotlinx.coroutines.delay
 import org.bukkit.Material
-import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
 import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
@@ -50,14 +50,14 @@ const val checkRange = 0.4 //TODO config
 //TODO move elsewhere
 /** How difficult it is to climb at this location for this player. The higher, the faster stamina should drain.
  *  If lower than 0, cannot climb on this wall. */
-val Player.wallDifficulty: Double
+val Player.wallDifficulty: Float
     get() {
         val loc = this.location
         //checks if player is at climbable wall
         if (loc.block.type == Material.WATER) //don't fly if in water
-            return -1.0
+            return -1f
 
-        var totalClimbDifficulty = 0.0
+        var totalClimbDifficulty = 0f
         var climbDifficultyCount = 0
         //check for block to hang onto in a 2x2x2 area around player
         inCube(-1..1 step 2, 0..1, -1..1 step 2) { x, y, z ->
@@ -78,14 +78,14 @@ val Player.wallDifficulty: Double
             if (climbModifier > 0)
                 return climbModifier * StaminaConfig.data.roofClimbDifficulty
         }
-        return -1.0
+        return -1f
     }
 
-val Material.climbDifficulty: Double
+val Material.climbDifficulty: Float
     get() = StaminaConfig.data.climbDifficulty.getOrDefault(
         this,
         StaminaConfig.data.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
-            ?: if (isSolid) 1.0 else -1.0
+            ?: if (isSolid) 1f else -1f
     )
 
 //TODO move to idofront
@@ -98,10 +98,6 @@ inline fun inCube(
     for (x in xRange) for (y in yRange) for (z in zRange) execute(x, y, z)
 }
 
-fun BossBar.removeProgress(amount: Double) = StaminaBar.removeProgress(amount, this)
-
-fun UUID.removeProgress(amount: Double) = StaminaBar.removeProgress(amount, this)
-
 var Player.climbEnabled: Boolean
     get() = !StaminaBar.disabledPlayers.contains(uniqueId)
     set(enable) {
@@ -113,16 +109,14 @@ var Player.climbEnabled: Boolean
             }
         } else if (enable) {
             StaminaBar.disabledPlayers.remove(uniqueId)
-            StaminaBar.registerBar(this).apply {
-                progress = 0.0
-            }
+            StaminaBar.registerBar(this).progress(0f)
         }
     }
 
 fun applyClimbDamage(player: Player) {
-    staminaClimb.schedule {
+    staminaClimb.launch {
         while (!player.location.apply { y -= 1 }.block.isSolid) {
-            waitFor(1)
+            delay(1)
         }
         if (isPluginEnabled("BoneHurtingJuice")) {
             if (StaminaBar.fallDist.containsKey(player.uniqueId)) {

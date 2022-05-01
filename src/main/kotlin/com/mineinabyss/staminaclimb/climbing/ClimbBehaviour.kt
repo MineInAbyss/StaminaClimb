@@ -3,6 +3,7 @@ package com.mineinabyss.staminaclimb.climbing
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
+import com.mineinabyss.staminaclimb.stamina.addProgress
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -55,13 +56,13 @@ object ClimbBehaviour : Listener {
         if (allowClimb(player) && rightClicked() && !isClimbing.containsKey(uuid)) {
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
-            bossBar.removeProgress(player.fallDistance / 15.0)
+            bossBar.addProgress(-player.fallDistance / 15f)
             //reduce fall damage by half heart per feather fall level
             val damageAmount = (player.fallDistance - 3) / 1.9
             if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
                 player.damage(damageAmount)
 
-            if (bossBar.progress > 0)
+            if (bossBar.progress() > 0)
                 if (player.wallDifficulty >= 0) {
                     //jump a bit if player is standing on ground and starts climbing
                     if (velocity.y in -0.08..-0.07)
@@ -101,7 +102,7 @@ object ClimbBehaviour : Listener {
                 val z = direction.z
 
                 if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
-                    bossBar.removeProgress(0.25) //take away more stamina when in the air
+                    bossBar.addProgress(-0.25f) //take away more stamina when in the air
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 2 + 0.3
@@ -109,7 +110,7 @@ object ClimbBehaviour : Listener {
                     }
                     uuid.climbCooldown = -StaminaConfig.data.airTime
                 } else {
-                    bossBar.removeProgress(0.2)
+                    bossBar.addProgress(-0.2f)
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 1

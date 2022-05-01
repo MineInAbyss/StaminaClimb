@@ -44,6 +44,6 @@ class StaminaClimbPlugin : JavaPlugin() {
         }
 
         //stop stamina bars from duplicating on plugin reload
-        StaminaBar.registeredBars.values.forEach { it.removeAll() }
+        StaminaBar.registeredBars.values.forEach { Bukkit.getServer().hideBossBar(it) }
     }
 }

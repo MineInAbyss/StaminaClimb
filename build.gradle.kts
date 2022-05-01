@@ -19,15 +19,16 @@ dependencies {
     compileOnly(libs.kotlinx.serialization.kaml) {
         exclude(group = "org.jetbrains.kotlin")
     }
-    compileOnly(libs.minecraft.skedule)
+    compileOnly(libs.kotlinx.coroutines)
+    compileOnly(libs.minecraft.mccoroutine)
     compileOnly("com.mineinabyss:bonehurtingjuice:1.2.4")
 
-    implementation("com.mineinabyss:idofront:$idofrontVersion")
+    implementation(libs.idofront.core)
     implementation(libs.idofront.nms)
 }
 
 tasks {
     shadowJar {
-        archiveBaseName.set("StaminaClimb")
+        minimize()
     }
 }
