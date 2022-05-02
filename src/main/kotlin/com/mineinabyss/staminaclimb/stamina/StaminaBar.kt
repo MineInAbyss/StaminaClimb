@@ -10,8 +10,6 @@ import com.mineinabyss.staminaclimb.nms.Tags
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.bossbar.BossBar.Overlay
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
@@ -56,7 +54,6 @@ object StaminaBar : Listener {
 
             }
         })
-        player.showBossBar(bossBar)
         registeredBars[uuid] = bossBar
         return bossBar
     }
