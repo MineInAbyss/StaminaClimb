@@ -23,11 +23,13 @@ object Tags {
         if (!disabledPlayers.contains(player)) return
         disabledPlayers -= player
 
-        val climbable = Registry.BLOCK.getTag(BlockTags.CLIMBABLE).get()
-        val list: IntList = IntArrayList(climbable.size()).apply {
-            climbable.forEach { add(Registry.BLOCK.getId(it.value())) }
-        }
-        val payload = createPayload(mapOf(BlockTags.CLIMBABLE.location to list))
+        val tags = Registry.BLOCK.tags.map { pair ->
+            pair.first.location to IntArrayList(pair.second.size()).apply {
+                pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
+            }
+        }.toList()
+
+        val payload = createPayload(tags.toMap())
         val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
         (player as CraftPlayer).handle.connection.send(packet)
     }
@@ -36,25 +38,17 @@ object Tags {
         if (disabledPlayers.contains(player)) return
         disabledPlayers += player
 
-        val payload = createPayload(mapOf(BlockTags.CLIMBABLE.location to IntArrayList()))
+        val tags = Registry.BLOCK.tags.map { pair ->
+            pair.first.location to IntArrayList(pair.second.size()).apply {
+                // If the tag is CLIMBABLE, don't add any blocks to the list
+                if (pair.first.location == BlockTags.CLIMBABLE.location) return@apply
+                pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
+            }
+        }.toList()
+
+        val payload = createPayload(tags.toMap())
         val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
-
-}
-
-fun <T : Any> T.getPrivateProperty(variableName: String): Any? {
-    return javaClass.getDeclaredField(variableName).let { field ->
-        field.isAccessible = true
-        return@let field.get(this)
-    }
-}
-
-fun <T : Any> T.setAndReturnPrivateProperty(variableName: String, data: Any): Any? {
-    return javaClass.getDeclaredField(variableName).let { field ->
-        field.isAccessible = true
-        field.set(this, data)
-        return@let field.get(this)
-    }
 }
