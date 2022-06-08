@@ -1,5 +1,7 @@
 package com.mineinabyss.staminaclimb.nms
 
+import com.mineinabyss.staminaclimb.emptyClimbableMap
+import com.mineinabyss.staminaclimb.normalClimbableMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.Registry
@@ -21,34 +23,35 @@ object Tags {
 
     fun enableClimb(player: Player) {
         if (!disabledPlayers.contains(player)) return
-        disabledPlayers -= player
+        disabledPlayers.remove(player)
 
-        val tags = Registry.BLOCK.tags.map { pair ->
-            pair.first.location to IntArrayList(pair.second.size()).apply {
-                pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
-            }
-        }.toList()
-
-        val payload = createPayload(tags.toMap())
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
+        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(normalClimbableMap)))
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
     fun disableClimb(player: Player) {
         if (disabledPlayers.contains(player)) return
-        disabledPlayers += player
+        disabledPlayers.add(player)
 
-        val tags = Registry.BLOCK.tags.map { pair ->
+        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(emptyClimbableMap)))
+        (player as CraftPlayer).handle.connection.send(packet)
+    }
+
+    fun createNormalClimbableMap(): Map<ResourceLocation, IntArrayList> {
+        return Registry.BLOCK.tags.map { pair ->
+            pair.first.location to IntArrayList(pair.second.size()).apply {
+                pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
+            }
+        }.toList().toMap()
+    }
+
+    fun createEmptyClimbableMap(): Map<ResourceLocation, IntArrayList> {
+        return Registry.BLOCK.tags.map { pair ->
             pair.first.location to IntArrayList(pair.second.size()).apply {
                 // If the tag is CLIMBABLE, don't add any blocks to the list
                 if (pair.first.location == BlockTags.CLIMBABLE.location) return@apply
                 pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
             }
-        }.toList()
-
-        val payload = createPayload(tags.toMap())
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to payload))
-        (player as CraftPlayer).handle.connection.send(packet)
+        }.toList().toMap()
     }
-
 }
