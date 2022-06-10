@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin
 val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
 var emptyClimbableMap = mapOf<ResourceLocation, IntArrayList>()
 var normalClimbableMap = mapOf<ResourceLocation, IntArrayList>()
+var fallDamageResetMap = mapOf<ResourceLocation, IntArrayList>()
 
 class StaminaClimbPlugin : JavaPlugin() {
     override fun onLoad() {

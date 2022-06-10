@@ -37,9 +37,20 @@ object Tags {
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
+    fun emptyFallDamageResetTag(player: Player): Map<ResourceLocation, IntArrayList> {
+        return Registry.BLOCK.tags.map { pair ->
+            pair.first.location to IntArrayList(pair.second.size()).apply {
+                if (pair.first.location != BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
+                if (disabledPlayers.contains(player) && pair.first.location == BlockTags.CLIMBABLE.location) return@apply
+                pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
+            }
+        }.toList().toMap()
+    }
+
     fun createNormalClimbableMap(): Map<ResourceLocation, IntArrayList> {
         return Registry.BLOCK.tags.map { pair ->
             pair.first.location to IntArrayList(pair.second.size()).apply {
+                if (pair.first.location == BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
                 pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
             }
         }.toList().toMap()
@@ -50,6 +61,7 @@ object Tags {
             pair.first.location to IntArrayList(pair.second.size()).apply {
                 // If the tag is CLIMBABLE, don't add any blocks to the list
                 if (pair.first.location == BlockTags.CLIMBABLE.location) return@apply
+                if (pair.first.location == BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
                 pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
             }
         }.toList().toMap()
