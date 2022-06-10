@@ -9,7 +9,7 @@ import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagNetworkSerialization.NetworkPayload
-import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 object Tags {
