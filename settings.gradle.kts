@@ -4,7 +4,6 @@ pluginManagement {
         maven("https://repo.mineinabyss.com/releases")
         maven("https://repo.papermc.io/repository/maven-public/")
         google()
-        mavenLocal()
     }
 
     plugins {
