@@ -21,7 +21,7 @@ dependencies {
     }
     compileOnly(libs.kotlinx.coroutines)
     compileOnly(libs.minecraft.mccoroutine)
-    compileOnly("com.mineinabyss:bonehurtingjuice:1.3.11")
+    compileOnly("com.mineinabyss:bonehurtingjuice:1.4.12")
 
     implementation(libs.idofront.core)
     implementation(libs.idofront.nms)

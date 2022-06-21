@@ -4,14 +4,20 @@ import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
 import com.mineinabyss.staminaclimb.stamina.StaminaTask
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import net.minecraft.resources.ResourceLocation
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
 val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
+var emptyClimbableMap = mapOf<ResourceLocation, IntArrayList>()
+var normalClimbableMap = mapOf<ResourceLocation, IntArrayList>()
+var fallDamageResetMap = mapOf<ResourceLocation, IntArrayList>()
 
 class StaminaClimbPlugin : JavaPlugin() {
     override fun onLoad() {
@@ -32,6 +38,9 @@ class StaminaClimbPlugin : JavaPlugin() {
         server.pluginManager.registerEvents(StaminaBar, this)
 
         StaminaCommands()
+
+        emptyClimbableMap = Tags.createEmptyClimbableMap()
+        normalClimbableMap = Tags.createNormalClimbableMap()
 
     }
 
