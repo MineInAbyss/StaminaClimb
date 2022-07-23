@@ -40,7 +40,7 @@ object Tags {
     fun emptyFallDamageResetTag(player: Player): Map<ResourceLocation, IntArrayList> {
         return Registry.BLOCK.tags.map { pair ->
             pair.first.location to IntArrayList(pair.second.size()).apply {
-                if (pair.first.location != BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
+                if (pair.first.location == BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
                 if (disabledPlayers.contains(player) && pair.first.location == BlockTags.CLIMBABLE.location) return@apply
                 pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
             }
