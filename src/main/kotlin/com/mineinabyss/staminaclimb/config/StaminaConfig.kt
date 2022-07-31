@@ -5,6 +5,7 @@ import com.mineinabyss.staminaclimb.staminaClimb
 import kotlinx.serialization.Serializable
 import org.bukkit.Material
 
+val config = StaminaConfig.data
 object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.serializer()) {
     @Serializable
     class Data(

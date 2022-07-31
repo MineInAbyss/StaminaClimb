@@ -1,11 +1,10 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.messaging.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.config.config
 import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
@@ -111,10 +110,10 @@ object StaminaBar : Listener {
         }
 
         if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007)
-            uuid.toPlayer()?.addStamina(-StaminaConfig.data.staminaRemoveWhileOnLadder)
+            player.addStamina(-config.staminaRemoveWhileOnLadder)
 
         if (!onClimbable && uuid.isClimbing && from.distanceSquared(to) > 0.007)
-            uuid.toPlayer()?.addStamina(-StaminaConfig.data.staminaRemoveWhileMoving)
+            player.addStamina(-config.staminaRemoveWhileMoving)
     }
 
     @EventHandler

@@ -5,6 +5,7 @@ import com.mineinabyss.idofront.messaging.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.config.config
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
@@ -43,11 +44,11 @@ class StaminaTask : BukkitRunnable() {
             if (!uuid.isClimbing)
                 bar.addProgress(
                     if (player.location.apply { y -= 0.0625 }.block.isSolid)
-                        StaminaConfig.data.staminaRegen
-                    else if (!onClimbable) StaminaConfig.data.staminaRegenInAir else 0f
+                        config.staminaRegen
+                    else if (!onClimbable) config.staminaRegenInAir else 0f
                 )
 
-            if (progress <= StaminaConfig.data.barRed) { //Changing bar colors and effects on player depending on its progress
+            if (progress <= config.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color(BossBar.Color.RED)
                 bar.name("<red><b>Stamina".miniMsg())
                 if (uuid.isClimbing) player.stopClimbing()
@@ -74,19 +75,19 @@ class StaminaTask : BukkitRunnable() {
                 )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if ((uuid.isClimbing || onClimbable) && progress <= StaminaConfig.data.barBlink2) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= config.barBlink2) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed2)
+                if (timeSinceLastColorFlip < config.barBlinkSpeed2)
                     timeSinceLastColorFlip += deltaTime
                 else {
                     flipColor(bar)
                     timeSinceLastColorFlip = 0
                 }
-            } else if ((uuid.isClimbing || onClimbable) && progress <= StaminaConfig.data.barBlink1) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= config.barBlink1) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < StaminaConfig.data.barBlinkSpeed1)
+                if (timeSinceLastColorFlip < config.barBlinkSpeed1)
                     timeSinceLastColorFlip += deltaTime
                 else {
                     flipColor(bar)
@@ -110,7 +111,7 @@ class StaminaTask : BukkitRunnable() {
             }
 
             //prevent player from climbing if they have fallen far enough or in a invalid state
-            if (!player.isFlying && isClimbing || player.fallDistance > StaminaConfig.data.maxFallDist) {
+            if (!player.isFlying && isClimbing || player.fallDistance > config.maxFallDist) {
                 player.stopClimbing()
                 return@forEach
             }
@@ -129,13 +130,13 @@ class StaminaTask : BukkitRunnable() {
                     player.allowFlight = false
                 }
                 //only prevent air jump after AIR_TIME ms
-                else if (uuid.climbCooldown + StaminaConfig.data.airTime < 0) {
+                else if (uuid.climbCooldown + config.airTime < 0) {
                     player.stopClimbing()
                     return@forEach
                 }
             }
 
-            if (isClimbing) player.addStamina(-tickDuration * StaminaConfig.data.staminaRemovePerTick * atWallMultiplier)
+            if (isClimbing) player.addStamina(-tickDuration * config.staminaRemovePerTick * atWallMultiplier)
 
         }
     }

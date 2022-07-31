@@ -22,7 +22,7 @@ object Tags {
     val disabledPlayers = mutableSetOf<Player>()
 
     fun enableClimb(player: Player) {
-        if (!disabledPlayers.contains(player)) return
+        if (player !in disabledPlayers) return
         disabledPlayers.remove(player)
 
         val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(normalClimbableMap)))
@@ -30,7 +30,7 @@ object Tags {
     }
 
     fun disableClimb(player: Player) {
-        if (disabledPlayers.contains(player)) return
+        if (player in disabledPlayers) return
         disabledPlayers.add(player)
 
         val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(emptyClimbableMap)))
@@ -41,7 +41,7 @@ object Tags {
         return Registry.BLOCK.tags.map { pair ->
             pair.first.location to IntArrayList(pair.second.size()).apply {
                 if (pair.first.location == BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
-                if (disabledPlayers.contains(player) && pair.first.location == BlockTags.CLIMBABLE.location) return@apply
+                if (player in disabledPlayers && pair.first.location == BlockTags.CLIMBABLE.location) return@apply
                 pair.second.forEach { add(Registry.BLOCK.getId(it.value())) }
             }
         }.toList().toMap()

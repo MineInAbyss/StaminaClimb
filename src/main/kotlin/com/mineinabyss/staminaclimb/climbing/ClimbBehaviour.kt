@@ -1,7 +1,7 @@
 package com.mineinabyss.staminaclimb.climbing
 
 import com.mineinabyss.staminaclimb.*
-import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.config.config
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.addProgress
 import org.bukkit.GameMode
@@ -38,13 +38,13 @@ object ClimbBehaviour : Listener {
     fun BlockPlaceEvent.onBlockPlace() {
         val uuid = player.uniqueId
         if (!player.isSneaking && uuid.isClimbing) isCancelled = true
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
+        if (cooldown.containsKey(uuid)) uuid.climbCooldown = config.walljumpCooldown
     }
 
     @EventHandler
     fun BlockBreakEvent.onBlockBreak() {
         val uuid = player.uniqueId
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
+        if (cooldown.containsKey(uuid)) uuid.climbCooldown = config.walljumpCooldown
     }
 
     @EventHandler
@@ -86,7 +86,7 @@ object ClimbBehaviour : Listener {
         //don't even ask ok
         if (allowClimb(player) && isClimbing.containsKey(uuid)) {
             //set a cooldown for player not to be able to wall jump right away
-            uuid.climbCooldown = StaminaConfig.data.walljumpCooldown
+            uuid.climbCooldown = config.walljumpCooldown
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
 
             //find left clicked block (in adventure mode)
@@ -108,7 +108,7 @@ object ClimbBehaviour : Listener {
                         this.y = y / 2 + 0.3
                         this.z = z / 1.8
                     }
-                    uuid.climbCooldown = -StaminaConfig.data.airTime
+                    uuid.climbCooldown = -config.airTime
                 } else {
                     bossBar.addProgress(-0.2f)
                     player.velocity = player.velocity.apply {
@@ -136,16 +136,16 @@ object ClimbBehaviour : Listener {
         val block = clickedBlock?.type ?: return false
         val heldItem = player.inventory.itemInMainHand.type
         if (heldItem.isBlock && heldItem != Material.AIR) {
-            player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
+            player.uniqueId.climbCooldown = config.jumpCooldown
             return false
         }
-        if (StaminaConfig.data.climbBlacklist.contains(block)) {
-            player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
+        if (config.climbBlacklist.contains(block)) {
+            player.uniqueId.climbCooldown = config.jumpCooldown
             return false
         } else {
-            for (interactable in StaminaConfig.data.climbBlacklistGeneral) {
+            for (interactable in config.climbBlacklistGeneral) {
                 if (block.toString().contains(interactable)) {
-                    player.uniqueId.climbCooldown = StaminaConfig.data.jumpCooldown
+                    player.uniqueId.climbCooldown = config.jumpCooldown
                     return false
                 }
             }
@@ -156,7 +156,7 @@ object ClimbBehaviour : Listener {
     //TODO dont make checks like this separate for left/right click if they do basically the same thing
     private fun leftClicked(block: Material): Boolean { //did player do a valid left click
         //If clicked block is in blacklist, return false
-        return !StaminaConfig.data.climbBlacklist.contains(block)
+        return !config.climbBlacklist.contains(block)
     }
 
     private fun cooldownComplete(uuid: UUID): Boolean { //is the click cooldown complete
