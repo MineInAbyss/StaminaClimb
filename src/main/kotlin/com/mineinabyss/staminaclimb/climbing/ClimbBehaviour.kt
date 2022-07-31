@@ -3,7 +3,7 @@ package com.mineinabyss.staminaclimb.climbing
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.config.config
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
-import com.mineinabyss.staminaclimb.stamina.addProgress
+import com.mineinabyss.staminaclimb.stamina.removeProgress
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -56,7 +56,7 @@ object ClimbBehaviour : Listener {
         if (allowClimb(player) && rightClicked() && !isClimbing.containsKey(uuid)) {
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
-            bossBar.addProgress(-player.fallDistance / 15f)
+            bossBar.removeProgress(player.fallDistance / 15f)
             //reduce fall damage by half heart per feather fall level
             val damageAmount = (player.fallDistance - 3) / 1.9
             if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
@@ -102,7 +102,7 @@ object ClimbBehaviour : Listener {
                 val z = direction.z
 
                 if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
-                    bossBar.addProgress(-0.25f) //take away more stamina when in the air
+                    bossBar.removeProgress(0.25f) //take away more stamina when in the air
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 2 + 0.3
@@ -110,7 +110,7 @@ object ClimbBehaviour : Listener {
                     }
                     uuid.climbCooldown = -config.airTime
                 } else {
-                    bossBar.addProgress(-0.2f)
+                    bossBar.removeProgress(0.2f)
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 1
@@ -144,7 +144,7 @@ object ClimbBehaviour : Listener {
             return false
         } else {
             for (interactable in config.climbBlacklistGeneral) {
-                if (block.toString().contains(interactable)) {
+                if (block.toString() in interactable) {
                     player.uniqueId.climbCooldown = config.jumpCooldown
                     return false
                 }

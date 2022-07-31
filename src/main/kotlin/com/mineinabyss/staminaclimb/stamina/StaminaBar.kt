@@ -16,7 +16,6 @@ import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.Location
-import org.bukkit.Tag
 import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -36,6 +35,7 @@ object StaminaBar : Listener {
     var registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private var velocities: MutableMap<UUID, Double> = mutableMapOf()
     var fallDist: MutableMap<UUID, Location> = mutableMapOf()
+    var barProgressTracker = mutableMapOf<UUID, Float>()
 
     fun registerBar(player: Player): BossBar {
         val uuid = player.uniqueId
@@ -67,12 +67,20 @@ object StaminaBar : Listener {
         val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(map)))
         (player as CraftPlayer).handle.connection.send(packet)
         registerBar(player)
+        if (player.isClimbing && player.uniqueId in barProgressTracker) {
+            player.setStamina(barProgressTracker[player.uniqueId]!!)
+            barProgressTracker.remove(player.uniqueId)
+        } else if (player.isClimbing && player.uniqueId !in barProgressTracker) {
+            ClimbBehaviour.stopClimbing(player)
+        }
     }
 
     @EventHandler
     fun PlayerQuitEvent.onPlayerQuit() {
         val player = player
         val uuid = player.uniqueId
+        if (uuid in registeredBars)
+            barProgressTracker[uuid] = registeredBars[uuid]?.progress() ?: 0f
         unregisterBar(uuid)
         if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
@@ -80,14 +88,13 @@ object StaminaBar : Listener {
     @EventHandler
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
-        val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
         val climbDisabled = Tags.disabledPlayers.contains(player)
         val vel = player.velocity.y
         if (vel < -0.1) {
             velocities[uuid] = vel
         }
 
-        if (onClimbable && !player.climbEnabled) {
+        if (player.isClimbing && !player.climbEnabled) {
             if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
@@ -95,7 +102,7 @@ object StaminaBar : Listener {
             }
         }
 
-        if (onClimbable && !uuid.canClimb) {
+        if (player.isClimbing && !uuid.canClimb) {
             if (!climbDisabled) {
                 fallDist[uuid] = player.location
                 Tags.disableClimb(player)
@@ -109,10 +116,10 @@ object StaminaBar : Listener {
             }
         }
 
-        if (onClimbable && uuid.canClimb && from.distanceSquared(to) > 0.007)
+        if (player.isClimbing && uuid.canClimb && from.distanceSquared(to) > 0.007)
             player.addStamina(-config.staminaRemoveWhileOnLadder)
 
-        if (!onClimbable && uuid.isClimbing && from.distanceSquared(to) > 0.007)
+        if (!player.isClimbing && uuid.isClimbing && from.distanceSquared(to) > 0.007)
             player.addStamina(-config.staminaRemoveWhileMoving)
     }
 
@@ -129,12 +136,12 @@ object StaminaBar : Listener {
         val vel = velocities[uuid] ?: return //TODO put this damage system into bonehurtingjuice
         player.hideBossBar(bossBar)
         if (vel > -threshold) {
-            bossBar.addProgress(-0.1f / 15f)
+            bossBar.removeProgress(-0.1f / 15f)
             return
         }
         val damaged = ((vel + threshold) * -multiplier).pow(exponent)
         damage = damaged
-        bossBar.addProgress(-damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
+        bossBar.removeProgress(-damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
@@ -163,12 +170,32 @@ object StaminaBar : Listener {
     }
 }
 
-/** Removes [amount] progress from [bossBar]'s progress */
+/** Adds [amount] progress from [bossBar]'s progress */
 internal fun BossBar.addProgress(amount: Float) {
     progress((progress() + amount).coerceIn(0.0f..1.0f))
 }
 
-/** Removes [amount] progress from [uuid]'s associated BossBar's progress */
+/** Removes [amount] progress from [bossBar]'s progress */
+internal fun BossBar.removeProgress(amount: Float) {
+    progress((progress() - amount).coerceIn(0.0f..1.0f))
+}
+
+/** Sets progress to [amount] from [bossBar]'s progress */
+internal fun BossBar.setProgress(amount: Float) {
+    progress((amount).coerceIn(0.0f..1.0f))
+}
+
+/** Adds [amount] progress from [uuid]'s associated BossBar's progress */
 internal fun Player.addStamina(amount: Float) {
     StaminaBar.registeredBars[uniqueId]?.addProgress(amount)
+}
+
+/** Removes [amount] progress from [uuid]'s associated BossBar's progress */
+internal fun Player.removeStamina(amount: Float) {
+    StaminaBar.registeredBars[uniqueId]?.removeProgress(amount)
+}
+
+/** Sets progress to [amount] from [uuid]'s associated BossBar's progress */
+internal fun Player.setStamina(amount: Float) {
+    StaminaBar.registeredBars[uniqueId]?.setProgress(amount)
 }
