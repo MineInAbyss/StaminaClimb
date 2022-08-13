@@ -94,7 +94,7 @@ class StaminaTask : BukkitRunnable() {
                     timeSinceLastColorFlip = 0
                 }
             } else {
-                bar.color(BossBar.Color.GREEN)
+                bar.color(config.baseBarColor)
                 bar.name("<b>Stamina".miniMsg())
                 uuid.canClimb = true
             }
@@ -143,11 +143,13 @@ class StaminaTask : BukkitRunnable() {
 
     private fun flipColor(bar: BossBar) {
         if (bar.color() == BossBar.Color.RED) {
-            bar.color(BossBar.Color.GREEN)
+            bar.color(config.baseBarColor)
+            bar.overlay(config.baseOverlay)
             bar.name("<b>Stamina".miniMsg())
         } else {
             bar.color(BossBar.Color.RED)
             bar.name("<red><b>Stamina".miniMsg()) //Make Stamina title red
+            bar.overlay(config.baseOverlay)
         }
     }
 

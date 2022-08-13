@@ -9,7 +9,6 @@ import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
-import net.kyori.adventure.bossbar.BossBar.Overlay
 import net.minecraft.core.Registry
 import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket
 import org.bukkit.Bukkit
@@ -45,8 +44,8 @@ object StaminaBar : Listener {
         val bossBar = BossBar.bossBar(
             "<b>Stamina".miniMsg(),
             1f,
-            BossBar.Color.GREEN,
-            Overlay.NOTCHED_10
+            config.baseBarColor,
+            config.baseOverlay
         )
         bossBar.addListener(object : BossBar.Listener {
             override fun bossBarProgressChanged(bar: BossBar, oldProgress: Float, newProgress: Float) {
@@ -136,12 +135,12 @@ object StaminaBar : Listener {
         val vel = velocities[uuid] ?: return //TODO put this damage system into bonehurtingjuice
         player.hideBossBar(bossBar)
         if (vel > -threshold) {
-            bossBar.removeProgress(-0.1f / 15f)
+            bossBar.removeProgress(0.1f / 15f)
             return
         }
         val damaged = ((vel + threshold) * -multiplier).pow(exponent)
         damage = damaged
-        bossBar.removeProgress(-damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
+        bossBar.removeProgress(damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler

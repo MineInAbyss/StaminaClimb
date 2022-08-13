@@ -3,6 +3,8 @@ package com.mineinabyss.staminaclimb.config
 import com.mineinabyss.idofront.config.IdofrontConfig
 import com.mineinabyss.staminaclimb.staminaClimb
 import kotlinx.serialization.Serializable
+import net.kyori.adventure.bossbar.BossBar.Color
+import net.kyori.adventure.bossbar.BossBar.Overlay
 import org.bukkit.Material
 
 val config = StaminaConfig.data
@@ -15,6 +17,8 @@ object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.ser
         val staminaRemovePerTick: Float,
         val staminaRemoveWhileMoving: Float,
         val staminaRemoveWhileOnLadder: Float,
+        val baseBarColor: Color,
+        val baseOverlay: Overlay,
         val barRed: Float,
         val barBlink1: Float,
         val barBlink2: Float,
