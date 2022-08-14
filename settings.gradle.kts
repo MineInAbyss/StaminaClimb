@@ -29,9 +29,8 @@ dependencyResolutionManagement {
     }
 
     versionCatalogs {
-        create("libs") {
-            from("com.mineinabyss:catalog:$idofrontVersion")
-        }
+        create("libs").from("com.mineinabyss:catalog:$idofrontVersion")
+        create("staminaLibs").from(files("gradle/staminaLibs.versions.toml"))
     }
 }
 
