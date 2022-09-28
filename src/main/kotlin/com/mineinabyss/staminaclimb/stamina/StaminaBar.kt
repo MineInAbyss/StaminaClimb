@@ -4,7 +4,7 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.idofront.messaging.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.config.config
+import com.mineinabyss.staminaclimb.config.staminaConfig
 import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
@@ -44,8 +44,8 @@ object StaminaBar : Listener {
         val bossBar = BossBar.bossBar(
             "<b>Stamina".miniMsg(),
             1f,
-            config.baseBarColor,
-            config.baseOverlay
+            staminaConfig.baseBarColor,
+            staminaConfig.baseOverlay
         )
         bossBar.addListener(object : BossBar.Listener {
             override fun bossBarProgressChanged(bar: BossBar, oldProgress: Float, newProgress: Float) {
@@ -116,10 +116,10 @@ object StaminaBar : Listener {
         }
 
         if (player.isClimbing && uuid.canClimb && from.distanceSquared(to) > 0.007)
-            player.addStamina(-config.staminaRemoveWhileOnLadder)
+            player.addStamina(-staminaConfig.staminaRemoveWhileOnLadder)
 
         if (!player.isClimbing && uuid.isClimbing && from.distanceSquared(to) > 0.007)
-            player.addStamina(-config.staminaRemoveWhileMoving)
+            player.addStamina(-staminaConfig.staminaRemoveWhileMoving)
     }
 
     @EventHandler

@@ -3,7 +3,7 @@ package com.mineinabyss.staminaclimb
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.config.config
+import com.mineinabyss.staminaclimb.config.staminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import kotlinx.coroutines.delay
 import org.bukkit.Material
@@ -76,15 +76,15 @@ val Player.wallDifficulty: Float
         if ((uniqueId.isClimbing || location.direction.y > 0.5)) {
             val climbModifier = loc.clone().add(0.0, 2.2, 0.0).block.type.climbDifficulty
             if (climbModifier > 0)
-                return climbModifier * config.roofClimbDifficulty
+                return climbModifier * staminaConfig.roofClimbDifficulty
         }
         return -1f
     }
 
 val Material.climbDifficulty: Float
-    get() = config.climbDifficulty.getOrDefault(
+    get() = staminaConfig.climbDifficulty.getOrDefault(
         this,
-        config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
+        staminaConfig.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
             ?: if (isSolid) 1f else -1f
     )
 

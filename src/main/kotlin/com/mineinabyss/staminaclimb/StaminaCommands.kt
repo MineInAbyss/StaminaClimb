@@ -3,6 +3,7 @@ package com.mineinabyss.staminaclimb
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.nms.Tags
 
@@ -20,6 +21,7 @@ class StaminaCommands : IdofrontCommandExecutor() {
             "reload" {
                 action {
                     StaminaConfig.reload(sender)
+                    sender.success("Config has been reloaded!")
                 }
             }
         }

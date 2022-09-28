@@ -5,7 +5,7 @@ import com.mineinabyss.idofront.messaging.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.StaminaConfig
-import com.mineinabyss.staminaclimb.config.config
+import com.mineinabyss.staminaclimb.config.staminaConfig
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
@@ -44,11 +44,11 @@ class StaminaTask : BukkitRunnable() {
             if (!uuid.isClimbing)
                 bar.addProgress(
                     if (player.location.apply { y -= 0.0625 }.block.isSolid)
-                        config.staminaRegen
-                    else if (!onClimbable) config.staminaRegenInAir else 0f
+                        staminaConfig.staminaRegen
+                    else if (!onClimbable) staminaConfig.staminaRegenInAir else 0f
                 )
 
-            if (progress <= config.barRed) { //Changing bar colors and effects on player depending on its progress
+            if (progress <= staminaConfig.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color(BossBar.Color.RED)
                 bar.name("<red><b>Stamina".miniMsg())
                 if (uuid.isClimbing) player.stopClimbing()
@@ -75,26 +75,26 @@ class StaminaTask : BukkitRunnable() {
                 )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if ((uuid.isClimbing || onClimbable) && progress <= config.barBlink2) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= staminaConfig.barBlink2) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < config.barBlinkSpeed2)
+                if (timeSinceLastColorFlip < staminaConfig.barBlinkSpeed2)
                     timeSinceLastColorFlip += deltaTime
                 else {
                     flipColor(bar)
                     timeSinceLastColorFlip = 0
                 }
-            } else if ((uuid.isClimbing || onClimbable) && progress <= config.barBlink1) {
+            } else if ((uuid.isClimbing || onClimbable) && progress <= staminaConfig.barBlink1) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < config.barBlinkSpeed1)
+                if (timeSinceLastColorFlip < staminaConfig.barBlinkSpeed1)
                     timeSinceLastColorFlip += deltaTime
                 else {
                     flipColor(bar)
                     timeSinceLastColorFlip = 0
                 }
             } else {
-                bar.color(config.baseBarColor)
+                bar.color(staminaConfig.baseBarColor)
                 bar.name("<b>Stamina".miniMsg())
                 uuid.canClimb = true
             }
@@ -111,7 +111,7 @@ class StaminaTask : BukkitRunnable() {
             }
 
             //prevent player from climbing if they have fallen far enough or in a invalid state
-            if (!player.isFlying && isClimbing || player.fallDistance > config.maxFallDist) {
+            if (!player.isFlying && isClimbing || player.fallDistance > staminaConfig.maxFallDist) {
                 player.stopClimbing()
                 return@forEach
             }
@@ -130,26 +130,26 @@ class StaminaTask : BukkitRunnable() {
                     player.allowFlight = false
                 }
                 //only prevent air jump after AIR_TIME ms
-                else if (uuid.climbCooldown + config.airTime < 0) {
+                else if (uuid.climbCooldown + staminaConfig.airTime < 0) {
                     player.stopClimbing()
                     return@forEach
                 }
             }
 
-            if (isClimbing) player.addStamina(-tickDuration * config.staminaRemovePerTick * atWallMultiplier)
+            if (isClimbing) player.addStamina(-tickDuration * staminaConfig.staminaRemovePerTick * atWallMultiplier)
 
         }
     }
 
     private fun flipColor(bar: BossBar) {
         if (bar.color() == BossBar.Color.RED) {
-            bar.color(config.baseBarColor)
-            bar.overlay(config.baseOverlay)
+            bar.color(staminaConfig.baseBarColor)
+            bar.overlay(staminaConfig.baseOverlay)
             bar.name("<b>Stamina".miniMsg())
         } else {
             bar.color(BossBar.Color.RED)
             bar.name("<red><b>Stamina".miniMsg()) //Make Stamina title red
-            bar.overlay(config.baseOverlay)
+            bar.overlay(staminaConfig.baseOverlay)
         }
     }
 

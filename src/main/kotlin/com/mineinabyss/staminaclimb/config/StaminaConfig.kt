@@ -7,7 +7,7 @@ import net.kyori.adventure.bossbar.BossBar.Color
 import net.kyori.adventure.bossbar.BossBar.Overlay
 import org.bukkit.Material
 
-val config = StaminaConfig.data
+val staminaConfig get() = StaminaConfig.data
 object StaminaConfig : IdofrontConfig<StaminaConfig.Data>(staminaClimb, Data.serializer()) {
     @Serializable
     class Data(
