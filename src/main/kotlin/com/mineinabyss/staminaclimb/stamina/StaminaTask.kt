@@ -1,10 +1,10 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.messaging.miniMsg
+import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.config.NANO_PER_TICK
 import com.mineinabyss.staminaclimb.config.staminaConfig
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
@@ -155,6 +155,6 @@ class StaminaTask : BukkitRunnable() {
 
     private fun calculateTickDuration(currentNano: Long, lastTickNano: Long): Float {
         val nanoDiff = (currentNano - lastTickNano).toFloat()
-        return nanoDiff / StaminaConfig.NANO_PER_TICK
+        return nanoDiff / NANO_PER_TICK
     }
 }

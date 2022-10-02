@@ -1,5 +1,5 @@
 [versions]
-bonehurtingjuice = "1.5.18"
+bonehurtingjuice = "1.6.0"
 
 [libraries]
 bonehurtingjuice = { module = "com.mineinabyss:bonehurtingjuice", version.ref = "bonehurtingjuice" }

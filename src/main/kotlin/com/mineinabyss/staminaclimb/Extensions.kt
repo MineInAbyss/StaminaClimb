@@ -1,14 +1,12 @@
 package com.mineinabyss.staminaclimb
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.staminaConfig
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import kotlinx.coroutines.delay
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -118,11 +116,11 @@ fun applyClimbDamage(player: Player) {
         while (!player.location.apply { y -= 1 }.block.isSolid) {
             delay(1)
         }
-        if (isPluginEnabled("BoneHurtingJuice")) {
-            if (StaminaBar.fallDist.containsKey(player.uniqueId)) {
-                player.hurtBones((StaminaBar.fallDist[player.uniqueId]!!.y - player.location.y).toFloat())
-            }
-        }
+//        if (Plugins.isEnabled()) {
+//            if (StaminaBar.fallDist.containsKey(player.uniqueId)) {
+//                player.hurtBones((StaminaBar.fallDist[player.uniqueId]!!.y - player.location.y).toFloat())
+//            }
+//        }
         StaminaBar.fallDist.remove(player.uniqueId)
     }
 }
