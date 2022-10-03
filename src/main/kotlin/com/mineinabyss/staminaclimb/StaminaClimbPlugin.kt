@@ -1,6 +1,9 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.idofront.platforms.IdofrontPlatforms
+import com.mineinabyss.idofront.config.IdofrontConfig
+import com.mineinabyss.idofront.config.config
+import com.mineinabyss.idofront.platforms.Platforms
+import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.config.StaminaConfig
@@ -20,25 +23,19 @@ var normalClimbableMap = mapOf<ResourceLocation, IntArrayList>()
 var fallDamageResetMap = mapOf<ResourceLocation, IntArrayList>()
 
 class StaminaClimbPlugin : JavaPlugin() {
+    lateinit var config: IdofrontConfig<StaminaConfig>
     override fun onLoad() {
-        IdofrontPlatforms.load(this, "mineinabyss")
+        Platforms.load(this, "mineinabyss")
     }
 
     override fun onEnable() {
-        logger.info("On enable has been called")
-        saveDefaultConfig()
-
-        StaminaConfig.load()
-
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
 
         StaminaTask().runTaskTimer(this, 0, 1)
-        server.pluginManager.registerEvents(ClimbBehaviour, this)
-        server.pluginManager.registerEvents(StaminaBar, this)
-
+        listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()
-
+        config = config("config") { fromPluginPath(loadDefault = true) }
         emptyClimbableMap = Tags.createEmptyClimbableMap()
         normalClimbableMap = Tags.createNormalClimbableMap()
 

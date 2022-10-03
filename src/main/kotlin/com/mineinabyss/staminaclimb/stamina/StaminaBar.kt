@@ -1,7 +1,7 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.idofront.messaging.miniMsg
+import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.config.staminaConfig
