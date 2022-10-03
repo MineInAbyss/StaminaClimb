@@ -27,9 +27,3 @@ dependencies {
     implementation(libs.bundles.idofront.core)
     implementation(libs.idofront.nms)
 }
-
-tasks {
-    shadowJar {
-        minimize()
-    }
-}
