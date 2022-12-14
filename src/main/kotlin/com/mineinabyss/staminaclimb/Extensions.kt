@@ -1,10 +1,8 @@
 package com.mineinabyss.staminaclimb
 
-import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.config.staminaConfig
+import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
-import kotlinx.coroutines.delay
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.*
@@ -74,15 +72,15 @@ val Player.wallDifficulty: Float
         if ((uniqueId.isClimbing || location.direction.y > 0.5)) {
             val climbModifier = loc.clone().add(0.0, 2.2, 0.0).block.type.climbDifficulty
             if (climbModifier > 0)
-                return climbModifier * staminaConfig.roofClimbDifficulty
+                return climbModifier * stamina.config.roofClimbDifficulty
         }
         return -1f
     }
 
 val Material.climbDifficulty: Float
-    get() = staminaConfig.climbDifficulty.getOrDefault(
+    get() = stamina.config.climbDifficulty.getOrDefault(
         this,
-        staminaConfig.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
+        stamina.config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
             ?: if (isSolid) 1f else -1f
     )
 
@@ -97,30 +95,5 @@ inline fun inCube(
 }
 
 var Player.climbEnabled: Boolean
-    get() = uniqueId !in StaminaBar.disabledPlayers
-    set(enable) {
-        if (climbEnabled) {
-            if (!enable) {
-                StaminaBar.disabledPlayers.add(uniqueId)
-                StaminaBar.unregisterBar(uniqueId)
-                this.stopClimbing()
-            }
-        } else if (enable) {
-            StaminaBar.disabledPlayers.remove(uniqueId)
-            StaminaBar.registerBar(this).progress(0f)
-        }
-    }
-
-fun applyClimbDamage(player: Player) {
-    staminaClimb.launch {
-        while (!player.location.apply { y -= 1 }.block.isSolid) {
-            delay(1)
-        }
-//        if (Plugins.isEnabled()) {
-//            if (StaminaBar.fallDist.containsKey(player.uniqueId)) {
-//                player.hurtBones((StaminaBar.fallDist[player.uniqueId]!!.y - player.location.y).toFloat())
-//            }
-//        }
-        StaminaBar.fallDist.remove(player.uniqueId)
-    }
-}
+    get() = StaminaBar.climbEnabled(this)
+    set(enable) = StaminaBar.setClimbEnabled(this, enable)

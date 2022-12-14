@@ -1,12 +1,9 @@
 package com.mineinabyss.staminaclimb.config
 
-import com.mineinabyss.staminaclimb.staminaClimb
 import kotlinx.serialization.Serializable
 import net.kyori.adventure.bossbar.BossBar.Color
 import net.kyori.adventure.bossbar.BossBar.Overlay
 import org.bukkit.Material
-
-val staminaConfig get() = staminaClimb.config.data
 
 @Serializable
 class StaminaConfig(
@@ -32,7 +29,3 @@ class StaminaConfig(
     val climbDifficulty: Map<Material, Float> = mapOf(),
     val climbDifficultyGeneral: Map<String, Float> = mapOf()
 )
-
-private const val SERVER_TPS = 20
-private const val NANO_IN_SECOND = 1000000000
-const val NANO_PER_TICK = NANO_IN_SECOND / SERVER_TPS

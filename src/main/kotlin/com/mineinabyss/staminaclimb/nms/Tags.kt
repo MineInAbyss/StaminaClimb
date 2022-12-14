@@ -1,7 +1,6 @@
 package com.mineinabyss.staminaclimb.nms
 
-import com.mineinabyss.staminaclimb.emptyClimbableMap
-import com.mineinabyss.staminaclimb.normalClimbableMap
+import com.mineinabyss.staminaclimb.modules.stamina
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.Registry
@@ -13,11 +12,10 @@ import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 object Tags {
-    fun createPayload(map: Map<ResourceLocation, IntList>): NetworkPayload {
-        return NetworkPayload::class.java.declaredConstructors.first()
+    fun createPayload(map: Map<ResourceLocation, IntList>): NetworkPayload =
+        NetworkPayload::class.java.declaredConstructors.first()
             .also { it.isAccessible = true }
             .newInstance(map) as NetworkPayload
-    }
 
     val disabledPlayers = mutableSetOf<Player>()
 
@@ -25,7 +23,8 @@ object Tags {
         if (player !in disabledPlayers) return
         disabledPlayers.remove(player)
 
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(normalClimbableMap)))
+        val packet =
+            ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(stamina.normalClimbableMap)))
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
@@ -33,7 +32,8 @@ object Tags {
         if (player in disabledPlayers) return
         disabledPlayers.add(player)
 
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(emptyClimbableMap)))
+        val packet =
+            ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(stamina.emptyClimbableMap)))
         (player as CraftPlayer).handle.connection.send(packet)
     }
 

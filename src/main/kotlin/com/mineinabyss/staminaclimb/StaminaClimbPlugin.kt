@@ -7,6 +7,8 @@ import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.modules.StaminaClimbModule
+import com.mineinabyss.staminaclimb.modules.StaminaPaperModule
 import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
@@ -17,13 +19,8 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
-val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
-var emptyClimbableMap = mapOf<ResourceLocation, IntArrayList>()
-var normalClimbableMap = mapOf<ResourceLocation, IntArrayList>()
-var fallDamageResetMap = mapOf<ResourceLocation, IntArrayList>()
 
 class StaminaClimbPlugin : JavaPlugin() {
-    lateinit var config: IdofrontConfig<StaminaConfig>
     override fun onLoad() {
         Platforms.load(this, "mineinabyss")
     }
@@ -35,9 +32,8 @@ class StaminaClimbPlugin : JavaPlugin() {
         StaminaTask().runTaskTimer(this, 0, 1)
         listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()
-        config = config("config") { fromPluginPath(loadDefault = true) }
-        emptyClimbableMap = Tags.createEmptyClimbableMap()
-        normalClimbableMap = Tags.createNormalClimbableMap()
+        //TODO DI inject
+        val module = StaminaPaperModule(this)
 
     }
 

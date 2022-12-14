@@ -5,10 +5,11 @@ import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
+import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
 
 class StaminaCommands : IdofrontCommandExecutor() {
-    override val commands = commands(staminaClimb) {
+    override val commands = commands(stamina.plugin) {
         "climb" {
             permission = "staminaclimb.toggle"
             playerAction {
@@ -20,7 +21,8 @@ class StaminaCommands : IdofrontCommandExecutor() {
         "staminaclimb" {
             "reload" {
                 action {
-                    staminaClimb.config = config("config") { staminaClimb.fromPluginPath(loadDefault = true) }
+                    TODO()
+                    // stamina.config = config("config") { stamina.fromPluginPath(loadDefault = true) }
                     sender.success("Config has been reloaded!")
                 }
             }
