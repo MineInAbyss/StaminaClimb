@@ -1,44 +1,34 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.idofront.config.IdofrontConfig
-import com.mineinabyss.idofront.config.config
+import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.platforms.Platforms
 import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
-import com.mineinabyss.staminaclimb.config.StaminaConfig
-import com.mineinabyss.staminaclimb.nms.Tags
+import com.mineinabyss.staminaclimb.modules.StaminaClimbModule
+import com.mineinabyss.staminaclimb.modules.StaminaPaperModule
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
 import com.mineinabyss.staminaclimb.stamina.StaminaTask
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import net.minecraft.resources.ResourceLocation
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
-val staminaClimb: StaminaClimbPlugin by lazy { JavaPlugin.getPlugin(StaminaClimbPlugin::class.java) }
-var emptyClimbableMap = mapOf<ResourceLocation, IntArrayList>()
-var normalClimbableMap = mapOf<ResourceLocation, IntArrayList>()
-var fallDamageResetMap = mapOf<ResourceLocation, IntArrayList>()
 
 class StaminaClimbPlugin : JavaPlugin() {
-    lateinit var config: IdofrontConfig<StaminaConfig>
     override fun onLoad() {
         Platforms.load(this, "mineinabyss")
     }
 
     override fun onEnable() {
+        DI.add<StaminaClimbModule>(StaminaPaperModule(this))
+
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
 
-        StaminaTask().runTaskTimer(this, 0, 1)
         listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()
-        config = config("config") { fromPluginPath(loadDefault = true) }
-        emptyClimbableMap = Tags.createEmptyClimbableMap()
-        normalClimbableMap = Tags.createNormalClimbableMap()
-
+        StaminaTask().runTaskTimer(this, 0, 1)
     }
 
     override fun onDisable() {
