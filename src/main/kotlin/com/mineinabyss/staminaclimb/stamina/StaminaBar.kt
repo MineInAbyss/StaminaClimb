@@ -10,13 +10,13 @@ import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
-import net.minecraft.core.Registry
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.Location
-import org.bukkit.craftbukkit.v1_19_R1.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_19_R2.entity.CraftPlayer
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -82,7 +82,7 @@ object StaminaBar : Listener {
     @EventHandler
     fun PlayerJoinEvent.onPlayerJoin() {
         val map = Tags.emptyFallDamageResetTag(player)
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registry.BLOCK_REGISTRY to createPayload(map)))
+        val packet = ClientboundUpdateTagsPacket(mapOf(Registries.BLOCK to createPayload(map)))
         (player as CraftPlayer).handle.connection.send(packet)
         registerBar(player)
         if (player.isClimbing && player.uniqueId in barProgressTracker) {
