@@ -2,13 +2,13 @@
 val idofrontVersion: String by project
 
 plugins {
-    id("com.mineinabyss.conventions.kotlin")
+    id("com.mineinabyss.conventions.kotlin.jvm")
     id("com.mineinabyss.conventions.papermc")
     id("com.mineinabyss.conventions.nms")
     id("com.mineinabyss.conventions.publication")
     id("com.mineinabyss.conventions.copyjar")
     id("com.mineinabyss.conventions.autoversion")
-    kotlin("plugin.serialization")
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 repositories {

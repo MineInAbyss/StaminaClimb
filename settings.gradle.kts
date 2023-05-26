@@ -6,11 +6,6 @@ pluginManagement {
         google()
     }
 
-    plugins {
-        val kotlinVersion: String by settings
-        kotlin("plugin.serialization") version kotlinVersion
-    }
-
     val idofrontVersion: String by settings
     resolutionStrategy {
         eachPlugin {
