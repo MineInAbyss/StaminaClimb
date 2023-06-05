@@ -1,10 +1,13 @@
 package com.mineinabyss.staminaclimb
 
+import com.mineinabyss.geary.papermc.tracking.items.toGeary
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.component.ClimbingEquipment
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.EquipmentSlot
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -43,6 +46,14 @@ fun Player.launchInDirection() {
 
 const val checkRange = 0.4 //TODO config
 
+val Player.equipmentModifiers: Float
+    get() {
+        val staminaEquipment = EquipmentSlot.values()
+            .mapNotNull { slot -> player?.inventory?.toGeary()?.get(slot)?.get<ClimbingEquipment>() }
+        return if (staminaEquipment.isEmpty()) 1f
+        else staminaEquipment.sumOf { it.modifier }.toFloat()
+    }
+
 //TODO move elsewhere
 /** How difficult it is to climb at this location for this player. The higher, the faster stamina should drain.
  *  If lower than 0, cannot climb on this wall. */
@@ -80,7 +91,7 @@ val Player.wallDifficulty: Float
 val Material.climbDifficulty: Float
     get() = stamina.config.climbDifficulty.getOrDefault(
         this,
-        stamina.config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
+        stamina.config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> name in this.name }?.value
             ?: if (isSolid) 1f else -1f
     )
 

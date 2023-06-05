@@ -1,5 +1,8 @@
 package com.mineinabyss.staminaclimb
 
+import com.mineinabyss.geary.addons.GearyPhase
+import com.mineinabyss.geary.autoscan.autoscan
+import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.platforms.Platforms
 import com.mineinabyss.idofront.plugin.listeners
@@ -28,7 +31,15 @@ class StaminaClimbPlugin : JavaPlugin() {
 
         listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()
-        StaminaTask().runTaskTimer(this, 0, 1)
+
+        geary {
+            autoscan(classLoader, "com.mineinabyss.staminaclimb") {
+                all()
+            }
+            on(GearyPhase.ENABLE) {
+                StaminaTask().runTaskTimer(this@StaminaClimbPlugin, 0, 1)
+            }
+        }
     }
 
     override fun onDisable() {

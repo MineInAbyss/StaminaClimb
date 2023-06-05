@@ -6,8 +6,11 @@ import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 
-class StaminaCommands : IdofrontCommandExecutor() {
+class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
     override val commands = commands(stamina.plugin) {
         "climb" {
             permission = "staminaclimb.toggle"
@@ -26,4 +29,19 @@ class StaminaCommands : IdofrontCommandExecutor() {
             }
         }
     }
+
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        label: String,
+        args: Array<out String>
+    ): List<String> {
+        return if (command.name == "staminaclimb") {
+            when (args.size) {
+                1 -> listOf("reload")
+                else -> emptyList()
+            }
+        } else emptyList()
+    }
+
 }
