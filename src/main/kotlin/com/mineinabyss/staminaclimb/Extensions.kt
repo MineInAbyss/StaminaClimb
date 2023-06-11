@@ -1,6 +1,6 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.geary.papermc.tracking.items.toGeary
+import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.component.ClimbingEquipment
 import com.mineinabyss.staminaclimb.modules.stamina
