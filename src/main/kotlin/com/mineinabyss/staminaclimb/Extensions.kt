@@ -46,12 +46,20 @@ fun Player.launchInDirection() {
 
 const val checkRange = 0.4 //TODO config
 
-val GearyPlayerInventory.equipmentModifiers: Float
-    get() {
-        val staminaEquipment = EquipmentSlot.values().mapNotNull { slot -> this.get(slot)?.get<StaminaModifier>() }
-        return if (staminaEquipment.isEmpty()) 1f
-        else staminaEquipment.sumOf { it.modifier }.toFloat()
+/**
+ * Get all modifiers from equipment, sorts them based on ModifierOperation Enum value, then folds them into the base value
+ * Logic is a mimic of [Modifier Operations](https://minecraft.fandom.com/wiki/Attribute#Operations) in vanilla.
+ */
+fun GearyPlayerInventory.getEquipmentModifiers(base: Float): Float {
+    return EquipmentSlot.values().mapNotNull { slot -> this.get(slot)?.get<StaminaModifier>() }
+        .sortedBy { it.operation }.fold(base) { current, modifier ->
+        when (modifier.operation) {
+            StaminaModifier.ModifierOperation.ADD -> current + modifier.modifier.toFloat()
+            StaminaModifier.ModifierOperation.MULTIPLY_BASE -> current + base * modifier.modifier.toFloat()
+            StaminaModifier.ModifierOperation.MULTIPLY -> current * (1 + modifier.modifier).toFloat()
+        }
     }
+}
 
 //TODO move elsewhere
 /** How difficult it is to climb at this location for this player. The higher, the faster stamina should drain.

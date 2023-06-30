@@ -120,9 +120,11 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            val equipmentModifiers = player.inventory.toGeary()?.equipmentModifiers ?: 1f
+            val stamina = (-tickDuration * conf.staminaRemovePerTick * atWallMultiplier).let { base ->
+                player.inventory.toGeary()?.getEquipmentModifiers(base) ?: base
+            }
 
-            if (isClimbing) player.addStamina(-tickDuration * conf.staminaRemovePerTick * atWallMultiplier / equipmentModifiers)
+            if (isClimbing) player.addStamina(stamina)
 
         }
     }
