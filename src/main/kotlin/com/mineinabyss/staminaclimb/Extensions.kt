@@ -1,8 +1,8 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
+import com.mineinabyss.geary.papermc.tracking.items.inventory.GearyPlayerInventory
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
-import com.mineinabyss.staminaclimb.component.ClimbingEquipment
+import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
@@ -46,10 +46,9 @@ fun Player.launchInDirection() {
 
 const val checkRange = 0.4 //TODO config
 
-val Player.equipmentModifiers: Float
+val GearyPlayerInventory.equipmentModifiers: Float
     get() {
-        val staminaEquipment = EquipmentSlot.values()
-            .mapNotNull { slot -> player?.inventory?.toGeary()?.get(slot)?.get<ClimbingEquipment>() }
+        val staminaEquipment = EquipmentSlot.values().mapNotNull { slot -> this.get(slot)?.get<StaminaModifier>() }
         return if (staminaEquipment.isEmpty()) 1f
         else staminaEquipment.sumOf { it.modifier }.toFloat()
     }

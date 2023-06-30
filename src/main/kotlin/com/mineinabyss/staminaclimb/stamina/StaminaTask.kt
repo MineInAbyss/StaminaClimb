@@ -1,5 +1,6 @@
 package com.mineinabyss.staminaclimb.stamina
 
+import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
@@ -119,7 +120,9 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            if (isClimbing) player.addStamina(-tickDuration * conf.staminaRemovePerTick * atWallMultiplier / player.equipmentModifiers)
+            val equipmentModifiers = player.inventory.toGeary()?.equipmentModifiers ?: 1f
+
+            if (isClimbing) player.addStamina(-tickDuration * conf.staminaRemovePerTick * atWallMultiplier / equipmentModifiers)
 
         }
     }
