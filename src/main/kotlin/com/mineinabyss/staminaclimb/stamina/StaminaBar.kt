@@ -135,10 +135,10 @@ object StaminaBar : Listener {
         }
 
         if (player.isClimbing && uuid.canClimb && from.distanceSquared(to) > 0.007)
-            player.addStamina(-conf.staminaRemoveWhileOnLadder)
+            player.removeStamina(conf.staminaRemoveWhileOnLadder)
 
         if (!player.isClimbing && uuid.isClimbing && from.distanceSquared(to) > 0.007)
-            player.addStamina(-conf.staminaRemoveWhileMoving)
+            player.removeStamina(conf.staminaRemoveWhileMoving)
     }
 
     @EventHandler

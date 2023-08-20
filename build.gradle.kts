@@ -12,6 +12,7 @@ plugins {
 }
 
 repositories {
+    maven("https://repo.mineinabyss.com/snapshots")
     maven("https://jitpack.io")
 }
 
@@ -22,6 +23,7 @@ dependencies {
     }
     compileOnly(libs.kotlinx.coroutines)
     compileOnly(libs.minecraft.mccoroutine)
+    compileOnly(staminaLibs.geary.papermc)
     compileOnly(staminaLibs.bonehurtingjuice)
 
     implementation(libs.bundles.idofront.core)

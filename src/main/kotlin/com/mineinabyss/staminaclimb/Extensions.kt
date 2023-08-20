@@ -1,10 +1,13 @@
 package com.mineinabyss.staminaclimb
 
+import com.mineinabyss.geary.papermc.tracking.items.inventory.GearyPlayerInventory
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.EquipmentSlot
 import java.util.*
 
 var UUID.isClimbing: Boolean
@@ -43,6 +46,21 @@ fun Player.launchInDirection() {
 
 const val checkRange = 0.4 //TODO config
 
+/**
+ * Get all modifiers from equipment, sorts them based on ModifierOperation Enum value, then folds them into the base value
+ * Logic is a mimic of [Modifier Operations](https://minecraft.fandom.com/wiki/Attribute#Operations) in vanilla.
+ */
+fun GearyPlayerInventory.getEquipmentModifiers(base: Float): Float {
+    return EquipmentSlot.values().mapNotNull { slot -> this.get(slot)?.get<StaminaModifier>() }
+        .sortedBy { it.operation }.fold(base) { current, modifier ->
+        when (modifier.operation) {
+            StaminaModifier.ModifierOperation.ADD -> current + modifier.modifier.toFloat()
+            StaminaModifier.ModifierOperation.MULTIPLY_BASE -> current + base * modifier.modifier.toFloat()
+            StaminaModifier.ModifierOperation.MULTIPLY -> current * (1 + modifier.modifier).toFloat()
+        }
+    }
+}
+
 //TODO move elsewhere
 /** How difficult it is to climb at this location for this player. The higher, the faster stamina should drain.
  *  If lower than 0, cannot climb on this wall. */
@@ -80,7 +98,7 @@ val Player.wallDifficulty: Float
 val Material.climbDifficulty: Float
     get() = stamina.config.climbDifficulty.getOrDefault(
         this,
-        stamina.config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> this.name.contains(name) }?.value
+        stamina.config.climbDifficultyGeneral.entries.firstOrNull { (name, _) -> name in this.name }?.value
             ?: if (isSolid) 1f else -1f
     )
 

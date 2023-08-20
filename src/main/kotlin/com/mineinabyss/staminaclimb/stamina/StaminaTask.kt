@@ -1,5 +1,6 @@
 package com.mineinabyss.staminaclimb.stamina
 
+import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
@@ -49,25 +50,12 @@ class StaminaTask : BukkitRunnable() {
                 bar.name("<red><b>Stamina".miniMsg())
                 if (uuid.isClimbing) player.stopClimbing()
 
-                uuid.canClimb =
-                    false //If player reaches red zone, they can't climb until they get back in green zone
+                uuid.canClimb = false //If player reaches red zone, they can't climb until they get back in green zone
                 player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.SLOW,
-                        110,
-                        2,
-                        false,
-                        false
-                    )
+                    PotionEffect(PotionEffectType.SLOW, 110, 2, false, false)
                 )
                 player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.WEAKNESS,
-                        110,
-                        2,
-                        false,
-                        false
-                    )
+                    PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false)
                 )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
@@ -132,7 +120,11 @@ class StaminaTask : BukkitRunnable() {
                 }
             }
 
-            if (isClimbing) player.addStamina(-tickDuration * conf.staminaRemovePerTick * atWallMultiplier)
+            val stamina = (-tickDuration * conf.staminaRemovePerTick * atWallMultiplier).let { base ->
+                player.inventory.toGeary()?.getEquipmentModifiers(base) ?: base
+            }
+
+            if (isClimbing) player.addStamina(stamina)
 
         }
     }
