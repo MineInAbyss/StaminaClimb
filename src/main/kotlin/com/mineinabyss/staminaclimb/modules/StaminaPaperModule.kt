@@ -9,9 +9,8 @@ import com.mineinabyss.staminaclimb.nms.Tags
 class StaminaPaperModule(
     override val plugin: StaminaClimbPlugin
 ) : StaminaClimbModule {
-    override val configHolder: IdofrontConfig<StaminaConfig> = config("config") {
-        plugin.fromPluginPath(loadDefault = true)
-    }
+    override val configHolder: IdofrontConfig<StaminaConfig> =
+        config("config", plugin.dataFolder.toPath(), StaminaConfig())
     override val config: StaminaConfig by configHolder
     override val emptyClimbableMap = Tags.createEmptyClimbableMap()
     override val normalClimbableMap = Tags.createNormalClimbableMap()

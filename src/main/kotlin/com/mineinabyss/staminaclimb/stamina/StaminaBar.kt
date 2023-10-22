@@ -11,12 +11,12 @@ import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
 import net.minecraft.core.registries.Registries
-import net.minecraft.network.protocol.game.ClientboundUpdateTagsPacket
+import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.Location
-import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

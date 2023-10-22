@@ -1,6 +1,6 @@
 [versions]
-geary = "0.25-SNAPSHOT"
-bonehurtingjuice = "1.9.2"
+geary = "0.26.0"
+bonehurtingjuice = "1.10.0"
 
 [libraries]
 geary-papermc = { module = "com.mineinabyss:geary-papermc", version.ref = "geary" }
