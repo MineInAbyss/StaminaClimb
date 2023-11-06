@@ -1,10 +1,8 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.geary.addons.GearyPhase
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.di.DI
-import com.mineinabyss.idofront.platforms.Platforms
 import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
@@ -20,26 +18,22 @@ import org.bukkit.plugin.java.JavaPlugin
 
 class StaminaClimbPlugin : JavaPlugin() {
     override fun onLoad() {
-        Platforms.load(this, "mineinabyss")
+        DI.add<StaminaClimbModule>(StaminaPaperModule(this))
+        geary {
+            autoscan(classLoader, "com.mineinabyss.staminaclimb") {
+                all()
+            }
+        }
     }
 
     override fun onEnable() {
-        DI.add<StaminaClimbModule>(StaminaPaperModule(this))
+        StaminaTask().runTaskTimer(this@StaminaClimbPlugin, 0, 1)
 
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach { registerBar(it) }
 
         listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()
-
-        geary {
-            autoscan(classLoader, "com.mineinabyss.staminaclimb") {
-                all()
-            }
-            on(GearyPhase.ENABLE) {
-                StaminaTask().runTaskTimer(this@StaminaClimbPlugin, 0, 1)
-            }
-        }
     }
 
     override fun onDisable() {
