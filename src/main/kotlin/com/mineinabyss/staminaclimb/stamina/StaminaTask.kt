@@ -21,6 +21,9 @@ class StaminaTask : BukkitRunnable() {
     private var timeSinceLastColorFlip = 0L
     private var lastTime = System.currentTimeMillis()
 
+    private val redBar = "<red><b>Stamina".miniMsg()
+    private val baseBar = "<b>Stamina".miniMsg()
+
     override fun run() {
         val currentNano = System.nanoTime()
         val tickDuration = (currentNano - lastTickNano).nanoseconds.inWholeTicks
@@ -47,7 +50,7 @@ class StaminaTask : BukkitRunnable() {
 
             if (progress <= conf.barRed) { //Changing bar colors and effects on player depending on its progress
                 bar.color(BossBar.Color.RED)
-                bar.name("<red><b>Stamina".miniMsg())
+                bar.name(redBar)
                 if (uuid.isClimbing) player.stopClimbing()
 
                 uuid.canClimb = false //If player reaches red zone, they can't climb until they get back in green zone
@@ -79,7 +82,7 @@ class StaminaTask : BukkitRunnable() {
                 }
             } else {
                 bar.color(conf.baseBarColor)
-                bar.name("<b>Stamina".miniMsg())
+                bar.name(baseBar)
                 uuid.canClimb = true
             }
         }
@@ -133,10 +136,10 @@ class StaminaTask : BukkitRunnable() {
         if (bar.color() == BossBar.Color.RED) {
             bar.color(conf.baseBarColor)
             bar.overlay(conf.baseOverlay)
-            bar.name("<b>Stamina".miniMsg())
+            bar.name(baseBar)
         } else {
             bar.color(BossBar.Color.RED)
-            bar.name("<red><b>Stamina".miniMsg()) //Make Stamina title red
+            bar.name(redBar) //Make Stamina title red
             bar.overlay(conf.baseOverlay)
         }
     }
