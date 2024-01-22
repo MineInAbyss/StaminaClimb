@@ -31,7 +31,6 @@ class StaminaTask : BukkitRunnable() {
 
         StaminaBar.forEachBar { player, uuid, bar ->
             val progress = bar.progress()
-            val onClimbable: Boolean = Tag.CLIMBABLE.isTagged(player.location.block.type)
 
             if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
                 StaminaBar.unregisterBar(uuid)
@@ -45,7 +44,7 @@ class StaminaTask : BukkitRunnable() {
                 bar.addProgress(
                     if (player.location.apply { y -= 0.0625 }.block.isSolid)
                         conf.staminaRegen
-                    else if (!onClimbable) conf.staminaRegenInAir else 0f
+                    else if (!player.isInClimbable) conf.staminaRegenInAir else 0f
                 )
 
             if (progress <= conf.barRed) { //Changing bar colors and effects on player depending on its progress
@@ -62,7 +61,7 @@ class StaminaTask : BukkitRunnable() {
                 )
             } else if (progress < 1 && !uuid.canClimb) {
                 bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if ((uuid.isClimbing || onClimbable) && progress <= conf.barBlink2) {
+            } else if ((uuid.isClimbing || player.isInClimbable) && progress <= conf.barBlink2) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
                 if (timeSinceLastColorFlip < conf.barBlinkSpeed2)
@@ -71,7 +70,7 @@ class StaminaTask : BukkitRunnable() {
                     flipColor(bar)
                     timeSinceLastColorFlip = 0
                 }
-            } else if ((uuid.isClimbing || onClimbable) && progress <= conf.barBlink1) {
+            } else if ((uuid.isClimbing || player.isInClimbable) && progress <= conf.barBlink1) {
                 val deltaTime = System.currentTimeMillis() - lastTime
                 lastTime = System.currentTimeMillis()
                 if (timeSinceLastColorFlip < conf.barBlinkSpeed1)

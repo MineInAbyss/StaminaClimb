@@ -6,6 +6,7 @@ import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
+import org.bukkit.Tag
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import java.util.*
@@ -115,3 +116,5 @@ inline fun inCube(
 var Player.climbEnabled: Boolean
     get() = StaminaBar.climbEnabled(this)
     set(enable) = StaminaBar.setClimbEnabled(this, enable)
+
+val Player.isInClimbable get() = location.block.type in Tag.CLIMBABLE.values

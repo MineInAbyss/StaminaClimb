@@ -6,6 +6,7 @@ import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
+import net.minecraft.tags.BlockTags
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
@@ -17,6 +18,7 @@ class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
             playerAction {
                 player.climbEnabled = !player.climbEnabled
                 if (player.climbEnabled) Tags.enableClimb(player)
+                else Tags.disableClimb(player)
                 player.info("Stamina and climbing system: ${if (player.climbEnabled) "ON" else "OFF"}!")
             }
         }
@@ -25,6 +27,16 @@ class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
                 action {
                     stamina.configHolder.reload()
                     sender.success("Config has been reloaded!")
+                }
+            }
+            "tags" {
+                action {
+                    stamina.emptyClimbableMap.entries.find { it.key == BlockTags.FALL_DAMAGE_RESETTING.location }?.let {
+                        sender.info("Fall damage resetting tag: ${it.value}")
+                    }
+                    stamina.normalClimbableMap.entries.find { it.key == BlockTags.CLIMBABLE.location }?.let {
+                        sender.info("Climbable tag: ${it.value}")
+                    }
                 }
             }
         }

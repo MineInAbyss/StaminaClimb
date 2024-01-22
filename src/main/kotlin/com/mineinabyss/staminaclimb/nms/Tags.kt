@@ -6,10 +6,11 @@ import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket
+import net.minecraft.network.protocol.game.ServerboundEntityTagQuery
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagNetworkSerialization.NetworkPayload
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 object Tags {
@@ -23,18 +24,27 @@ object Tags {
     fun enableClimb(player: Player) {
         if (player !in disabledPlayers) return
         disabledPlayers.remove(player)
-        val packet =
-            ClientboundUpdateTagsPacket(mapOf(Registries.BLOCK to createPayload(stamina.normalClimbableMap)))
-        (player as CraftPlayer).handle.connection.send(packet)
+        (player as CraftPlayer).handle.connection.send(updateTagPacket(true))
     }
 
     fun disableClimb(player: Player) {
         if (player in disabledPlayers) return
         disabledPlayers.add(player)
 
-        val packet =
-            ClientboundUpdateTagsPacket(mapOf(Registries.BLOCK to createPayload(stamina.emptyClimbableMap)))
-        (player as CraftPlayer).handle.connection.send(packet)
+        (player as CraftPlayer).handle.connection.send(updateTagPacket(false))
+    }
+
+    private fun updateTagPacket(enable: Boolean): ClientboundUpdateTagsPacket {
+        return ClientboundUpdateTagsPacket(
+            mapOf(
+                Registries.BLOCK to createPayload(
+                    when (enable) {
+                        true -> stamina.normalClimbableMap
+                        false -> stamina.emptyClimbableMap
+                    }
+                )
+            )
+        )
     }
 
     fun emptyFallDamageResetTag(player: Player): Map<ResourceLocation, IntArrayList> {
@@ -60,9 +70,10 @@ object Tags {
         return BuiltInRegistries.BLOCK.tags.map { pair ->
             pair.first.location to IntArrayList(pair.second.size()).apply {
                 // If the tag is CLIMBABLE, don't add any blocks to the list
-                if (pair.first.location == BlockTags.CLIMBABLE.location) return@apply
-                if (pair.first.location == BlockTags.FALL_DAMAGE_RESETTING.location) return@apply
-                pair.second.forEach { add(BuiltInRegistries.BLOCK.getId(it.value())) }
+                when (pair.first.location) {
+                    BlockTags.CLIMBABLE.location, BlockTags.FALL_DAMAGE_RESETTING.location -> return@apply
+                    else -> pair.second.forEach { add(BuiltInRegistries.BLOCK.getId(it.value())) }
+                }
             }
         }.toList().toMap()
     }

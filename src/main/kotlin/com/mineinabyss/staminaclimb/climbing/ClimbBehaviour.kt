@@ -1,21 +1,30 @@
 package com.mineinabyss.staminaclimb.climbing
 
+import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeProgress
+import net.minecraft.world.level.block.LadderBlock
 import org.bukkit.GameMode
 import org.bukkit.Material
+import org.bukkit.Tag
+import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerAnimationEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
+import org.cultofclang.bonehurtingjuice.events.BoneHurtDamageEvent
+import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -35,17 +44,35 @@ object ClimbBehaviour : Listener {
         isClimbing.remove(uuid)
     }
 
+    private val climbableMap = mutableMapOf<UUID, Float>()
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    fun PlayerMoveEvent.onScaleDownClimbable() {
+        if (!hasExplicitlyChangedBlock() || !player.isInClimbable) return
+
+        val block = player.location.block
+        val increase = if (block.type == Material.SCAFFOLDING || !player.uniqueId.canClimb) 1 else 0
+        climbableMap.compute(player.uniqueId) { _, v -> (v ?: 0).toFloat() + increase }
+        if (block.getRelative(BlockFace.DOWN).type in Tag.CLIMBABLE.values) return
+        player.hurtBones(climbableMap[player.uniqueId] ?: 0f)
+        climbableMap.remove(player.uniqueId)
+    }
+
+    @EventHandler
+    fun EntityDamageEvent.onClimbableDamage() {
+        broadcast(cause.name + ": " + isCancelled)
+    }
+
     @EventHandler
     fun BlockPlaceEvent.onBlockPlace() {
         val uuid = player.uniqueId
         if (!player.isSneaking && uuid.isClimbing) isCancelled = true
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = conf.walljumpCooldown
+        if (uuid in cooldown) uuid.climbCooldown = conf.walljumpCooldown
     }
 
     @EventHandler
     fun BlockBreakEvent.onBlockBreak() {
         val uuid = player.uniqueId
-        if (cooldown.containsKey(uuid)) uuid.climbCooldown = conf.walljumpCooldown
+        if (uuid in cooldown) uuid.climbCooldown = conf.walljumpCooldown
     }
 
     @EventHandler
@@ -54,7 +81,7 @@ object ClimbBehaviour : Listener {
         val velocity = player.velocity
 
         //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(player) && rightClicked() && !isClimbing.containsKey(uuid)) {
+        if (allowClimb(player) && rightClicked() && uuid !in isClimbing) {
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
             bossBar.removeProgress(player.fallDistance / 15f)
@@ -85,7 +112,7 @@ object ClimbBehaviour : Listener {
         val uuid = player.uniqueId
         //when isClimbing is false, it means player can still do the jump, once it's actually removed from the hashmap, that's when we can't climb
         //don't even ask ok
-        if (allowClimb(player) && isClimbing.containsKey(uuid)) {
+        if (allowClimb(player) && uuid in isClimbing) {
             //set a cooldown for player not to be able to wall jump right away
             uuid.climbCooldown = conf.walljumpCooldown
             val bossBar = StaminaBar.registeredBars[uuid] ?: return
