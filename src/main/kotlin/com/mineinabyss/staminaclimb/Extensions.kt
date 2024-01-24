@@ -117,4 +117,4 @@ var Player.climbEnabled: Boolean
     get() = StaminaBar.climbEnabled(this)
     set(enable) = StaminaBar.setClimbEnabled(this, enable)
 
-val Player.isInClimbable get() = location.block.type in Tag.CLIMBABLE.values
+val Player.isInClimbableBlock get() = location.block.type in Tag.CLIMBABLE.values

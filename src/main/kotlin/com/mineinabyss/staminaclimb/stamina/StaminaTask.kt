@@ -1,15 +1,14 @@
 package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
+import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.modules.stamina
 import net.kyori.adventure.bossbar.BossBar
-import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.Tag
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.scheduler.BukkitRunnable
@@ -42,52 +41,58 @@ class StaminaTask : BukkitRunnable() {
             //regenerate stamina for BossBar
             if (!uuid.isClimbing)
                 bar.addProgress(
-                    if (player.location.apply { y -= 0.0625 }.block.isSolid)
-                        conf.staminaRegen
-                    else if (!player.isInClimbable) conf.staminaRegenInAir else 0f
+                    when {
+                        player.location.clone().apply { y -= 0.0625 }.block.isSolid -> conf.staminaRegen
+                        !player.isInClimbableBlock -> conf.staminaRegenInAir
+                        else -> 0f
+                    }
                 )
 
-            if (progress <= conf.barRed) { //Changing bar colors and effects on player depending on its progress
-                bar.color(BossBar.Color.RED)
-                bar.name(redBar)
-                if (uuid.isClimbing) player.stopClimbing()
+            when {
+                progress <= conf.barRed -> { //Changing bar colors and effects on player depending on its progress
+                    bar.color(BossBar.Color.RED)
+                    bar.name(redBar)
+                    if (uuid.isClimbing) player.stopClimbing()
 
-                uuid.canClimb = false //If player reaches red zone, they can't climb until they get back in green zone
-                player.addPotionEffect(
-                    PotionEffect(PotionEffectType.SLOW, 110, 2, false, false)
-                )
-                player.addPotionEffect(
-                    PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false)
-                )
-            } else if (progress < 1 && !uuid.canClimb) {
-                bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
-            } else if ((uuid.isClimbing || player.isInClimbable) && progress <= conf.barBlink2) {
-                val deltaTime = System.currentTimeMillis() - lastTime
-                lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < conf.barBlinkSpeed2)
-                    timeSinceLastColorFlip += deltaTime
-                else {
-                    flipColor(bar)
-                    timeSinceLastColorFlip = 0
+                    uuid.canClimb =
+                        false //If player reaches red zone, they can't climb until they get back in green zone
+                    player.addPotionEffect(PotionEffect(PotionEffectType.SLOW, 110, 2, false, false))
+                    player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false))
                 }
-            } else if ((uuid.isClimbing || player.isInClimbable) && progress <= conf.barBlink1) {
-                val deltaTime = System.currentTimeMillis() - lastTime
-                lastTime = System.currentTimeMillis()
-                if (timeSinceLastColorFlip < conf.barBlinkSpeed1)
-                    timeSinceLastColorFlip += deltaTime
-                else {
-                    flipColor(bar)
-                    timeSinceLastColorFlip = 0
+
+                progress < 1 && !uuid.canClimb -> bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
+                (uuid.isClimbing || player.isInClimbableBlock) && progress <= conf.barBlink2 -> {
+                    val deltaTime = System.currentTimeMillis() - lastTime
+                    lastTime = System.currentTimeMillis()
+                    if (timeSinceLastColorFlip < conf.barBlinkSpeed2)
+                        timeSinceLastColorFlip += deltaTime
+                    else {
+                        flipColor(bar)
+                        timeSinceLastColorFlip = 0
+                    }
                 }
-            } else {
-                bar.color(conf.baseBarColor)
-                bar.name(baseBar)
-                uuid.canClimb = true
+
+                (uuid.isClimbing || player.isInClimbableBlock) && progress <= conf.barBlink1 -> {
+                    val deltaTime = System.currentTimeMillis() - lastTime
+                    lastTime = System.currentTimeMillis()
+                    if (timeSinceLastColorFlip < conf.barBlinkSpeed1)
+                        timeSinceLastColorFlip += deltaTime
+                    else {
+                        flipColor(bar)
+                        timeSinceLastColorFlip = 0
+                    }
+                }
+
+                else -> {
+                    bar.color(conf.baseBarColor)
+                    bar.name(baseBar)
+                    uuid.canClimb = true
+                }
             }
         }
 
         ClimbBehaviour.isClimbing.entries.forEach { (uuid, isClimbing) ->
-            val player = Bukkit.getPlayer(uuid) ?: ClimbBehaviour.isClimbing.remove(uuid).let { return }
+            val player = uuid.toPlayer() ?: ClimbBehaviour.isClimbing.remove(uuid).let { return }
             //if climbing in creative, stop climbing but keep flight
             if (player.gameMode == GameMode.CREATIVE) {
                 player.stopClimbing()

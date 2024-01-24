@@ -5,7 +5,6 @@ import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeProgress
-import net.minecraft.world.level.block.LadderBlock
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.Tag
@@ -23,7 +22,6 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
-import org.cultofclang.bonehurtingjuice.events.BoneHurtDamageEvent
 import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -47,19 +45,14 @@ object ClimbBehaviour : Listener {
     private val climbableMap = mutableMapOf<UUID, Float>()
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     fun PlayerMoveEvent.onScaleDownClimbable() {
-        if (!hasExplicitlyChangedBlock() || !player.isInClimbable) return
+        if (!hasExplicitlyChangedBlock() || !player.isInClimbableBlock) return
 
         val block = player.location.block
-        val increase = if (block.type == Material.SCAFFOLDING || !player.uniqueId.canClimb) 1 else 0
+        val increase = if (block.type == Material.SCAFFOLDING || !player.climbEnabled || !player.uniqueId.canClimb) 1 else 0
         climbableMap.compute(player.uniqueId) { _, v -> (v ?: 0).toFloat() + increase }
         if (block.getRelative(BlockFace.DOWN).type in Tag.CLIMBABLE.values) return
         player.hurtBones(climbableMap[player.uniqueId] ?: 0f)
         climbableMap.remove(player.uniqueId)
-    }
-
-    @EventHandler
-    fun EntityDamageEvent.onClimbableDamage() {
-        broadcast(cause.name + ": " + isCancelled)
     }
 
     @EventHandler
