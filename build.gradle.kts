@@ -8,7 +8,7 @@ plugins {
     id("com.mineinabyss.conventions.publication")
     id("com.mineinabyss.conventions.copyjar")
     id("com.mineinabyss.conventions.autoversion")
-    alias(libs.plugins.kotlinx.serialization)
+    alias(idofrontLibs.plugins.kotlinx.serialization)
 }
 
 repositories {
@@ -18,15 +18,15 @@ repositories {
 }
 
 dependencies {
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.kotlinx.serialization.kaml) {
+    compileOnly(idofrontLibs.kotlin.stdlib)
+    compileOnly(idofrontLibs.kotlinx.serialization.kaml) {
         exclude(group = "org.jetbrains.kotlin")
     }
-    compileOnly(libs.kotlinx.coroutines)
-    compileOnly(libs.minecraft.mccoroutine)
-    compileOnly(staminaLibs.geary.papermc)
-    compileOnly(staminaLibs.bonehurtingjuice)
+    compileOnly(idofrontLibs.kotlinx.coroutines)
+    compileOnly(idofrontLibs.minecraft.mccoroutine)
+    compileOnly(libs.geary.papermc)
+    compileOnly(libs.bonehurtingjuice)
 
-    implementation(libs.bundles.idofront.core)
-    implementation(libs.idofront.nms)
+    implementation(idofrontLibs.bundles.idofront.core)
+    implementation(idofrontLibs.idofront.nms)
 }
