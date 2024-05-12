@@ -6,11 +6,10 @@ import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket
-import net.minecraft.network.protocol.game.ServerboundEntityTagQuery
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagNetworkSerialization.NetworkPayload
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
 
 object Tags {

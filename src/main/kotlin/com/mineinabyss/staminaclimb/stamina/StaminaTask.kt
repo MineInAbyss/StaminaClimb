@@ -56,7 +56,7 @@ class StaminaTask : BukkitRunnable() {
 
                     uuid.canClimb =
                         false //If player reaches red zone, they can't climb until they get back in green zone
-                    player.addPotionEffect(PotionEffect(PotionEffectType.SLOW, 110, 2, false, false))
+                    player.addPotionEffect(PotionEffect(PotionEffectType.SLOWNESS, 110, 2, false, false))
                     player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false))
                 }
 

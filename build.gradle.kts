@@ -25,7 +25,6 @@ dependencies {
     compileOnly(idofrontLibs.kotlinx.coroutines)
     compileOnly(idofrontLibs.minecraft.mccoroutine)
     compileOnly(libs.geary.papermc)
-    compileOnly(libs.bonehurtingjuice)
 
     implementation(idofrontLibs.bundles.idofront.core)
     implementation(idofrontLibs.idofront.nms)

@@ -1,28 +1,21 @@
 package com.mineinabyss.staminaclimb.climbing
 
-import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeProgress
 import org.bukkit.GameMode
 import org.bukkit.Material
-import org.bukkit.Tag
-import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.player.PlayerAnimationEvent
 import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
-import org.cultofclang.bonehurtingjuice.hurtBones
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -42,18 +35,18 @@ object ClimbBehaviour : Listener {
         isClimbing.remove(uuid)
     }
 
-    private val climbableMap = mutableMapOf<UUID, Float>()
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
-    fun PlayerMoveEvent.onScaleDownClimbable() {
-        if (!hasExplicitlyChangedBlock() || !player.isInClimbableBlock) return
-
-        val block = player.location.block
-        val increase = if (block.type == Material.SCAFFOLDING || !player.climbEnabled || !player.uniqueId.canClimb) 1 else 0
-        climbableMap.compute(player.uniqueId) { _, v -> (v ?: 0).toFloat() + increase }
-        if (block.getRelative(BlockFace.DOWN).type in Tag.CLIMBABLE.values) return
-        player.hurtBones(climbableMap[player.uniqueId] ?: 0f)
-        climbableMap.remove(player.uniqueId)
-    }
+//    private val climbableMap = mutableMapOf<UUID, Float>()
+//    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+//    fun PlayerMoveEvent.onScaleDownClimbable() {
+//        if (!hasExplicitlyChangedBlock() || !player.isInClimbableBlock) return
+//
+//        val block = player.location.block
+//        val increase = if (block.type == Material.SCAFFOLDING || !player.climbEnabled || !player.uniqueId.canClimb) 1 else 0
+//        climbableMap.compute(player.uniqueId) { _, v -> (v ?: 0).toFloat() + increase }
+//        if (block.getRelative(BlockFace.DOWN).type in Tag.CLIMBABLE.values) return
+//        player.hurtBones(climbableMap[player.uniqueId] ?: 0f)
+//        climbableMap.remove(player.uniqueId)
+//    }
 
     @EventHandler
     fun BlockPlaceEvent.onBlockPlace() {
