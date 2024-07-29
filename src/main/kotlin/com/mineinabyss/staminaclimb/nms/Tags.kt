@@ -1,6 +1,8 @@
 package com.mineinabyss.staminaclimb.nms
 
 import com.mineinabyss.idofront.nms.interceptClientbound
+import com.mineinabyss.idofront.nms.networkPayload
+import com.mineinabyss.idofront.nms.tags
 import com.mineinabyss.staminaclimb.modules.stamina
 import it.unimi.dsi.fastutil.ints.IntList
 import net.minecraft.core.registries.Registries
@@ -28,18 +30,17 @@ object Tags {
 
             stamina.initialTags.putAll(packet.tags)
             packet.tags.entries.map { registryEntry ->
-                if (registryEntry.key == Registries.BLOCK) {
+                registryEntry.key to if (registryEntry.key == Registries.BLOCK) {
                     val tags = registryEntry.value.tags().map { tag ->
                         tag.key to when (tag.key) {
                             BlockTags.CLIMBABLE.location, BlockTags.FALL_DAMAGE_RESETTING.location -> IntList.of()
                             else -> tag.value
                         }
                     }.toMap()
-                    registryEntry.setValue(tags.networkPayload())
-                }
-                registryEntry
+                    tags.networkPayload()
+                } else registryEntry.value
             }.forEach {
-                stamina.disabledClimbingTags[it.key] = it.value
+                stamina.disabledClimbingTags[it.first] = it.second
             }
 
             return@interceptClientbound packet
@@ -58,10 +59,5 @@ object Tags {
 
         (player as CraftPlayer).handle.connection.send(ClientboundUpdateTagsPacket(stamina.disabledClimbingTags))
     }
-
-    private val tagsField = NetworkPayload::class.java.getDeclaredField("tags").also { it.isAccessible = true }
-    private val payloadConstructor = NetworkPayload::class.java.declaredConstructors.first().also { it.isAccessible = true }
-    fun NetworkPayload.tags() = (tagsField.get(this) as Map<ResourceLocation, IntList>).toMutableMap()
-    fun Map<ResourceLocation, IntList>.networkPayload() = payloadConstructor.newInstance(this) as NetworkPayload
 
 }

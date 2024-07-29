@@ -6,13 +6,9 @@ import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
-import net.minecraft.core.Registry
-import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.tags.BlockTags
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
-import kotlin.jvm.optionals.getOrNull
 
 class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
     override val commands = commands(stamina.plugin) {

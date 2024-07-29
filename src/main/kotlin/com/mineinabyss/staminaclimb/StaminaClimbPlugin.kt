@@ -1,29 +1,21 @@
 package com.mineinabyss.staminaclimb
 
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.di.DI
-import com.mineinabyss.idofront.nms.interceptClientbound
 import com.mineinabyss.idofront.plugin.listeners
+import com.mineinabyss.idofront.time.ticks
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.modules.StaminaClimbModule
 import com.mineinabyss.staminaclimb.modules.StaminaPaperModule
-import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
-import com.mineinabyss.staminaclimb.nms.Tags.networkPayload
-import com.mineinabyss.staminaclimb.nms.Tags.tags
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
 import com.mineinabyss.staminaclimb.stamina.StaminaTask
-import it.unimi.dsi.fastutil.ints.IntList
-import net.minecraft.core.registries.Registries
-import net.minecraft.network.protocol.Packet
-import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket
-import net.minecraft.resources.ResourceLocation
-import net.minecraft.tags.BlockTags
+import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
-import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 
 /** A reference to the StaminaClimb plugin */
