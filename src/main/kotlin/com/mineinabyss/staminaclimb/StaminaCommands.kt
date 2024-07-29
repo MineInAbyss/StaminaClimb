@@ -6,10 +6,13 @@ import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
+import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.tags.BlockTags
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
+import kotlin.jvm.optionals.getOrNull
 
 class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
     override val commands = commands(stamina.plugin) {
@@ -25,18 +28,18 @@ class StaminaCommands : IdofrontCommandExecutor(), TabCompleter {
         "staminaclimb" {
             "reload" {
                 action {
-                    stamina.configHolder.reload()
+                    stamina.plugin.createClimbContext()
                     sender.success("Config has been reloaded!")
                 }
             }
             "tags" {
                 action {
-                    stamina.emptyClimbableMap.entries.find { it.key == BlockTags.FALL_DAMAGE_RESETTING.location }?.let {
-                        sender.info("Fall damage resetting tag: ${it.value}")
-                    }
-                    stamina.normalClimbableMap.entries.find { it.key == BlockTags.CLIMBABLE.location }?.let {
-                        sender.info("Climbable tag: ${it.value}")
-                    }
+//                    stamina.emptyClimbableMap.entries.find { it.key == BlockTags.CLIMBABLE.location }?.let {
+//                        sender.info("Empty climbable tag: ${it.value.joinToString { BuiltInRegistries.BLOCK.getHolder(it).getOrNull()?.registeredName.toString() }}")
+//                    }
+//                    stamina.normalClimbableMap.entries.find { it.key == BlockTags.CLIMBABLE.location }?.let {
+//                        sender.info("Normal Climbable Tag: ${it.value.joinToString { BuiltInRegistries.BLOCK.getHolder(it).getOrNull()?.registeredName.toString() }}")
+//                    }
                 }
             }
         }

@@ -1,7 +1,7 @@
 name: StaminaClimb
 version: '${plugin_version}'
 author: Offz
-api-version: '1.20'
+api-version: '1.21'
 main: com.mineinabyss.staminaclimb.StaminaClimbPlugin
 prefix: SnC
 description: A mod that lets you climb and get exhausted
@@ -10,9 +10,5 @@ dependencies:
   server:
     Geary:
       required: true
-      load: BEFORE
-      join-classpath: true
-    BoneHurtingJuice:
-      required: false
       load: BEFORE
       join-classpath: true

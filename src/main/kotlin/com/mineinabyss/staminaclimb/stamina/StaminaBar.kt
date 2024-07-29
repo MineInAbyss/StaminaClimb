@@ -7,7 +7,6 @@ import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
-import com.mineinabyss.staminaclimb.nms.Tags.createPayload
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
 import net.minecraft.core.registries.Registries
@@ -81,9 +80,6 @@ object StaminaBar : Listener {
 
     @EventHandler
     fun PlayerJoinEvent.onPlayerJoin() {
-        val map = Tags.emptyFallDamageResetTag(player)
-        val packet = ClientboundUpdateTagsPacket(mapOf(Registries.BLOCK to createPayload(map)))
-        (player as CraftPlayer).handle.connection.send(packet)
         registerBar(player)
         if (player.isClimbing && player.uniqueId in barProgressTracker) {
             player.setStamina(barProgressTracker[player.uniqueId]!!)
