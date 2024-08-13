@@ -20,7 +20,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 object ClimbBehaviour : Listener {
-    private val conf = stamina.config
+    internal var conf = stamina.config
     val canClimb: MutableMap<UUID, Boolean> = mutableMapOf()
     val isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
     val cooldown: MutableMap<UUID, Long> = HashMap()

@@ -9,13 +9,10 @@ import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
-import net.minecraft.core.registries.Registries
-import net.minecraft.network.protocol.common.ClientboundUpdateTagsPacket
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
 import org.bukkit.Location
-import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -30,7 +27,7 @@ import kotlin.math.pow
 import kotlin.time.Duration.Companion.seconds
 
 object StaminaBar : Listener {
-    private val conf = stamina.config
+    internal var conf = stamina.config
     private val disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
 
     @PublishedApi
@@ -102,36 +99,28 @@ object StaminaBar : Listener {
     @EventHandler
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
-        val climbDisabled = Tags.disabledPlayers.contains(player)
+        val climbDisabled = player in Tags.disabledPlayers
         val vel = player.velocity.y
-        if (vel < -0.1) {
-            velocities[uuid] = vel
+        if (vel < -0.1) velocities[uuid] = vel
+
+        if (player.isClimbing && !player.climbEnabled && !climbDisabled) {
+            fallDist[uuid] = player.location
+            Tags.disableClimb(player)
+            applyClimbDamage(player)
         }
 
-        if (player.isClimbing && !player.climbEnabled) {
-            if (!climbDisabled) {
-                fallDist[uuid] = player.location
-                Tags.disableClimb(player)
-                applyClimbDamage(player)
+        if (player.isClimbing && !uuid.canClimb && !climbDisabled) {
+            fallDist[uuid] = player.location
+            Tags.disableClimb(player)
+            stamina.plugin.launch {
+                while (!uuid.canClimb) delay(1.seconds)
+                Tags.enableClimb(player)
             }
-        }
-
-        if (player.isClimbing && !uuid.canClimb) {
-            if (!climbDisabled) {
-                fallDist[uuid] = player.location
-                Tags.disableClimb(player)
-                stamina.plugin.launch {
-                    while (!uuid.canClimb) {
-                        delay(1.seconds)
-                    }
-                    Tags.enableClimb(player)
-                }
-                applyClimbDamage(player)
-            }
+            applyClimbDamage(player)
         }
 
         if (player.isClimbing && uuid.canClimb && from.distanceSquared(to) > 0.007)
-            player.removeStamina(conf.staminaRemoveWhileOnLadder)
+            player.removeStamina(conf.staminaRemoveWhileOnClimbable)
 
         if (!player.isClimbing && uuid.isClimbing && from.distanceSquared(to) > 0.007)
             player.removeStamina(conf.staminaRemoveWhileMoving)

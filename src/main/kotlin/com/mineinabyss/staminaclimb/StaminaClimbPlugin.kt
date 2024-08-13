@@ -1,20 +1,17 @@
 package com.mineinabyss.staminaclimb
 
-import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.plugin.listeners
-import com.mineinabyss.idofront.time.ticks
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
 import com.mineinabyss.staminaclimb.modules.StaminaClimbModule
 import com.mineinabyss.staminaclimb.modules.StaminaPaperModule
+import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.StaminaBar.registerBar
-import com.mineinabyss.staminaclimb.stamina.StaminaTask
-import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -31,10 +28,10 @@ class StaminaClimbPlugin : JavaPlugin() {
     }
 
     override fun onEnable() {
-        StaminaTask().runTaskTimer(this@StaminaClimbPlugin, 0, 1)
+        stamina.staminaTask.runTaskTimer(this@StaminaClimbPlugin, 0, 1)
 
         // toggle system on for all online players (for plugin reload)
-        Bukkit.getOnlinePlayers().forEach { registerBar(it) }
+        Bukkit.getOnlinePlayers().forEach(::registerBar)
 
         listeners(ClimbBehaviour, StaminaBar)
         StaminaCommands()

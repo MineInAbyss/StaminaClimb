@@ -12,7 +12,7 @@ class StaminaConfig(
     val staminaRegenInAir: Float = 0.003f,
     val staminaRemovePerTick: Float = 0.005f,
     val staminaRemoveWhileMoving: Float = 0.005f,
-    val staminaRemoveWhileOnLadder: Float = 0.01f,
+    val staminaRemoveWhileOnClimbable: Float = 0.01f,
     val baseBarColor: Color = Color.GREEN,
     val baseOverlay: Overlay = Overlay.NOTCHED_10,
     val barRed: Float = 0.02f,
