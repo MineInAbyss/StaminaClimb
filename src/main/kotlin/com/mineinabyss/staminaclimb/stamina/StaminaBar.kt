@@ -33,7 +33,6 @@ object StaminaBar : Listener {
     @PublishedApi
     internal val registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
     private val velocities: MutableMap<UUID, Double> = mutableMapOf()
-    private val fallDist: MutableMap<UUID, Location> = mutableMapOf()
     private val barProgressTracker = mutableMapOf<UUID, Float>()
 
     fun climbEnabled(player: Player) = player.uniqueId !in disabledPlayers
@@ -103,20 +102,14 @@ object StaminaBar : Listener {
         val vel = player.velocity.y
         if (vel < -0.1) velocities[uuid] = vel
 
-        if (player.isClimbing && !player.climbEnabled && !climbDisabled) {
-            fallDist[uuid] = player.location
-            Tags.disableClimb(player)
-            applyClimbDamage(player)
-        }
+        if (player.isClimbing && !player.climbEnabled && !climbDisabled) Tags.disableClimb(player)
 
         if (player.isClimbing && !uuid.canClimb && !climbDisabled) {
-            fallDist[uuid] = player.location
             Tags.disableClimb(player)
             stamina.plugin.launch {
                 while (!uuid.canClimb) delay(1.seconds)
                 Tags.enableClimb(player)
             }
-            applyClimbDamage(player)
         }
 
         if (player.isClimbing && uuid.canClimb && from.distanceSquared(to) > 0.007)
@@ -133,18 +126,11 @@ object StaminaBar : Listener {
         if (cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
         val bossBar = registeredBars[uuid] ?: return
-        val threshold = 0.6 //TODO make config and not dumb calculations
-        val multiplier = 11.0
-        val exponent = 1.1
-        val vel = velocities[uuid] ?: return //TODO put this damage system into bonehurtingjuice
+        val threshold = 0.6
+        val vel = velocities[uuid] ?: return
         player.hideBossBar(bossBar)
-        if (vel > -threshold) {
-            bossBar.removeProgress(0.1f / 15f)
-            return
-        }
-        val damaged = ((vel + threshold) * -multiplier).pow(exponent)
-        damage = damaged
-        bossBar.removeProgress(damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
+        if (vel > -threshold) bossBar.removeProgress(0.1f / 15f)
+        else bossBar.removeProgress(damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
@@ -162,6 +148,7 @@ object StaminaBar : Listener {
             && !registeredBars.containsKey(player.uniqueId)
         ) {
             registerBar(player)
+            player.setStamina(1f)
         }
     }
 
@@ -176,20 +163,6 @@ object StaminaBar : Listener {
         registeredBars.toMap().forEach { (uuid, bar) ->
             val player = uuid.toPlayer() ?: registeredBars.remove(uuid).let { return@forEach }
             run(player, uuid, bar)
-        }
-    }
-
-    fun applyClimbDamage(player: Player) {
-        stamina.plugin.launch {
-            while (!player.location.apply { y -= 1 }.block.isSolid) {
-                delay(1)
-            }
-//        if (Plugins.isEnabled()) {
-//            if (StaminaBar.fallDist.containsKey(player.uniqueId)) {
-//                player.hurtBones((StaminaBar.fallDist[player.uniqueId]!!.y - player.location.y).toFloat())
-//            }
-//        }
-            fallDist.remove(player.uniqueId)
         }
     }
 
