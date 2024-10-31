@@ -1,7 +1,7 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.geary.autoscan.autoscan
-import com.mineinabyss.geary.modules.geary
+import com.mineinabyss.geary.papermc.configure
+import com.mineinabyss.geary.papermc.gearyPaper
 import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
@@ -20,10 +20,8 @@ import org.bukkit.plugin.java.JavaPlugin
 class StaminaClimbPlugin : JavaPlugin() {
     override fun onLoad() {
         createClimbContext()
-        geary {
-            autoscan(classLoader, "com.mineinabyss.staminaclimb") {
-                all()
-            }
+        gearyPaper.configure {
+            install(StaminaAddon)
         }
     }
 
@@ -34,7 +32,7 @@ class StaminaClimbPlugin : JavaPlugin() {
         Bukkit.getOnlinePlayers().forEach(::registerBar)
 
         listeners(ClimbBehaviour, StaminaBar)
-        StaminaCommands()
+        StaminaCommands.registerCommands()
 
         Tags.interceptConfigPhaseTagPacket()
     }
