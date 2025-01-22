@@ -51,7 +51,7 @@ object ClimbBehaviour : Listener {
     @EventHandler
     fun BlockPlaceEvent.onBlockPlace() {
         val uuid = player.uniqueId
-        if (!player.isSneaking && uuid.isClimbing) isCancelled = true
+        if ((!player.isSneaking || player.isInClimbableBlock) && uuid.isClimbing) isCancelled = true
         if (uuid in cooldown) uuid.climbCooldown = conf.walljumpCooldown
     }
 
@@ -91,6 +91,8 @@ object ClimbBehaviour : Listener {
                 }
             player.flySpeed = 0.03f
         }
+
+        if ((!player.isSneaking || player.isInClimbableBlock) && uuid.isClimbing) isCancelled = true
     }
 
     @EventHandler
