@@ -3,6 +3,7 @@ package com.mineinabyss.staminaclimb
 import com.mineinabyss.geary.papermc.tracking.items.inventory.GearyPlayerInventory
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.component.StaminaModifier
+import com.mineinabyss.staminaclimb.component.StaminaModifiers
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import org.bukkit.Material
@@ -51,9 +52,9 @@ const val checkRange = 0.4 //TODO config
  * Get all modifiers from equipment, sorts them based on ModifierOperation Enum value, then folds them into the base value
  * Logic is a mimic of [Modifier Operations](https://minecraft.fandom.com/wiki/Attribute#Operations) in vanilla.
  */
-fun GearyPlayerInventory.getEquipmentModifiers(base: Float): Float {
-    return EquipmentSlot.values().mapNotNull { slot -> this.get(slot)?.get<StaminaModifier>() }
-        .sortedBy { it.operation }.fold(base) { current, modifier ->
+fun GearyPlayerInventory.equipmentModifiers(base: Float, type: StaminaModifier.ModifierType): Float {
+    return EquipmentSlot.entries.mapNotNull { slot -> this.get(slot)?.get<StaminaModifiers>()?.modifiers }.flatten()
+        .filter { it.type == type }.sortedBy { it.operation }.fold(base) { current, modifier ->
         when (modifier.operation) {
             StaminaModifier.ModifierOperation.ADD -> current + modifier.modifier.toFloat()
             StaminaModifier.ModifierOperation.MULTIPLY_BASE -> current + base * modifier.modifier.toFloat()
@@ -90,8 +91,7 @@ val Player.wallDifficulty: Float
 
         if ((uniqueId.isClimbing || location.direction.y > 0.5)) {
             val climbModifier = loc.clone().add(0.0, 2.2, 0.0).block.type.climbDifficulty
-            if (climbModifier > 0)
-                return climbModifier * stamina.config.roofClimbDifficulty
+            if (climbModifier > 0) return climbModifier * stamina.config.roofClimbDifficulty
         }
         return -1f
     }

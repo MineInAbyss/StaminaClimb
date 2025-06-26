@@ -1,9 +1,12 @@
 package com.mineinabyss.staminaclimb.climbing
 
+import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.staminaclimb.*
+import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeProgress
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -21,9 +24,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 object ClimbBehaviour : Listener {
     internal var conf = stamina.config
-    val canClimb: MutableMap<UUID, Boolean> = mutableMapOf()
+    val canClimb: Object2ObjectOpenHashMap<UUID, Boolean> = Object2ObjectOpenHashMap()
     val isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
-    val cooldown: MutableMap<UUID, Long> = HashMap()
+    val cooldown: Object2ObjectOpenHashMap<UUID, Long> = Object2ObjectOpenHashMap()
 
     fun stopClimbing(player: Player) {
         if (player.gameMode == GameMode.SURVIVAL || player.gameMode == GameMode.ADVENTURE) {
@@ -89,7 +92,7 @@ object ClimbBehaviour : Listener {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()
                 }
-            player.flySpeed = 0.03f
+            player.flySpeed = player.inventory.toGeary()?.equipmentModifiers(0.03f, StaminaModifier.ModifierType.CLIMB_SPEED) ?: 0.03f
         }
 
         if ((!player.isSneaking || player.isInClimbableBlock) && uuid.isClimbing) isCancelled = true
@@ -155,7 +158,7 @@ object ClimbBehaviour : Listener {
             player.uniqueId.climbCooldown = conf.jumpCooldown
             return false
         }
-        if (conf.climbBlacklist.contains(block)) {
+        if (block in conf.climbBlacklist) {
             player.uniqueId.climbCooldown = conf.jumpCooldown
             return false
         } else {

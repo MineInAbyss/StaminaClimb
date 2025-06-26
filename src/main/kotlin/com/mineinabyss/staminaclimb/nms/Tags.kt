@@ -50,14 +50,14 @@ object Tags {
     fun enableClimb(player: Player) {
         if (player !in disabledPlayers) return
         disabledPlayers.remove(player)
-        (player as CraftPlayer).handle.connection.send(ClientboundUpdateTagsPacket(stamina.initialTags))
+        (player as CraftPlayer).handle.connection.send(stamina.initialTagsPacket)
     }
 
     fun disableClimb(player: Player) {
         if (player in disabledPlayers) return
         disabledPlayers.add(player)
 
-        (player as CraftPlayer).handle.connection.send(ClientboundUpdateTagsPacket(stamina.disabledClimbingTags))
+        (player as CraftPlayer).handle.connection.send(stamina.disabledClimbingTagsPacket)
     }
 
 }

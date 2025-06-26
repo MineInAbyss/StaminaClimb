@@ -7,6 +7,8 @@ import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.delay
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
@@ -22,18 +24,20 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 import java.util.*
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.seconds
 
 object StaminaBar : Listener {
     internal var conf = stamina.config
-    private val disabledPlayers: MutableList<UUID> = mutableListOf() //TODO persist
+    private val disabledPlayers: ObjectArrayList<UUID> = ObjectArrayList() //TODO persist
 
     @PublishedApi
-    internal val registeredBars: MutableMap<UUID, BossBar> = mutableMapOf()
-    private val velocities: MutableMap<UUID, Double> = mutableMapOf()
-    private val barProgressTracker = mutableMapOf<UUID, Float>()
+    internal val registeredBars: Object2ObjectOpenHashMap<UUID, BossBar> = Object2ObjectOpenHashMap()
+    private val velocities: Object2ObjectOpenHashMap<UUID, Double> = Object2ObjectOpenHashMap()
+    private val barProgressTracker: Object2ObjectOpenHashMap<UUID, Float> = Object2ObjectOpenHashMap()
 
     fun climbEnabled(player: Player) = player.uniqueId !in disabledPlayers
 
@@ -197,3 +201,6 @@ internal fun Player.removeStamina(amount: Float) {
 internal fun Player.setStamina(amount: Float) {
     StaminaBar.registeredBars[uniqueId]?.setProgress(amount)
 }
+
+val SLOWNESS_EFFECT = PotionEffect(PotionEffectType.SLOWNESS, 110, 2, false, false)
+val WEAKNESS_EFFECT = PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false)

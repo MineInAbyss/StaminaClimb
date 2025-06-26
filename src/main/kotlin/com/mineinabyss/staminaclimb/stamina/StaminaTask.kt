@@ -7,11 +7,11 @@ import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
+import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.GameMode
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
+import org.bukkit.attribute.Attribute
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -39,14 +39,17 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             }
 
             //regenerate stamina for BossBar
-            if (!uuid.isClimbing)
-                bar.addProgress(
-                    when {
-                        player.location.down(0.0625).block.isSolid -> config.staminaRegen
-                        !player.isInClimbableBlock -> config.staminaRegenInAir
-                        else -> 0f
-                    }
-                )
+            if (!uuid.isClimbing) {
+                val base = when {
+                    player.location.down(0.0625).block.isSolid -> config.staminaRegen
+                    !player.isInClimbableBlock -> config.staminaRegenInAir
+                    else -> 0f
+                }
+
+                val gearyInventory = player.inventory.toGeary()
+                val amount = gearyInventory?.equipmentModifiers(base, StaminaModifier.ModifierType.REGENERATE) ?: base
+                bar.addProgress(amount)
+            }
 
             when {
                 progress <= config.barRed -> { //Changing bar colors and effects on player depending on its progress
@@ -54,9 +57,9 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                     bar.name(redBar)
                     if (uuid.isClimbing) player.stopClimbing()
 
-                    uuid.canClimb = false//If player is in red zone, they can't climb until they get back in green zone
-                    player.addPotionEffect(PotionEffect(PotionEffectType.SLOWNESS, 110, 2, false, false))
-                    player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 110, 2, false, false))
+                    uuid.canClimb = false //If player is in red zone, they can't climb until they get back in green zone
+                    player.addPotionEffect(SLOWNESS_EFFECT)
+                    player.addPotionEffect(WEAKNESS_EFFECT)
                 }
 
                 progress < 1 && !uuid.canClimb -> bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
@@ -101,7 +104,8 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             }
 
             //prevent player from climbing if they have fallen far enough or in a invalid state
-            if (!player.isFlying && isClimbing || player.fallDistance > config.maxFallDist) {
+            val safeFallDistance = player.getAttribute(Attribute.SAFE_FALL_DISTANCE)?.value ?: config.maxFallDist
+            if (!player.isFlying && isClimbing || player.fallDistance > safeFallDistance) {
                 player.stopClimbing()
                 return@forEach
             }
@@ -127,9 +131,12 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                 }
             }
 
-            val stamina = (-tickDuration * config.staminaRemovePerTick * atWallMultiplier).let { base ->
-                player.inventory.toGeary()?.getEquipmentModifiers(base) ?: base
-            }
+            val baseReduction = (tickDuration * config.staminaRemovePerTick * atWallMultiplier).coerceAtLeast(0.0f)
+            val modifiedReduction = player.inventory.toGeary()?.let { geary ->
+                val modifier = geary.equipmentModifiers(1.0f, StaminaModifier.ModifierType.STAMINA)
+                baseReduction / modifier.coerceAtLeast(0.1f) // Divide to reduce stamina drain
+            } ?: baseReduction
+            val stamina = -modifiedReduction.coerceIn(0.0f, 1.0f)
 
             if (isClimbing) player.addStamina(stamina)
 
