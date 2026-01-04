@@ -16,8 +16,8 @@ interface StaminaClimbModule {
     val plugin: StaminaClimbPlugin
     val config: StaminaConfig
     val staminaTask: StaminaTask
-    val disabledClimbingTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>?>, NetworkPayload>
+    val disabledClimbingTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload>
     val disabledClimbingTagsPacket: ClientboundUpdateTagsPacket
-    val initialTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>?>, NetworkPayload>
+    val initialTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload>
     val initialTagsPacket: ClientboundUpdateTagsPacket
 }

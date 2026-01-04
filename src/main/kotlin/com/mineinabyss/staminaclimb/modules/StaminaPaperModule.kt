@@ -15,8 +15,8 @@ class StaminaPaperModule(
 ) : StaminaClimbModule {
     override val config by config("config", plugin.dataPath, StaminaConfig())
     override val staminaTask: StaminaTask = StaminaTask(config)
-    override val disabledClimbingTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>?>, NetworkPayload> = Object2ObjectOpenHashMap()
+    override val disabledClimbingTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload> = Object2ObjectOpenHashMap()
     override val disabledClimbingTagsPacket = ClientboundUpdateTagsPacket(disabledClimbingTags)
-    override val initialTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>?>, NetworkPayload> = Object2ObjectOpenHashMap()
+    override val initialTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload> = Object2ObjectOpenHashMap()
     override val initialTagsPacket = ClientboundUpdateTagsPacket(initialTags)
 }
