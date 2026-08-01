@@ -2,6 +2,8 @@ package com.mineinabyss.staminaclimb.climbing
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.staminaclimb.*
+import com.mineinabyss.staminaclimb.Events.PlayerClimbEvent
+import com.mineinabyss.staminaclimb.Events.PlayerStopClimbEvent
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
@@ -21,12 +23,29 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
 
 object ClimbBehaviour : Listener {
     internal var conf = stamina.config
     val canClimb: Object2ObjectOpenHashMap<UUID, Boolean> = Object2ObjectOpenHashMap()
     val isClimbing: MutableMap<UUID, Boolean> = ConcurrentHashMap()
     val cooldown: Object2ObjectOpenHashMap<UUID, Long> = Object2ObjectOpenHashMap()
+    private class ClimbStats(var lastY: Double) {
+        var up = 0.0
+        var down = 0.0
+
+        fun update(y: Double) {
+            val delta = y - lastY
+            if (delta > 0) up += delta else down -= delta
+            lastY = y
+        }
+    }
+
+    private val climbStats: MutableMap<UUID, ClimbStats> = ConcurrentHashMap()
+
+    fun trackClimbMovement(player: Player) {
+        climbStats[player.uniqueId]?.update(player.location.y)
+    }
 
     fun stopClimbing(player: Player) {
         if (player.gameMode == GameMode.SURVIVAL || player.gameMode == GameMode.ADVENTURE) {
@@ -35,7 +54,14 @@ object ClimbBehaviour : Listener {
         }
         player.flySpeed = 0.1f
         val uuid = player.uniqueId
-        isClimbing.remove(uuid)
+        val wasClimbing = isClimbing.remove(uuid) != null
+        val stats = climbStats.remove(uuid)
+        if (wasClimbing) {
+            stats?.update(player.location.y)
+            val up = stats?.up ?: 0.0
+            val down = stats?.down ?: 0.0
+            PlayerStopClimbEvent(player, (up - down).roundToInt(), up, down).callEvent()
+        }
     }
 
 //    private val climbableMap = mutableMapOf<UUID, Float>()
@@ -86,8 +112,10 @@ object ClimbBehaviour : Listener {
                         player.velocity = player.velocity.add(Vector(0.0, 0.25, 0.0))
 
                     uuid.isClimbing = true
+                    climbStats[uuid] = ClimbStats(player.location.y)
                     player.allowFlight = true
                     player.isFlying = true
+                    PlayerClimbEvent(player).callEvent()
                 } else {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()

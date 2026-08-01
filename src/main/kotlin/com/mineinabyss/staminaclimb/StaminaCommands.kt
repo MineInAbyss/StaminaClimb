@@ -12,15 +12,15 @@ object StaminaCommands {
     fun registerCommands() {
         stamina.plugin.commands {
             "climb" {
-                requiresPermission("")
-                playerExecutes {
+                permission = "staminaclimb.climb"
+                executes.asPlayer {
                     player.climbEnabled = !player.climbEnabled
                     if (player.climbEnabled) Tags.enableClimb(player)
                     else Tags.disableClimb(player)
                     player.info("Stamina and climbing system: ${if (player.climbEnabled) "ON" else "OFF"}!")
                 }
                 "reload" {
-                    requiresPermission("staminaclimb.reload")
+                    permission = "staminaclimb.reload"
                     executes {
                         stamina.staminaTask.cancel()
                         stamina.plugin.createClimbContext()

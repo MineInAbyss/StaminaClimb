@@ -1,8 +1,7 @@
 package com.mineinabyss.staminaclimb
 
-import com.mineinabyss.geary.papermc.configure
+import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.papermc.gearyPaper
-import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.plugin.listeners
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour.stopClimbing
@@ -21,7 +20,11 @@ class StaminaClimbPlugin : JavaPlugin() {
     override fun onLoad() {
         createClimbContext()
         gearyPaper.configure {
-            install(StaminaAddon)
+            world.autoscan {
+                scan(this@StaminaClimbPlugin.classLoader, listOf("com.mineinabyss.staminaclimb")) {
+                    components()
+                }
+            }
         }
     }
 
@@ -38,8 +41,7 @@ class StaminaClimbPlugin : JavaPlugin() {
     }
 
     fun createClimbContext() {
-        DI.remove<StaminaClimbModule>()
-        DI.add<StaminaClimbModule>(StaminaPaperModule(this))
+        StaminaClimbModule.instance = StaminaPaperModule(this)
     }
 
     override fun onDisable() {

@@ -1,13 +1,13 @@
-
-val idofrontVersion: String by project
+import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
+import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder.BEFORE
 
 plugins {
-    id("com.mineinabyss.conventions.kotlin.jvm")
-    id("com.mineinabyss.conventions.papermc")
-    id("com.mineinabyss.conventions.nms")
-    id("com.mineinabyss.conventions.publication")
-    id("com.mineinabyss.conventions.copyjar")
-    id("com.mineinabyss.conventions.autoversion")
+    alias(idofrontLibs.plugins.mia.kotlin.jvm)
+    alias(idofrontLibs.plugins.mia.papermc)
+    alias(idofrontLibs.plugins.mia.nms)
+    alias(idofrontLibs.plugins.mia.publication)
+    alias(idofrontLibs.plugins.mia.copyjar)
+    alias(idofrontLibs.plugins.mia.autoversion)
     alias(idofrontLibs.plugins.kotlinx.serialization)
 }
 
@@ -24,8 +24,41 @@ dependencies {
     }
     compileOnly(idofrontLibs.kotlinx.coroutines)
     compileOnly(idofrontLibs.minecraft.mccoroutine)
-    compileOnly(libs.geary.papermc)
+    compileOnly(idofrontLibs.geary.papermc)
 
-    implementation(idofrontLibs.bundles.idofront.core)
-    implementation(idofrontLibs.idofront.nms)
+    compileOnly(idofrontLibs.bundles.idofront.core)
+    compileOnly(idofrontLibs.idofront.nms)
+}
+
+paper {
+    name = "StaminaClimb"
+    main = "com.mineinabyss.staminaclimb.StaminaClimbPlugin"
+    authors = listOf("Offz")
+    apiVersion = "1.21"
+    prefix = "SnC"
+    description = "A mod that lets you climb and get exhausted"
+
+    permissions {
+        register("staminaclimb.climb") {
+            description = "Toggle the stamina and climbing system for yourself"
+            default = BukkitPluginDescription.Permission.Default.TRUE
+        }
+        register("staminaclimb.reload") {
+            description = "Reload the StaminaClimb config"
+            default = BukkitPluginDescription.Permission.Default.OP
+        }
+    }
+
+    serverDependencies {
+        register("Idofront") {
+            required = true
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("Geary") {
+            required = true
+            load = BEFORE
+            joinClasspath = true
+        }
+    }
 }
