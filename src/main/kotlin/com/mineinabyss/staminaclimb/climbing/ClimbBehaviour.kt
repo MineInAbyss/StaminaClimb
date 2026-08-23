@@ -2,8 +2,8 @@ package com.mineinabyss.staminaclimb.climbing
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.staminaclimb.*
-import com.mineinabyss.staminaclimb.Events.PlayerClimbEvent
-import com.mineinabyss.staminaclimb.Events.PlayerStopClimbEvent
+import com.mineinabyss.staminaclimb.events.PlayerStartClimbEvent
+import com.mineinabyss.staminaclimb.events.PlayerStopClimbEvent
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
@@ -60,7 +60,7 @@ object ClimbBehaviour : Listener {
             stats?.update(player.location.y)
             val up = stats?.up ?: 0.0
             val down = stats?.down ?: 0.0
-            PlayerStopClimbEvent(player, (up - down).roundToInt(), up, down).callEvent()
+            PlayerStopClimbEvent(player, up - down).callEvent()
         }
     }
 
@@ -115,7 +115,7 @@ object ClimbBehaviour : Listener {
                     climbStats[uuid] = ClimbStats(player.location.y)
                     player.allowFlight = true
                     player.isFlying = true
-                    PlayerClimbEvent(player).callEvent()
+                    PlayerStartClimbEvent(player).callEvent()
                 } else {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()
