@@ -10,7 +10,7 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    val idofrontVersion: String by settings
+    val miaLibs: String by settings
 
     repositories {
         maven("https://repo.mineinabyss.com/releases")
@@ -19,14 +19,8 @@ dependencyResolutionManagement {
     }
 
     versionCatalogs {
-        create("idofrontLibs") {
-            from("com.mineinabyss:catalog:$idofrontVersion")
-            version("minecraft-server", "26.3.build.18-alpha")
-            version("java", "25")
-            version("kotlin", "2.4.20")
-            version("creative", "1.15.1")
-            version("idofront", "2.0")
-            version("gearyPaper", "0.34")
+        create("miaLibs") {
+            from("com.mineinabyss:catalog:$miaLibs")
         }
     }
 }
