@@ -17,7 +17,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.player.PlayerAnimationEvent
+import io.papermc.paper.event.player.PlayerArmSwingEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
@@ -127,7 +127,8 @@ object ClimbBehaviour : Listener {
     }
 
     @EventHandler
-    fun PlayerAnimationEvent.onLeftClick() {
+    fun PlayerArmSwingEvent.onLeftClick() {
+        if (hand != EquipmentSlot.HAND) return
         val uuid = player.uniqueId
         //when isClimbing is false, it means player can still do the jump, once it's actually removed from the hashmap, that's when we can't climb
         //don't even ask ok
