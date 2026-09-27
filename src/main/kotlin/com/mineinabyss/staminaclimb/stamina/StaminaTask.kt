@@ -87,7 +87,10 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
         }
 
         ClimbBehaviour.isClimbing.entries.forEach { (uuid, isClimbing) ->
-            val player = uuid.toPlayer() ?: ClimbBehaviour.isClimbing.remove(uuid).let { return }
+            val player = uuid.toPlayer() ?: run {
+                ClimbBehaviour.isClimbing.remove(uuid)
+                return@forEach
+            }
             if (isClimbing) ClimbBehaviour.trackClimbMovement(player)
             //if climbing in creative, stop climbing but keep flight
             if (player.gameMode == GameMode.CREATIVE) {

@@ -2,6 +2,7 @@ package com.mineinabyss.staminaclimb.modules
 
 import com.mineinabyss.staminaclimb.StaminaClimbPlugin
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.rope.RopeClimbTask
 import com.mineinabyss.staminaclimb.stamina.StaminaTask
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.minecraft.core.Registry
@@ -12,10 +13,13 @@ import net.minecraft.tags.TagNetworkSerialization.NetworkPayload
 val stamina: StaminaClimbModule
     get() = StaminaClimbModule.instance ?: error("StaminaClimb plugin hasn't started yet!")
 
+val ropeConfig get() = stamina.config.rope
+
 interface StaminaClimbModule {
     val plugin: StaminaClimbPlugin
     val config: StaminaConfig
     val staminaTask: StaminaTask
+    val ropeTask: RopeClimbTask
     val disabledClimbingTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload>
     val disabledClimbingTagsPacket: ClientboundUpdateTagsPacket
     val initialTags: Object2ObjectOpenHashMap<ResourceKey<out Registry<*>>, NetworkPayload>

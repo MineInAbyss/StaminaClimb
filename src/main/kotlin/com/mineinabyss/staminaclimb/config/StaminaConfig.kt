@@ -25,6 +25,7 @@ class StaminaConfig(
     val jumpCooldown: Long = 300,
     val walljumpCooldown: Long = 300,
     val roofClimbDifficulty: Float = 7.0f,
+    val rope: RopeConfig = RopeConfig(),
     val climbBlacklist: Set<Material> = setOf(
         Material.BEACON,
         Material.BARREL,

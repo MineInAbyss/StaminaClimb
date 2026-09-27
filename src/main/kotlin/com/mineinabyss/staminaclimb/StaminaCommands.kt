@@ -6,6 +6,8 @@ import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.nms.Tags
+import com.mineinabyss.staminaclimb.rope.PitonParts
+import com.mineinabyss.staminaclimb.rope.RopeClimb
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 
 object StaminaCommands {
@@ -22,9 +24,12 @@ object StaminaCommands {
                 "reload" {
                     permission = "staminaclimb.reload"
                     executes {
-                        stamina.staminaTask.cancel()
+                        stamina.plugin.stopTasks()
+                        RopeClimb.exitAll()
+                        PitonParts.clear()
                         stamina.plugin.createClimbContext()
-                        stamina.staminaTask.runTaskTimer(stamina.plugin, 0, 1)
+                        PitonParts.restoreLoaded()
+                        stamina.plugin.startTasks()
                         StaminaBar.conf = stamina.config
                         StaminaBar.selectDisplay()
                         ClimbBehaviour.conf = stamina.config

@@ -15,6 +15,7 @@ repositories {
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://jitpack.io")
     maven("https://mvn.lumine.io/repository/maven-public/")
+    maven("https://repo.nexomc.com/releases")
     mavenLocal()
 }
 
@@ -30,6 +31,8 @@ dependencies {
     compileOnly(miaLibs.bundles.idofront.core)
     compileOnly(miaLibs.idofront.nms)
     compileOnly("io.lumine.mythichud:api:1.3.6-SNAPSHOT")
+    compileOnly(miaLibs.minecraft.protectionlib)
+    compileOnly(miaLibs.deeperworld) { isTransitive = false }
 }
 
 paper {
@@ -64,6 +67,11 @@ paper {
         }
         register("MythicHUD") {
             required = false
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("DeeperWorld") {
+            required = true
             load = BEFORE
             joinClasspath = true
         }

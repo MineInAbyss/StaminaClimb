@@ -2,12 +2,15 @@ package com.mineinabyss.staminaclimb.climbing
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.staminaclimb.*
+import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.events.PlayerStartClimbEvent
 import com.mineinabyss.staminaclimb.events.PlayerStopClimbEvent
-import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
+import com.mineinabyss.staminaclimb.rope.RopeClimb
+import com.mineinabyss.staminaclimb.rope.RopeClimb.isRopeClimbing
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeStamina
+import io.papermc.paper.event.player.PlayerArmSwingEvent
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -17,13 +20,11 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import io.papermc.paper.event.player.PlayerArmSwingEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.roundToInt
 
 object ClimbBehaviour : Listener {
     internal var conf = stamina.config
@@ -93,7 +94,6 @@ object ClimbBehaviour : Listener {
     @EventHandler
     fun PlayerInteractEvent.onRightClick() {
         val uuid = player.uniqueId
-        val velocity = player.velocity
 
         //if sneaking, don't climb, but do climb if player is also falling
         if (allowClimb(player) && rightClicked() && uuid !in isClimbing) {
@@ -106,21 +106,11 @@ object ClimbBehaviour : Listener {
                 player.damage(damageAmount)
 
             if (stamina.progress > 0)
-                if (player.wallDifficulty >= 0) {
-                    //jump a bit if player is standing on ground and starts climbing
-                    if (velocity.y in -0.08..-0.07)
-                        player.velocity = player.velocity.add(Vector(0.0, 0.25, 0.0))
-
-                    uuid.isClimbing = true
-                    climbStats[uuid] = ClimbStats(player.location.y)
-                    player.allowFlight = true
-                    player.isFlying = true
-                    PlayerStartClimbEvent(player).callEvent()
-                } else {
+                if (player.wallDifficulty >= 0) startClimbing(player)
+                else {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()
                 }
-            player.flySpeed = player.inventory.toGeary()?.equipmentModifiers(0.03f, StaminaModifier.ModifierType.CLIMB_SPEED) ?: 0.03f
         }
 
         if ((!player.isSneaking || player.isInClimbableBlock) && uuid.isClimbing) isCancelled = true
@@ -129,6 +119,7 @@ object ClimbBehaviour : Listener {
     @EventHandler
     fun PlayerArmSwingEvent.onLeftClick() {
         if (hand != EquipmentSlot.HAND) return
+        if (player.isRopeClimbing || RopeClimb.swingConsumed(player)) return
         val uuid = player.uniqueId
         //when isClimbing is false, it means player can still do the jump, once it's actually removed from the hashmap, that's when we can't climb
         //don't even ask ok
@@ -141,71 +132,67 @@ object ClimbBehaviour : Listener {
             val blocks = player.getLastTwoTargetBlocks(null, 4) //Get two connected blocks player is looking at
             if (blocks.size < 2 || blocks[0].isLiquid || blocks[0].location.distanceSquared(player.location) < 4) return
 
-            //leap
-            val blockType = blocks[1].type
-            if (leftClicked(blockType)) { //Make sure target block isn't in blacklist
-                val direction = player.location.direction
-                val x = direction.x
-                val y = direction.y
-                val z = direction.z
-
-                if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
-                    player.removeStamina(0.25f) //take away more stamina when in the air
-                    player.velocity = player.velocity.apply {
-                        this.x = x / 1.8
-                        this.y = y / 2 + 0.3
-                        this.z = z / 1.8
-                    }
-                    uuid.climbCooldown = -conf.airTime
-                } else {
-                    player.removeStamina(0.2f)
-                    player.velocity = player.velocity.apply {
-                        this.x = x / 1.8
-                        this.y = y / 1
-                        this.z = z / 1.8
-                    }
-                }
-            }
+            if (isClimbable(blocks[1].type)) dash(player)
         }
     }
 
-    private fun allowClimb(player: Player): Boolean { //does player meet all requirements to be able to climb
+    fun startClimbing(player: Player) {
         val uuid = player.uniqueId
-        //Check if player in survival or adventure mode
-        return (player.climbEnabled && uuid.canClimb
-                && (!player.isSneaking || player.velocity.y < -0.5) //prevent climb when sneaking, unless already falling
-                && uuid.climbCooldownDone
-                && (player.gameMode == GameMode.SURVIVAL || player.gameMode == GameMode.ADVENTURE))
-        //              && p.getInventory().getItemInMainHand().getType().equals(Material.AIR)) //Make sure player is holding nothing in hand
+        //jump a bit if player is standing on ground and starts climbing
+        if (player.velocity.y in -0.08..-0.07)
+            player.velocity = player.velocity.add(Vector(0.0, 0.25, 0.0))
+
+        uuid.isClimbing = true
+        climbStats[uuid] = ClimbStats(player.location.y)
+        player.allowFlight = true
+        player.isFlying = true
+        player.flySpeed = player.climbFlySpeed
+        PlayerStartClimbEvent(player).callEvent()
     }
+
+    fun dash(player: Player) {
+        val uuid = player.uniqueId
+        if (uuid !in StaminaBar.players) return
+        val direction = player.location.direction
+        val x = direction.x
+        val y = direction.y
+        val z = direction.z
+
+        if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
+            player.removeStamina(0.25f) //take away more stamina when in the air
+            player.velocity = Vector(x / 1.8, y / 2 + 0.3, z / 1.8)
+            uuid.climbCooldown = -conf.airTime
+        } else {
+            player.removeStamina(0.2f)
+            player.velocity = Vector(x / 1.8, y / 1, z / 1.8)
+        }
+    }
+
+    private val Player.climbFlySpeed: Float
+        get() = inventory.toGeary()?.equipmentModifiers(0.03f, StaminaModifier.ModifierType.CLIMB_SPEED) ?: 0.03f
+
+    fun mayClimbWall(player: Player): Boolean {
+        val uuid = player.uniqueId
+        return player.climbEnabled && uuid.canClimb && uuid.climbCooldownDone
+                && (player.gameMode == GameMode.SURVIVAL || player.gameMode == GameMode.ADVENTURE)
+    }
+
+    // Sneaking stops a climb from starting unless the player is already falling
+    private fun allowClimb(player: Player) = mayClimbWall(player) && !player.isRopeClimbing && (!player.isSneaking || player.velocity.y < -0.5)
 
     private fun PlayerInteractEvent.rightClicked(): Boolean { //did player do a valid right click
-        if (clickedBlock == null) return false
+        if (player.heldPiton != null) return false
         val block = clickedBlock?.type ?: return false
         val heldItem = player.inventory.itemInMainHand.type
-        if (heldItem.isBlock && heldItem != Material.AIR) {
+        if (heldItem.isBlock && heldItem != Material.AIR || !isClimbable(block)) {
             player.uniqueId.climbCooldown = conf.jumpCooldown
             return false
-        }
-        if (block in conf.climbBlacklist) {
-            player.uniqueId.climbCooldown = conf.jumpCooldown
-            return false
-        } else {
-            for (interactable in conf.climbBlacklistGeneral) {
-                if (block.toString() in interactable) {
-                    player.uniqueId.climbCooldown = conf.jumpCooldown
-                    return false
-                }
-            }
         }
         return action == Action.RIGHT_CLICK_BLOCK && hand == EquipmentSlot.HAND && block.isSolid
     }
 
-    //TODO dont make checks like this separate for left/right click if they do basically the same thing
-    private fun leftClicked(block: Material): Boolean { //did player do a valid left click
-        //If clicked block is in blacklist, return false
-        return !conf.climbBlacklist.contains(block)
-    }
+    /** Blocks players interact with, such as containers and doors, are used rather than climbed */
+    fun isClimbable(block: Material) = block !in conf.climbBlacklist && conf.climbBlacklistGeneral.none { it in block.name }
 
     private fun cooldownComplete(uuid: UUID): Boolean { //is the click cooldown complete
         val playerCooldown = cooldown[uuid] ?: return true
