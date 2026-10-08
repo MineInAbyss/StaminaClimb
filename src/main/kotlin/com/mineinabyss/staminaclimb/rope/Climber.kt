@@ -127,8 +127,7 @@ class Climber(
         val fast = input?.isSprint == true && player.uniqueId.canClimb
         val speed = ropeConfig.climbSpeed * if (fast) ropeConfig.fastClimbMultiplier else 1.0
         val delta = when {
-            input?.isJump == true && input.isSneak -> 0.0
-            input?.isJump == true -> -speed
+            input?.isJump == true -> if (input.isSneak) 0.0 else -speed
             input?.isSneak == true -> speed
             else -> 0.0
         }
@@ -138,18 +137,22 @@ class Climber(
         val blocked = target != length && player.collidesAt(anchor.clone().add(dir.clone().multiply(target)))
         // A ledge partway down only stops the descent, one within the last block is the floor the rope ends on
         val atBottom = target >= maxLength || blocked && maxLength - target < 1
-        if (delta < 0) {
-            if (blocked) return true
-            if (target <= minLength && canTopOut()) {
-                val destination = topOutLocation(player.location)
+        when {
+            delta < 0 -> {
+                if (blocked) return true
+                if (target <= minLength && canTopOut()) {
+                    val destination = topOutLocation(player.location)
+                    RopeClimb.exit(player)
+                    player.teleportAsync(destination)
+                    return false
+                }
+            }
+            !swinging && atBottom && groundBelow() -> {
                 RopeClimb.exit(player)
-                player.teleport(destination)
                 return false
             }
-        } else if (!swinging && atBottom && groundBelow()) {
-            RopeClimb.exit(player)
-            return false
-        } else if (blocked) return true
+            blocked -> return true
+        }
 
         if (target == length) return true
         if (fast) player.removeStamina((ropeConfig.fastClimbStaminaPerBlock * abs(target - length)).toFloat())

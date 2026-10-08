@@ -1,16 +1,24 @@
 package com.mineinabyss.staminaclimb.rope
 
+import com.github.shynixn.mccoroutine.bukkit.launch
+import com.github.shynixn.mccoroutine.bukkit.ticks
 import com.mineinabyss.staminaclimb.hasCollision
 import com.mineinabyss.staminaclimb.isFullCube
 import com.mineinabyss.staminaclimb.modules.ropeConfig
+import com.mineinabyss.staminaclimb.modules.stamina
 import com.nexomc.protectionlib.ProtectionLib
+import kotlinx.coroutines.delay
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Transformation
+import org.joml.Quaternionf
+import org.joml.Vector3f
 import java.util.*
+import kotlin.math.PI
 
 sealed interface PlacementCheck {
     data object Ok : PlacementCheck
@@ -45,7 +53,7 @@ object Pitons {
         PitonParts.pitonsOn(block).firstOrNull { it.placedPiton?.face == face }
 
     /** Null when the piton state could not be stored on the display, which is then removed again so the caller can refund the item */
-    fun spawn(block: Block, face: BlockFace, item: ItemStack, owner: UUID, fusing: Boolean): ItemDisplay? {
+    fun spawn(block: Block, face: BlockFace, item: ItemStack, owner: UUID, fusing: Boolean, drill: Boolean = false): ItemDisplay? {
         val placed = PlacedPiton(
             owner = owner,
             face = face,
@@ -61,6 +69,7 @@ object Pitons {
         val display = block.world.spawn(location, ItemDisplay::class.java) {
             it.itemDisplayTransform = ItemDisplay.ItemDisplayTransform.FIXED
             it.setItemStack(item.asOne())
+            if (drill) it.transformation = drillStep(0)
         }
 
         display.setPlacedPiton(placed)
@@ -70,7 +79,43 @@ object Pitons {
         }
 
         PitonParts.ensure(display, loadMirror = true)
+        if (drill) drillIn(display)
         return display
+    }
+
+    /** Only the transformation moves, the entity itself stays put since the hitbox, rope and mirror are placed from it */
+    private fun drillIn(display: ItemDisplay) = stamina.plugin.launch {
+        val drill = ropeConfig.drill
+        runCatching {
+            delay(1.ticks)
+            repeat(drill.steps) { step ->
+                if (!display.isValid) return@launch
+                PitonParts.displaysOf(display).forEach {
+                    it.interpolationDelay = 0
+                    it.interpolationDuration = drill.ticksPerStep
+                    it.transformation = drillStep(step)
+                }
+                ropeConfig.sounds.drillPiton.play(display.location)
+                delay(drill.ticksPerStep.ticks)
+            }
+            ropeConfig.sounds.placePiton.play(display.location)
+        }.exceptionOrNull()
+        if (display.isValid) PitonParts.displaysOf(display).forEach { it.transformation = drillStep(ropeConfig.drill.steps) }
+    }
+
+    /**
+     * Local +Z points out of the face, so the piton slides in along it while turning around it.
+     * A quarter turn per step keeps the interpolation, which takes the shortest way round, spinning one way
+     */
+    private fun drillStep(step: Int): Transformation {
+        val drill = ropeConfig.drill
+        val left = drill.steps - step
+        return Transformation(
+            Vector3f(0f, 0f, drill.distance * left / drill.steps.coerceAtLeast(1)),
+            Quaternionf().rotationZ(-left * PI.toFloat() / 2),
+            Vector3f(1f),
+            Quaternionf(),
+        )
     }
 
     fun load(display: ItemDisplay) {

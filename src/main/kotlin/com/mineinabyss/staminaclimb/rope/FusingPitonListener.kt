@@ -34,6 +34,7 @@ import org.bukkit.util.Transformation
 import org.bukkit.util.Vector
 import org.joml.Quaternionf
 import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 object FusingPitonListener : Listener {
     private class Throw(val owner: UUID, val piton: ItemStack, val rope: ItemStack, val free: Boolean) {
@@ -126,7 +127,7 @@ object FusingPitonListener : Listener {
             it.isPersistent = false
             throws[it.uniqueId] = throwData
         }
-        // A cancelled launch event leaves the snowball out of the world
+        // A canceled launch event leaves the snowball out of the world
         if (!snowball.isValid) {
             throws.remove(snowball.uniqueId)
             return
@@ -166,7 +167,7 @@ object FusingPitonListener : Listener {
         // The snowball flies on while the chunk loads, and changing worlds would replace it with a new entity the throw does not know
         val to = RopeSections.linkedLocation(location)?.takeIf { isValid && it.world == world } ?: return
         val velocity = velocity
-        if (teleport(to, PlayerTeleportEvent.TeleportCause.PLUGIN)) this.velocity = velocity
+        if (teleportAsync(to, PlayerTeleportEvent.TeleportCause.PLUGIN).join()) this.velocity = velocity
     }
 
     /** The raw piton model has its spike pointing down -Y, near zero [velocity] at the apex keeps the last rotation */

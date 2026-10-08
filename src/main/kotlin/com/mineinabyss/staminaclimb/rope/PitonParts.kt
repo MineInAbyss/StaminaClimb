@@ -97,6 +97,8 @@ object PitonParts {
     fun locationOf(piton: ItemDisplay, onMirror: Boolean): Location =
         byPiton[piton.uniqueId]?.mirror?.takeIf { onMirror }?.link?.toTarget(piton.location) ?: piton.location
 
+    fun displaysOf(piton: ItemDisplay): List<ItemDisplay> = listOfNotNull(piton, byPiton[piton.uniqueId]?.mirror?.display)
+
     fun hasMirrorIn(piton: UUID, chunk: ChunkPos) = byPiton[piton]?.mirror?.chunk == chunk
 
     /** The spot a piton or its mirror sits in, or a block its rope hangs through, a bottom face rope blocks one extra row below its end */

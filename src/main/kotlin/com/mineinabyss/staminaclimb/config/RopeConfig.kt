@@ -34,9 +34,18 @@ class RopeConfig(
     val ropeModel: String? = null,
     val dropAnimationTicksPerSegment: Int = 1,
     val fusingThrowVelocity: Double = 1.2,
+    val drill: DrillConfig = DrillConfig(),
     val swing: SwingConfig = SwingConfig(),
     val sounds: RopeSounds = RopeSounds(),
     val messages: RopeMessages = RopeMessages(),
+)
+
+// A placed piton starts this far out of the face and screws in over the steps, turning a quarter each step
+@Serializable
+class DrillConfig(
+    val distance: Float = 0.3f,
+    val steps: Int = 4,
+    val ticksPerStep: Int = 2,
 )
 
 @Serializable
@@ -69,6 +78,7 @@ class RopeSound(val sound: String, val volume: Float = 1f, val pitch: Float = 1f
 @Serializable
 class RopeSounds(
     val placePiton: RopeSound = RopeSound("block.chain.place", 0.8f, 1.4f),
+    val drillPiton: RopeSound = RopeSound("block.chain.hit", 0.6f, 1.6f),
     val breakPiton: RopeSound = RopeSound("block.chain.break", 0.8f, 1.2f),
     val attachRope: RopeSound = RopeSound("item.lead.tied", 1f, 0.9f),
     val detachRope: RopeSound = RopeSound("item.lead.untied", 1f, 0.9f),

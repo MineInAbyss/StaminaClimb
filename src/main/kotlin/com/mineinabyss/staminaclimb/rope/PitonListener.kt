@@ -54,13 +54,12 @@ object PitonListener : Listener {
             is PlacementCheck.Error -> return player.error(check.message)
             is PlacementCheck.Ok -> {}
         }
-
         if (!Pitons.mayPlace(player, block, blockFace)) return
+
         val item = player.inventory.itemInMainHand
-        Pitons.spawn(block, blockFace, item, player.uniqueId, fusing = false) ?: return
+        Pitons.spawn(block, blockFace, item, player.uniqueId, fusing = false, drill = true) ?: return
         if (!player.isCreative) item.subtract()
         player.swingMainHand()
-        sounds.placePiton.play(block.location)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
