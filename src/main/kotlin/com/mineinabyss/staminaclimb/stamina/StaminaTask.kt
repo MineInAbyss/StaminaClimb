@@ -3,13 +3,11 @@ package com.mineinabyss.staminaclimb.stamina
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.location.down
-import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.config.StaminaConfig
-import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.GameMode
 import org.bukkit.attribute.Attribute
 import org.bukkit.scheduler.BukkitRunnable
@@ -20,16 +18,13 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
     private var timeSinceLastColorFlip = 0L
     private var lastTime = System.currentTimeMillis()
 
-    private val redBar = "<red><b>Stamina".miniMsg()
-    private val baseBar = "<b>Stamina".miniMsg()
-
     override fun run() {
         val currentNano = System.nanoTime()
         val tickDuration = (currentNano - lastTickNano).nanoseconds.inWholeTicks
         lastTickNano = currentNano
 
-        StaminaBar.forEachBar { player, uuid, bar ->
-            val progress = bar.progress()
+        StaminaBar.forEachPlayer { player, uuid, stamina ->
+            val progress = stamina.progress
 
             if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
                 StaminaBar.unregisterBar(uuid)
@@ -38,7 +33,7 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                 return
             }
 
-            //regenerate stamina for BossBar
+            //regenerate stamina
             if (!uuid.isClimbing) {
                 val base = when {
                     player.location.down(0.0625).block.isSolid -> config.staminaRegen
@@ -48,13 +43,12 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
 
                 val gearyInventory = player.inventory.toGeary()
                 val amount = gearyInventory?.equipmentModifiers(base, StaminaModifier.ModifierType.REGENERATE) ?: base
-                bar.addProgress(amount)
+                player.addStamina(amount)
             }
 
             when {
                 progress <= config.barRed -> { //Changing bar colors and effects on player depending on its progress
-                    bar.color(BossBar.Color.RED)
-                    bar.name(redBar)
+                    StaminaBar.update(player, stamina, alert = true)
                     if (uuid.isClimbing) player.stopClimbing()
 
                     uuid.canClimb = false //If player is in red zone, they can't climb until they get back in green zone
@@ -62,14 +56,14 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                     player.addPotionEffect(WEAKNESS_EFFECT)
                 }
 
-                progress < 1 && !uuid.canClimb -> bar.color(BossBar.Color.RED) //Keep Stamina Bar red even in yellow zone while it's regenerating
+                progress < 1 && !uuid.canClimb -> StaminaBar.update(player, stamina, alert = true) //Keep Stamina Bar red even in yellow zone while it's regenerating
                 (uuid.isClimbing || player.isInClimbableBlock) && progress <= config.barBlink2 -> {
                     val deltaTime = System.currentTimeMillis() - lastTime
                     lastTime = System.currentTimeMillis()
                     if (timeSinceLastColorFlip < config.barBlinkSpeed2)
                         timeSinceLastColorFlip += deltaTime
                     else {
-                        flipColor(bar)
+                        StaminaBar.update(player, stamina, alert = !stamina.alert)
                         timeSinceLastColorFlip = 0
                     }
                 }
@@ -80,14 +74,13 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                     if (timeSinceLastColorFlip < config.barBlinkSpeed1)
                         timeSinceLastColorFlip += deltaTime
                     else {
-                        flipColor(bar)
+                        StaminaBar.update(player, stamina, alert = !stamina.alert)
                         timeSinceLastColorFlip = 0
                     }
                 }
 
                 else -> {
-                    bar.color(config.baseBarColor)
-                    bar.name(baseBar)
+                    StaminaBar.update(player, stamina, alert = false)
                     uuid.canClimb = true
                 }
             }
@@ -142,20 +135,5 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             if (isClimbing) player.addStamina(stamina)
 
         }
-    }
-
-    private fun flipColor(bar: BossBar) {
-        when (BossBar.Color.RED) {
-            bar.color() -> {
-                bar.color(config.baseBarColor)
-                bar.name(baseBar)
-            }
-
-            else -> {
-                bar.color(BossBar.Color.RED)
-                bar.name(redBar) //Make Stamina title red
-            }
-        }
-        bar.overlay(config.baseOverlay)
     }
 }

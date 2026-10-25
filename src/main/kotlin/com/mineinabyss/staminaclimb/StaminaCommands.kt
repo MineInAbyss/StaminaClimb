@@ -26,6 +26,7 @@ object StaminaCommands {
                         stamina.plugin.createClimbContext()
                         stamina.staminaTask.runTaskTimer(stamina.plugin, 0, 1)
                         StaminaBar.conf = stamina.config
+                        StaminaBar.selectDisplay()
                         ClimbBehaviour.conf = stamina.config
                         sender.success("Config has been reloaded!")
                     }

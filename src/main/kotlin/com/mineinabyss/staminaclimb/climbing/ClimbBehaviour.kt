@@ -7,7 +7,7 @@ import com.mineinabyss.staminaclimb.events.PlayerStopClimbEvent
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
-import com.mineinabyss.staminaclimb.stamina.removeProgress
+import com.mineinabyss.staminaclimb.stamina.removeStamina
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -97,15 +97,15 @@ object ClimbBehaviour : Listener {
 
         //if sneaking, don't climb, but do climb if player is also falling
         if (allowClimb(player) && rightClicked() && uuid !in isClimbing) {
-            val bossBar = StaminaBar.registeredBars[uuid] ?: return
+            val stamina = StaminaBar.players[uuid] ?: return
             //remove stamina progress based on how long the player's already fallen
-            bossBar.removeProgress(player.fallDistance / 15f)
+            player.removeStamina(player.fallDistance / 15f)
             //reduce fall damage by half heart per feather fall level
             val damageAmount = (player.fallDistance - 3) / 1.9
             if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
                 player.damage(damageAmount)
 
-            if (bossBar.progress() > 0)
+            if (stamina.progress > 0)
                 if (player.wallDifficulty >= 0) {
                     //jump a bit if player is standing on ground and starts climbing
                     if (velocity.y in -0.08..-0.07)
@@ -135,7 +135,7 @@ object ClimbBehaviour : Listener {
         if (allowClimb(player) && uuid in isClimbing) {
             //set a cooldown for player not to be able to wall jump right away
             uuid.climbCooldown = conf.walljumpCooldown
-            val bossBar = StaminaBar.registeredBars[uuid] ?: return
+            if (uuid !in StaminaBar.players) return
 
             //find left clicked block (in adventure mode)
             val blocks = player.getLastTwoTargetBlocks(null, 4) //Get two connected blocks player is looking at
@@ -150,7 +150,7 @@ object ClimbBehaviour : Listener {
                 val z = direction.z
 
                 if (player.wallDifficulty < 0) { //if not at a wall (i.e. double jump)
-                    bossBar.removeProgress(0.25f) //take away more stamina when in the air
+                    player.removeStamina(0.25f) //take away more stamina when in the air
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 2 + 0.3
@@ -158,7 +158,7 @@ object ClimbBehaviour : Listener {
                     }
                     uuid.climbCooldown = -conf.airTime
                 } else {
-                    bossBar.removeProgress(0.2f)
+                    player.removeStamina(0.2f)
                     player.velocity = player.velocity.apply {
                         this.x = x / 1.8
                         this.y = y / 1

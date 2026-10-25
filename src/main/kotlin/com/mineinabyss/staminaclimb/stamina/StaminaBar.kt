@@ -2,7 +2,6 @@ package com.mineinabyss.staminaclimb.stamina
 
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.modules.stamina
@@ -10,7 +9,6 @@ import com.mineinabyss.staminaclimb.nms.Tags
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import kotlinx.coroutines.delay
-import net.kyori.adventure.bossbar.BossBar
 import org.bukkit.Bukkit
 import org.bukkit.GameMode.ADVENTURE
 import org.bukkit.GameMode.SURVIVAL
@@ -27,6 +25,7 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,7 +34,14 @@ object StaminaBar : Listener {
     private val disabledPlayers: ObjectArrayList<UUID> = ObjectArrayList() //TODO persist
 
     @PublishedApi
-    internal val registeredBars: Object2ObjectOpenHashMap<UUID, BossBar> = Object2ObjectOpenHashMap()
+    internal val players: MutableMap<UUID, PlayerStamina> = ConcurrentHashMap()
+
+    internal var display: StaminaDisplay = BossBarDisplay
+        private set
+
+    // Checked instead of the display type, since MythicHudDisplay cannot be loaded without MythicHUD present
+    private var usingMythicHud = false
+
     private val velocities: Object2ObjectOpenHashMap<UUID, Double> = Object2ObjectOpenHashMap()
     private val barProgressTracker: Object2ObjectOpenHashMap<UUID, Float> = Object2ObjectOpenHashMap()
 
@@ -46,7 +52,8 @@ object StaminaBar : Listener {
         val uuid = player.uniqueId
         if (enable) {
             disabledPlayers.remove(uuid)
-            registerBar(player).progress(0f)
+            registerBar(player)
+            player.setStamina(0f)
         } else {
             disabledPlayers.add(uuid)
             unregisterBar(uuid)
@@ -54,28 +61,38 @@ object StaminaBar : Listener {
         }
     }
 
-    fun registerBar(player: Player): BossBar {
+    fun registerBar(player: Player): PlayerStamina {
         val uuid = player.uniqueId
         uuid.restartCooldown()
         uuid.canClimb = true
         disabledPlayers.remove(uuid)
-        val bossBar = BossBar.bossBar(
-            "<b>Stamina".miniMsg(),
-            1f,
-            conf.baseBarColor,
-            conf.baseOverlay
-        )
-        bossBar.addListener(object : BossBar.Listener {
-            override fun bossBarProgressChanged(bar: BossBar, oldProgress: Float, newProgress: Float) {
-                //Hide when full
-                if (newProgress < 1f)
-                    player.showBossBar(bar)
-                else player.hideBossBar(bar)
+        val stamina = PlayerStamina()
+        players[uuid] = stamina
+        display.show(player, stamina)
+        return stamina
+    }
 
-            }
-        })
-        registeredBars[uuid] = bossBar
-        return bossBar
+    fun selectDisplay() {
+        val useMythicHud = conf.useMythicHud && Bukkit.getPluginManager().isPluginEnabled("MythicHUD")
+        if (useMythicHud == usingMythicHud) return
+
+        disableDisplay()
+        display = if (useMythicHud) MythicHudDisplay.also { it.register() } else BossBarDisplay
+        usingMythicHud = useMythicHud
+        forEachPlayer { player, _, stamina -> display.show(player, stamina) }
+    }
+
+    fun disableDisplay() {
+        display.hideAll()
+        if (usingMythicHud) MythicHudDisplay.unregister()
+    }
+
+    internal fun update(player: Player, stamina: PlayerStamina, progress: Float = stamina.progress, alert: Boolean = stamina.alert) {
+        val clamped = progress.coerceIn(0.0f..1.0f)
+        if (clamped == stamina.progress && alert == stamina.alert) return
+        stamina.progress = clamped
+        stamina.alert = alert
+        display.update(player, stamina)
     }
 
     @EventHandler
@@ -93,8 +110,8 @@ object StaminaBar : Listener {
     fun PlayerQuitEvent.onPlayerQuit() {
         val player = player
         val uuid = player.uniqueId
-        if (uuid in registeredBars)
-            barProgressTracker[uuid] = registeredBars[uuid]?.progress() ?: 0f
+        if (uuid in players)
+            barProgressTracker[uuid] = players[uuid]?.progress ?: 0f
         unregisterBar(uuid)
         if (ClimbBehaviour.isClimbing.containsKey(uuid)) ClimbBehaviour.stopClimbing(player)
     }
@@ -129,12 +146,11 @@ object StaminaBar : Listener {
         val uuid = player.uniqueId
         if (cause != EntityDamageEvent.DamageCause.FALL || !player.climbEnabled || !velocities.containsKey(uuid)) return
 
-        val bossBar = registeredBars[uuid] ?: return
+        if (uuid !in players) return
         val threshold = 0.6
         val vel = velocities[uuid] ?: return
-        player.hideBossBar(bossBar)
-        if (vel > -threshold) bossBar.removeProgress(0.1f / 15f)
-        else bossBar.removeProgress(damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
+        if (vel > -threshold) player.removeStamina(0.1f / 15f)
+        else player.removeStamina(damage.toFloat() / 15f) //taking 15 damage reduces stamina fully
     }
 
     @EventHandler
@@ -142,14 +158,14 @@ object StaminaBar : Listener {
         val player = entity
         val uuid = player.uniqueId
         if (!player.climbEnabled) return
-        registeredBars[uuid]?.progress(1.0f)
+        player.setStamina(1.0f)
     }
 
     @EventHandler
     fun PlayerGameModeChangeEvent.onGamemodeChange() {
         if (player.climbEnabled
             && (newGameMode == SURVIVAL || newGameMode == ADVENTURE)
-            && !registeredBars.containsKey(player.uniqueId)
+            && !players.containsKey(player.uniqueId)
         ) {
             registerBar(player)
             player.setStamina(1f)
@@ -158,48 +174,29 @@ object StaminaBar : Listener {
 
     fun unregisterBar(uuid: UUID) {
         ClimbBehaviour.cooldown.remove(uuid)
-        val bar = registeredBars[uuid] ?: return
-        Bukkit.getServer().hideBossBar(bar)
-        registeredBars.remove(uuid)
+        players.remove(uuid) ?: return
+        display.hide(uuid)
     }
 
-    inline fun forEachBar(run: (Player, UUID, BossBar) -> Unit) {
-        registeredBars.toMap().forEach { (uuid, bar) ->
-            val player = uuid.toPlayer() ?: registeredBars.remove(uuid).let { return@forEach }
-            run(player, uuid, bar)
+    inline fun forEachPlayer(run: (Player, UUID, PlayerStamina) -> Unit) {
+        players.toMap().forEach { (uuid, stamina) ->
+            val player = uuid.toPlayer() ?: players.remove(uuid).let { return@forEach }
+            run(player, uuid, stamina)
         }
     }
 
 }
 
-/** Adds [amount] progress from [bossBar]'s progress */
-internal fun BossBar.addProgress(amount: Float) {
-    progress((progress() + amount).coerceIn(0.0f..1.0f))
-}
-
-/** Removes [amount] progress from [bossBar]'s progress */
-internal fun BossBar.removeProgress(amount: Float) {
-    progress((progress() - amount).coerceIn(0.0f..1.0f))
-}
-
-/** Sets progress to [amount] from [bossBar]'s progress */
-internal fun BossBar.setProgress(amount: Float) {
-    progress((amount).coerceIn(0.0f..1.0f))
-}
-
-/** Adds [amount] progress from [uuid]'s associated BossBar's progress */
 internal fun Player.addStamina(amount: Float) {
-    StaminaBar.registeredBars[uniqueId]?.addProgress(amount)
+    val stamina = StaminaBar.players[uniqueId] ?: return
+    StaminaBar.update(this, stamina, progress = stamina.progress + amount)
 }
 
-/** Removes [amount] progress from [uuid]'s associated BossBar's progress */
-internal fun Player.removeStamina(amount: Float) {
-    StaminaBar.registeredBars[uniqueId]?.removeProgress(amount)
-}
+internal fun Player.removeStamina(amount: Float) = addStamina(-amount)
 
-/** Sets progress to [amount] from [uuid]'s associated BossBar's progress */
 internal fun Player.setStamina(amount: Float) {
-    StaminaBar.registeredBars[uniqueId]?.setProgress(amount)
+    val stamina = StaminaBar.players[uniqueId] ?: return
+    StaminaBar.update(this, stamina, progress = amount)
 }
 
 val SLOWNESS_EFFECT = PotionEffect(PotionEffectType.SLOWNESS, 110, 2, false, false)

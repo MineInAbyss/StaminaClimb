@@ -30,6 +30,7 @@ class StaminaClimbPlugin : JavaPlugin() {
 
     override fun onEnable() {
         stamina.staminaTask.runTaskTimer(this@StaminaClimbPlugin, 0, 1)
+        StaminaBar.selectDisplay()
 
         // toggle system on for all online players (for plugin reload)
         Bukkit.getOnlinePlayers().forEach(::registerBar)
@@ -53,6 +54,6 @@ class StaminaClimbPlugin : JavaPlugin() {
         }
 
         //stop stamina bars from duplicating on plugin reload
-        StaminaBar.registeredBars.values.forEach { Bukkit.getServer().hideBossBar(it) }
+        StaminaBar.disableDisplay()
     }
 }

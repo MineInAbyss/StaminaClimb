@@ -14,6 +14,7 @@ plugins {
 repositories {
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://jitpack.io")
+    maven("https://mvn.lumine.io/repository/maven-public/")
     mavenLocal()
 }
 
@@ -28,6 +29,7 @@ dependencies {
 
     compileOnly(miaLibs.bundles.idofront.core)
     compileOnly(miaLibs.idofront.nms)
+    compileOnly("io.lumine.mythichud:api:1.3.6-SNAPSHOT")
 }
 
 paper {
@@ -57,6 +59,11 @@ paper {
         }
         register("Geary") {
             required = true
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("MythicHUD") {
+            required = false
             load = BEFORE
             joinClasspath = true
         }
