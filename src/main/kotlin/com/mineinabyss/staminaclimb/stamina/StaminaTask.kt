@@ -65,7 +65,7 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                 }
 
                 progress < 1 && !uuid.canClimb -> StaminaBar.update(player, stamina, alert = true) //Keep Stamina Bar red even in yellow zone while it's regenerating
-                (uuid.isClimbing || player.isInClimbableBlock) && progress <= config.barBlink2 -> {
+                progress <= config.barBlink2 && (uuid.isClimbing || player.isInClimbableBlock) -> {
                     val deltaTime = System.currentTimeMillis() - lastTime
                     lastTime = System.currentTimeMillis()
                     if (timeSinceLastColorFlip < config.barBlinkSpeed2)
@@ -76,7 +76,7 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                     }
                 }
 
-                (uuid.isClimbing || player.isInClimbableBlock) && progress <= config.barBlink1 -> {
+                progress <= config.barBlink1 && (uuid.isClimbing || player.isInClimbableBlock) -> {
                     val deltaTime = System.currentTimeMillis() - lastTime
                     lastTime = System.currentTimeMillis()
                     if (timeSinceLastColorFlip < config.barBlinkSpeed1)
