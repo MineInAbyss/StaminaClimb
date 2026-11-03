@@ -19,15 +19,20 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
     private var timeSinceLastColorFlip = 0L
     private var lastTime = System.currentTimeMillis()
 
+    // At full stamina a non-negative regen is clamped away, so only negative REGENERATE item modifiers could still drain here
+    private val regenBaseNeverNegative = config.staminaRegen >= 0f && config.staminaRegenInAir >= 0f
+
     override fun run() {
         val currentNano = System.nanoTime()
         val tickDuration = (currentNano - lastTickNano).nanoseconds.inWholeTicks
         lastTickNano = currentNano
+        val regenNeverNegative = regenBaseNeverNegative && ropeConfig.stillStaminaRegenPerTick >= 0f
 
         StaminaBar.forEachPlayer { player, uuid, stamina ->
             val progress = stamina.progress
 
-            if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            val gameMode = player.gameMode
+            if (gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR) {
                 StaminaBar.unregisterBar(uuid)
                 player.stopClimbing()
                 player.allowFlight = true
@@ -36,7 +41,7 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
 
             //regenerate stamina
             val ropeClimber = RopeClimb.climber(player)
-            if (!uuid.isClimbing && ropeClimber?.isStill != false && !ClimbBehaviour.isGrabSliding(uuid)) {
+            if (!uuid.isClimbing && (progress < 1f || !regenNeverNegative) && ropeClimber?.isStill != false && !ClimbBehaviour.isGrabSliding(uuid)) {
                 val base = when {
                     ropeClimber != null -> ropeConfig.stillStaminaRegenPerTick
                     player.toNMS().onGround() -> config.staminaRegen
