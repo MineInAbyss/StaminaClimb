@@ -10,7 +10,9 @@ import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.rope.RopeClimb
+import net.minecraft.world.level.GameType
 import org.bukkit.GameMode
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -31,8 +33,9 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
         StaminaBar.forEachPlayer { player, uuid, stamina ->
             val progress = stamina.progress
 
-            val gameMode = player.gameMode
-            if (gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR) {
+            // CraftPlayer.getGameMode maps the NMS game type through a lookup on every call
+            val gameType = (player as CraftPlayer).handle.gameMode()
+            if (gameType == GameType.CREATIVE || gameType == GameType.SPECTATOR) {
                 StaminaBar.unregisterBar(uuid)
                 player.stopClimbing()
                 player.allowFlight = true

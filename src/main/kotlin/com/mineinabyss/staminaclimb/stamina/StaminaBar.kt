@@ -180,7 +180,8 @@ object StaminaBar : Listener {
     }
 
     inline fun forEachPlayer(run: (Player, UUID, PlayerStamina) -> Unit) {
-        players.toMap().forEach { (uuid, stamina) ->
+        // ConcurrentHashMap iteration tolerates the removals below, so no copy is needed
+        players.forEach { (uuid, stamina) ->
             val player = uuid.toPlayer() ?: players.remove(uuid).let { return@forEach }
             run(player, uuid, stamina)
         }
