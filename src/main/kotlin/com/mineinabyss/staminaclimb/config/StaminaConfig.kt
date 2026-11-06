@@ -21,6 +21,9 @@ class StaminaConfig(
     val barBlink2: Float = 0.1f,
     val barBlinkSpeed1: Float = 120f,
     val barBlinkSpeed2: Float = 20f,
+    // Share taken off the distance slid when counting fall damage, for losing grip mid slide or landing while still holding on
+    val grabSlideLostGripFallReduction: Double = 0.15,
+    val grabSlideLandedFallReduction: Double = 0.25,
     val jumpCooldown: Long = 300,
     val walljumpCooldown: Long = 300,
     val roofClimbDifficulty: Float = 7.0f,

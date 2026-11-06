@@ -47,8 +47,15 @@ object ClimbBehaviour : Listener {
 
     private val climbStats: MutableMap<UUID, ClimbStats> = ConcurrentHashMap()
 
-    /** Downward speed in blocks per tick of each player still sliding down a wall they grabbed mid fall */
-    private val grabSlides = HashMap<UUID, Double>()
+    /** [speed] is downward in blocks per tick */
+    private class GrabSlide(var speed: Double, val fallBefore: Float, val grabY: Double) {
+        fun creditedFall(player: Player, reduction: Double): Float {
+            val slid = (grabY - player.location.y).coerceAtLeast(0.0)
+            return fallBefore + (slid * (1 - reduction)).toFloat()
+        }
+    }
+
+    private val grabSlides = HashMap<UUID, GrabSlide>()
     fun isGrabSliding(uuid: UUID) = uuid in grabSlides
 
     fun trackClimbMovement(player: Player) {
@@ -109,7 +116,8 @@ object ClimbBehaviour : Listener {
             if (stamina.progress > 0)
                 if (player.wallDifficulty >= 0) {
                     val fallSpeed = player.fallSpeed
-                    if (fallSpeed > 0) grabSlides[uuid] = fallSpeed else startClimbing(player)
+                    if (fallSpeed > 0) grabSlides[uuid] = GrabSlide(fallSpeed, player.fallDistance, player.location.y)
+                    else startClimbing(player)
                 } else {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()
@@ -119,21 +127,24 @@ object ClimbBehaviour : Listener {
         if ((!player.isSneaking || player.isInClimbableBlock) && (uuid.isClimbing || uuid in grabSlides)) isCancelled = true
     }
 
-    /** Their fall distance keeps building meanwhile, so landing mid slide still hurts */
-    fun tickGrabSlides() = grabSlides.entries.removeIf { entry ->
-        val player = Bukkit.getPlayer(entry.key) ?: return@removeIf true
-        val speed = entry.value
-        if (!entry.key.canClimb || player.toNMS().onGround() || player.wallDifficulty < 0) return@removeIf true
+    /** Landing is damaged by the server before this runs, so the fall distance is kept at the landing credit every tick and only raised to the lost grip credit when they let go */
+    fun tickGrabSlides() = grabSlides.entries.removeIf { (uuid, slide) ->
+        val player = Bukkit.getPlayer(uuid) ?: return@removeIf true
+        if (player.toNMS().onGround()) return@removeIf true
+        if (!uuid.canClimb || player.wallDifficulty < 0) {
+            player.fallDistance = slide.creditedFall(player, conf.grabSlideLostGripFallReduction)
+            return@removeIf true
+        }
 
-        player.removeStamina((ropeConfig.slideStaminaPerBlock * speed).toFloat())
-        val next = speed - ropeConfig.slideDeceleration
-        if (next <= 0) {
+        player.removeStamina((ropeConfig.slideStaminaPerBlock * slide.speed).toFloat())
+        slide.speed -= ropeConfig.slideDeceleration
+        if (slide.speed <= 0) {
             player.fallDistance = 0f
             startClimbing(player)
             return@removeIf true
         }
-        entry.setValue(next)
-        player.velocity = Vector(0.0, -next, 0.0)
+        player.fallDistance = slide.creditedFall(player, conf.grabSlideLandedFallReduction)
+        player.velocity = Vector(0.0, -slide.speed, 0.0)
         false
     }
 
