@@ -23,7 +23,7 @@ class RopeConfig(
     val ropeHitboxHeight: Int = 4,
     // Reaching the end of the rope drops you off it when there is floor within this many blocks below
     val groundDismountBuffer: Int = 1,
-    // Grabbing while falling slides you down the rope, losing this much speed per tick and this much stamina per block slid
+    // Grabbing a rope or wall while falling slides you down it, losing this much speed per tick and this much stamina per block slid
     val slideDeceleration: Double = 0.03,
     val slideStaminaPerBlock: Float = 0.05f,
     // Holding sprint while climbing or descending moves this much faster and costs stamina per block, until the bar is in the red

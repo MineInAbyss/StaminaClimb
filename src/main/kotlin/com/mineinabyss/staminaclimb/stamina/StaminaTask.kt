@@ -2,14 +2,13 @@ package com.mineinabyss.staminaclimb.stamina
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.location.down
+import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.idofront.time.inWholeTicks
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.config.StaminaConfig
 import org.bukkit.GameMode
-import org.bukkit.attribute.Attribute
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.time.Duration.Companion.nanoseconds
 
@@ -34,9 +33,9 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             }
 
             //regenerate stamina
-            if (!uuid.isClimbing) {
+            if (!uuid.isClimbing && !ClimbBehaviour.isGrabSliding(uuid)) {
                 val base = when {
-                    player.location.down(0.0625).block.isSolid -> config.staminaRegen
+                    player.toNMS().onGround() -> config.staminaRegen
                     !player.isInClimbableBlock -> config.staminaRegenInAir
                     else -> 0f
                 }
@@ -86,6 +85,8 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             }
         }
 
+        ClimbBehaviour.tickGrabSlides()
+
         ClimbBehaviour.isClimbing.entries.forEach { (uuid, isClimbing) ->
             val player = uuid.toPlayer() ?: run {
                 ClimbBehaviour.isClimbing.remove(uuid)
@@ -100,9 +101,8 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                 return@forEach
             }
 
-            //prevent player from climbing if they have fallen far enough or in a invalid state
-            val safeFallDistance = player.getAttribute(Attribute.SAFE_FALL_DISTANCE)?.value ?: config.maxFallDist
-            if (!player.isFlying && isClimbing || player.fallDistance > safeFallDistance) {
+            //prevent player from climbing if in a invalid state
+            if (!player.isFlying && isClimbing) {
                 player.stopClimbing()
                 return@forEach
             }

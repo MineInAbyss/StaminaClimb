@@ -21,7 +21,6 @@ class StaminaConfig(
     val barBlink2: Float = 0.1f,
     val barBlinkSpeed1: Float = 120f,
     val barBlinkSpeed2: Float = 20f,
-    val maxFallDist: Double = 5.0,
     val jumpCooldown: Long = 300,
     val walljumpCooldown: Long = 300,
     val roofClimbDifficulty: Float = 7.0f,

@@ -85,11 +85,10 @@ fun Player.wallDifficultyAt(loc: Location): Float {
 
     var totalClimbDifficulty = 0f
     var climbDifficultyCount = 0
+    //fix some issues with half slabs by checking half a block higher when the player isn't yet climbing
+    val slabRaise = if (!ClimbBehaviour.isClimbing.containsKey(uniqueId)) 0.5 else 0.0
     inCube(-1..1 step 2, 0..1, -1..1 step 2) { x, y, z ->
-        val to = loc.clone().add(x * checkRange, y.toDouble(), z * checkRange)
-
-        //fix some issues with half slabs by checking half a block higher when the player isn't yet climbing
-        if (!ClimbBehaviour.isClimbing.containsKey(uniqueId)) to.add(0.0, 0.5, 0.0)
+        val to = loc.clone().add(x * checkRange, y + slabRaise, z * checkRange)
         val climbDifficulty = to.block.type.climbDifficulty
         if (climbDifficulty >= 0) {
             totalClimbDifficulty += climbDifficulty
@@ -129,6 +128,13 @@ var Player.climbEnabled: Boolean
 val Player.isInClimbableBlock get() = location.block.type in Tag.CLIMBABLE.values
 
 val Player.isCreative get() = gameMode == GameMode.CREATIVE
+
+/** A grounded player still reports a small downward velocity, so only a real fall counts */
+val Player.fallSpeed: Double
+    get() {
+        val falling = !toNMS().onGround() && fallDistance > 0f
+        return if (falling) (-velocity.y).coerceAtLeast(0.0) else 0.0
+    }
 
 val Player.hasFooting get() = isRopeClimbing || uniqueId.isClimbing || toNMS().onGround()
 

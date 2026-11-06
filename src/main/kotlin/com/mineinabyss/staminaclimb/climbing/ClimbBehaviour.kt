@@ -1,10 +1,12 @@
 package com.mineinabyss.staminaclimb.climbing
 
 import com.mineinabyss.geary.papermc.tracking.items.inventory.toGeary
+import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.events.PlayerStartClimbEvent
 import com.mineinabyss.staminaclimb.events.PlayerStopClimbEvent
+import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.rope.RopeClimb
 import com.mineinabyss.staminaclimb.rope.RopeClimb.isRopeClimbing
@@ -12,6 +14,7 @@ import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeStamina
 import io.papermc.paper.event.player.PlayerArmSwingEvent
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -44,6 +47,10 @@ object ClimbBehaviour : Listener {
 
     private val climbStats: MutableMap<UUID, ClimbStats> = ConcurrentHashMap()
 
+    /** Downward speed in blocks per tick of each player still sliding down a wall they grabbed mid fall */
+    private val grabSlides = HashMap<UUID, Double>()
+    fun isGrabSliding(uuid: UUID) = uuid in grabSlides
+
     fun trackClimbMovement(player: Player) {
         climbStats[player.uniqueId]?.update(player.location.y)
     }
@@ -55,6 +62,7 @@ object ClimbBehaviour : Listener {
         }
         player.flySpeed = 0.1f
         val uuid = player.uniqueId
+        grabSlides.remove(uuid)
         val wasClimbing = isClimbing.remove(uuid) != null
         val stats = climbStats.remove(uuid)
         if (wasClimbing) {
@@ -96,24 +104,37 @@ object ClimbBehaviour : Listener {
         val uuid = player.uniqueId
 
         //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(player) && rightClicked() && uuid !in isClimbing) {
+        if (allowClimb(player) && rightClicked() && uuid !in isClimbing && uuid !in grabSlides) {
             val stamina = StaminaBar.players[uuid] ?: return
-            //remove stamina progress based on how long the player's already fallen
-            player.removeStamina(player.fallDistance / 15f)
-            //reduce fall damage by half heart per feather fall level
-            val damageAmount = (player.fallDistance - 3) / 1.9
-            if (damageAmount >= 1) //prevent player taking damage they can't see, which just makes a sound
-                player.damage(damageAmount)
-
             if (stamina.progress > 0)
-                if (player.wallDifficulty >= 0) startClimbing(player)
-                else {
+                if (player.wallDifficulty >= 0) {
+                    val fallSpeed = player.fallSpeed
+                    if (fallSpeed > 0) grabSlides[uuid] = fallSpeed else startClimbing(player)
+                } else {
                     isClimbing.remove(uuid)
                     uuid.restartCooldown()
                 }
         }
 
-        if ((!player.isSneaking || player.isInClimbableBlock) && uuid.isClimbing) isCancelled = true
+        if ((!player.isSneaking || player.isInClimbableBlock) && (uuid.isClimbing || uuid in grabSlides)) isCancelled = true
+    }
+
+    /** Their fall distance keeps building meanwhile, so landing mid slide still hurts */
+    fun tickGrabSlides() = grabSlides.entries.removeIf { entry ->
+        val player = Bukkit.getPlayer(entry.key) ?: return@removeIf true
+        val speed = entry.value
+        if (!entry.key.canClimb || player.toNMS().onGround() || player.wallDifficulty < 0) return@removeIf true
+
+        player.removeStamina((ropeConfig.slideStaminaPerBlock * speed).toFloat())
+        val next = speed - ropeConfig.slideDeceleration
+        if (next <= 0) {
+            player.fallDistance = 0f
+            startClimbing(player)
+            return@removeIf true
+        }
+        entry.setValue(next)
+        player.velocity = Vector(0.0, -next, 0.0)
+        false
     }
 
     @EventHandler

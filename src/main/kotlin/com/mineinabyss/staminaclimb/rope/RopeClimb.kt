@@ -7,6 +7,7 @@ import com.mineinabyss.staminaclimb.canClimb
 import com.mineinabyss.staminaclimb.checkRange
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.collidesAt
+import com.mineinabyss.staminaclimb.fallSpeed
 import com.mineinabyss.staminaclimb.isClimbing
 import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.modules.stamina
@@ -108,13 +109,7 @@ object RopeClimb {
         return player.location.direction.setY(0).normalizeOrZero()
     }
 
-    /** A grounded player still reports a small downward velocity, so only a real fall makes the grab slip */
-    private fun grabSlideSpeed(player: Player): Double {
-        val falling = !player.toNMS().onGround() && player.fallDistance > 0f
-        return if (falling) (-player.velocity.y).coerceAtLeast(0.0) else 0.0
-    }
-
-    fun canGrab(player: Player) = grabSlideSpeed(player) == 0.0 || player.uniqueId.canClimb
+    fun canGrab(player: Player) = player.fallSpeed == 0.0 || player.uniqueId.canClimb
 
     /** [link] leads to the copy of the rope grabbed, null for the piton's own */
     fun enter(player: Player, piton: ItemDisplay, feetY: Double, link: SectionLink? = null) {
@@ -122,7 +117,7 @@ object RopeClimb {
         val placed = piton.placedPiton ?: return
         val rope = piton.hangingRope ?: return
         val velocity = player.velocity
-        val slideSpeed = grabSlideSpeed(player)
+        val slideSpeed = player.fallSpeed
         if (player.uniqueId in ClimbBehaviour.isClimbing) player.stopClimbing()
 
         val anchor = placed.ropeAnchor(piton.world, link)
