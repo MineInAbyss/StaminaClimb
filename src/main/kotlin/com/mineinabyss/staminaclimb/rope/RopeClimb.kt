@@ -137,7 +137,7 @@ object RopeClimb {
         val rope = piton.hangingRope ?: return
         val velocity = player.velocity
         val slideSpeed = player.fallSpeed
-        if (player.uniqueId in ClimbBehaviour.isClimbing) player.stopClimbing()
+        if (player.uniqueId in ClimbBehaviour.isClimbing || ClimbBehaviour.isGrabSliding(player.uniqueId)) player.stopClimbing()
 
         val anchor = placed.ropeAnchor(piton.world, link)
         val maxLength = rope.length.toDouble()

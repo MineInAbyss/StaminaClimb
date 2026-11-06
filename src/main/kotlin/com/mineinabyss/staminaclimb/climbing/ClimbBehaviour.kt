@@ -10,20 +10,26 @@ import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.modules.stamina
 import com.mineinabyss.staminaclimb.rope.RopeClimb
 import com.mineinabyss.staminaclimb.rope.RopeClimb.isRopeClimbing
+import com.mineinabyss.staminaclimb.rope.RopeSections
 import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeStamina
+import io.papermc.paper.entity.TeleportFlag
 import io.papermc.paper.event.player.PlayerArmSwingEvent
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.util.Vector
 import java.util.*
@@ -48,9 +54,17 @@ object ClimbBehaviour : Listener {
     private val climbStats: MutableMap<UUID, ClimbStats> = ConcurrentHashMap()
 
     /** [speed] is downward in blocks per tick */
-    private class GrabSlide(var speed: Double, val fallBefore: Float, val grabY: Double) {
-        fun creditedFall(player: Player, reduction: Double): Float {
-            val slid = (grabY - player.location.y).coerceAtLeast(0.0)
+    private class GrabSlide(var speed: Double, val fallBefore: Float, var grabY: Double) {
+        var lastY = grabY
+        var offWallTicks = 0
+
+        fun shift(dy: Double) {
+            grabY += dy
+            lastY += dy
+        }
+
+        fun creditedFall(y: Double, reduction: Double): Float {
+            val slid = (grabY - y).coerceAtLeast(0.0)
             return fallBefore + (slid * (1 - reduction)).toFloat()
         }
     }
@@ -111,39 +125,80 @@ object ClimbBehaviour : Listener {
         val uuid = player.uniqueId
 
         //if sneaking, don't climb, but do climb if player is also falling
-        if (allowClimb(player) && rightClicked() && uuid !in isClimbing && uuid !in grabSlides) {
+        // A false entry is the air time left after a dash or leaving a wall, which a fresh grab replaces
+        if (allowClimb(player) && rightClicked() && !uuid.isClimbing && uuid !in grabSlides) {
             val stamina = StaminaBar.players[uuid] ?: return
-            if (stamina.progress > 0)
-                if (player.wallDifficulty >= 0) {
-                    val fallSpeed = player.fallSpeed
-                    if (fallSpeed > 0) grabSlides[uuid] = GrabSlide(fallSpeed, player.fallDistance, player.location.y)
-                    else startClimbing(player)
-                } else {
-                    isClimbing.remove(uuid)
-                    uuid.restartCooldown()
-                }
+            if (stamina.progress > 0) {
+                if (player.wallDifficulty >= 0 || pullToWall()) grab(player)
+                else if (uuid !in isClimbing) uuid.restartCooldown()
+            }
         }
 
-        if ((!player.isSneaking || player.isInClimbableBlock) && (uuid.isClimbing || uuid in grabSlides)) isCancelled = true
+        // Only clicks on blocks are held back mid slide, so buckets, pearls and food still work while slipping
+        val sliding = uuid in grabSlides && action == Action.RIGHT_CLICK_BLOCK
+        if ((!player.isSneaking || player.isInClimbableBlock) && (uuid.isClimbing || sliding)) isCancelled = true
+    }
+
+    private fun grab(player: Player) {
+        val fallSpeed = player.fallSpeed
+        // A leftover air time entry would have the climb loop stick the player to the wall mid slide
+        if (player.uniqueId in isClimbing) stopClimbing(player)
+        if (fallSpeed > 0) grabSlides[player.uniqueId] = GrabSlide(fallSpeed, player.fallDistance, player.location.y)
+        else startClimbing(player)
+    }
+
+    /** The wall check only reaches a hair past the player, so a wall clicked from a little further off pulls them flush against it */
+    private fun PlayerInteractEvent.pullToWall(): Boolean {
+        val wall = wallBlock ?: return false
+        val face = blockFace.takeIf { it.modY == 0 } ?: return false
+        val from = player.location
+        val gap = player.standingHalfWidth
+        val at = from.clone().apply {
+            if (face.modX != 0) x = wall.x + 0.5 + face.modX * (0.5 + gap)
+            if (face.modZ != 0) z = wall.z + 0.5 + face.modZ * (0.5 + gap)
+        }
+        val pull = at.toVector().subtract(from.toVector())
+        // Only ever toward the wall, a player already past the face would be pushed out of it
+        if (pull.dot(face.direction) > 0 || pull.lengthSquared() > conf.grabReach * conf.grabReach) return false
+        if (player.collidesAt(at.toVector()) || player.wallDifficultyAt(at) < 0) return false
+        return player.teleport(at, TeleportFlag.Relative.VELOCITY_X, TeleportFlag.Relative.VELOCITY_Y, TeleportFlag.Relative.VELOCITY_Z)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    fun PlayerTeleportEvent.onTeleportMidSlide() {
+        val slide = grabSlides[player.uniqueId] ?: return
+        // A section transition carries the slide on in the next section, its fall credit measured from the moved grab point
+        if (to.world == from.world && cause == PlayerTeleportEvent.TeleportCause.PLUGIN && RopeSections.inTransition(from)) slide.shift(to.y - from.y)
+        else grabSlides.remove(player.uniqueId)
+    }
+
+    @EventHandler
+    fun PlayerDeathEvent.onDeathMidSlide() {
+        grabSlides.remove(entity.uniqueId)
     }
 
     /** Landing is damaged by the server before this runs, so the fall distance is kept at the landing credit every tick and only raised to the lost grip credit when they let go */
     fun tickGrabSlides() = grabSlides.entries.removeIf { (uuid, slide) ->
         val player = Bukkit.getPlayer(uuid) ?: return@removeIf true
         if (player.toNMS().onGround()) return@removeIf true
-        if (!uuid.canClimb || player.wallDifficulty < 0) {
-            player.fallDistance = slide.creditedFall(player, conf.grabSlideLostGripFallReduction)
+
+        val y = player.location.y
+        player.removeStamina((ropeConfig.slideStaminaPerBlock * (slide.lastY - y).coerceAtLeast(0.0)).toFloat())
+        slide.lastY = y
+        slide.offWallTicks = if (player.wallDifficulty < 0) slide.offWallTicks + 1 else 0
+        if (!uuid.canClimb || slide.offWallTicks > conf.grabSlideGripGraceTicks) {
+            player.fallDistance = slide.creditedFall(y, conf.grabSlideLostGripFallReduction)
             return@removeIf true
         }
 
-        player.removeStamina((ropeConfig.slideStaminaPerBlock * slide.speed).toFloat())
-        slide.speed -= ropeConfig.slideDeceleration
-        if (slide.speed <= 0) {
+        // A slide that stops away from the wall hangs there until it finds the wall again or the grace runs out
+        slide.speed = (slide.speed - ropeConfig.slideDeceleration).coerceAtLeast(0.0)
+        if (slide.speed == 0.0 && slide.offWallTicks == 0) {
             player.fallDistance = 0f
             startClimbing(player)
             return@removeIf true
         }
-        player.fallDistance = slide.creditedFall(player, conf.grabSlideLandedFallReduction)
+        player.fallDistance = slide.creditedFall(y, conf.grabSlideLandedFallReduction)
         player.velocity = Vector(0.0, -slide.speed, 0.0)
         false
     }
@@ -171,7 +226,7 @@ object ClimbBehaviour : Listener {
     fun startClimbing(player: Player) {
         val uuid = player.uniqueId
         //jump a bit if player is standing on ground and starts climbing
-        if (player.velocity.y in -0.08..-0.07)
+        if (player.toNMS().onGround())
             player.velocity = player.velocity.add(Vector(0.0, 0.25, 0.0))
 
         uuid.isClimbing = true
@@ -210,16 +265,20 @@ object ClimbBehaviour : Listener {
     }
 
     // Sneaking stops a climb from starting unless the player is already falling
-    private fun allowClimb(player: Player) = mayClimbWall(player) && !player.isRopeClimbing && (!player.isSneaking || player.velocity.y < -0.5)
+    private fun allowClimb(player: Player) = mayClimbWall(player) && !player.isRopeClimbing && (!player.isSneaking || player.fallSpeed > 0)
+
+    /** A torch, vine or other thin block on the wall catches the click meant for the wall behind it */
+    private val PlayerInteractEvent.wallBlock: Block?
+        get() = clickedBlock?.let { if (it.type.isSolid || !isClimbable(it.type)) it else it.getRelative(blockFace.oppositeFace) }
 
     private fun PlayerInteractEvent.rightClicked(): Boolean { //did player do a valid right click
-        if (player.heldPiton != null) return false
-        val block = clickedBlock?.type ?: return false
+        if (action != Action.RIGHT_CLICK_BLOCK || hand != EquipmentSlot.HAND || player.heldPiton != null) return false
+        val block = wallBlock?.type ?: return false
         if (player.holdsBlock || !isClimbable(block)) {
             player.uniqueId.climbCooldown = conf.jumpCooldown
             return false
         }
-        return action == Action.RIGHT_CLICK_BLOCK && hand == EquipmentSlot.HAND && block.isSolid
+        return block.isSolid
     }
 
     /** Blocks players interact with, such as containers and doors, are used rather than climbed */

@@ -85,8 +85,8 @@ fun Player.wallDifficultyAt(loc: Location): Float {
 
     var totalClimbDifficulty = 0f
     var climbDifficultyCount = 0
-    //fix some issues with half slabs by checking half a block higher when the player isn't yet climbing
-    val slabRaise = if (!ClimbBehaviour.isClimbing.containsKey(uniqueId)) 0.5 else 0.0
+    //fix some issues with half slabs by checking half a block higher when the player stands on the ground rather than climbing
+    val slabRaise = if (!ClimbBehaviour.isClimbing.containsKey(uniqueId) && toNMS().onGround()) 0.5 else 0.0
     inCube(-1..1 step 2, 0..1, -1..1 step 2) { x, y, z ->
         val to = loc.clone().add(x * checkRange, y + slabRaise, z * checkRange)
         val climbDifficulty = to.block.type.climbDifficulty
@@ -129,11 +129,14 @@ val Player.isInClimbableBlock get() = location.block.type in Tag.CLIMBABLE.value
 
 val Player.isCreative get() = gameMode == GameMode.CREATIVE
 
-/** A grounded player still reports a small downward velocity, so only a real fall counts */
+/**
+ * The server never runs a player's physics, so their velocity is not how fast they fall.
+ * This is the movement of their last move packet instead, which the server zeroes on a client tick without one
+ */
 val Player.fallSpeed: Double
     get() {
-        val falling = !toNMS().onGround() && fallDistance > 0f
-        return if (falling) (-velocity.y).coerceAtLeast(0.0) else 0.0
+        val nms = toNMS()
+        return if (nms.onGround()) 0.0 else (-nms.knownMovement.y).coerceAtLeast(0.0)
     }
 
 val Player.hasFooting get() = isRopeClimbing || uniqueId.isClimbing || toNMS().onGround()

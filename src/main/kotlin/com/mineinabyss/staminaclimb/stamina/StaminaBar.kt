@@ -120,7 +120,8 @@ object StaminaBar : Listener {
     fun PlayerMoveEvent.onPlayerMove() {
         val uuid = player.uniqueId
         val climbDisabled = player in Tags.disabledPlayers
-        val vel = player.velocity.y
+        // The server never runs a player's physics, so their velocity is not how fast they fall
+        val vel = to.y - from.y
         if (vel < -0.1) velocities[uuid] = vel
 
         if (player.isClimbing && !player.climbEnabled && !climbDisabled) Tags.disableClimb(player)

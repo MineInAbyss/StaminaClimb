@@ -21,6 +21,10 @@ class StaminaConfig(
     val barBlink2: Float = 0.1f,
     val barBlinkSpeed1: Float = 120f,
     val barBlinkSpeed2: Float = 20f,
+    // Ticks a slide may spend away from the wall, such as drifting off it or passing a gap, before the grip is lost
+    val grabSlideGripGraceTicks: Int = 3,
+    // A wall clicked within this many blocks of the player pulls them flush against it to grab on
+    val grabReach: Double = 1.0,
     // Share taken off the distance slid when counting fall damage, for losing grip mid slide or landing while still holding on
     val grabSlideLostGripFallReduction: Double = 0.15,
     val grabSlideLandedFallReduction: Double = 0.25,
@@ -52,7 +56,6 @@ class StaminaConfig(
         Material.LECTERN,
         Material.LEVER,
         Material.LOOM,
-        Material.NOTE_BLOCK,
         Material.SCAFFOLDING,
         Material.SMOKER,
         Material.SMITHING_TABLE,
