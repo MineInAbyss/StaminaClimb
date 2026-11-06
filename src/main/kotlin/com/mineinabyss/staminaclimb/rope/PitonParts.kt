@@ -14,6 +14,7 @@ import org.bukkit.Axis
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.World
 import org.bukkit.block.Block
 import org.bukkit.block.data.Orientable
@@ -24,6 +25,7 @@ import org.bukkit.entity.Interaction
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.BoundingBox
 import org.bukkit.util.Transformation
 import org.bukkit.util.Vector
@@ -37,6 +39,7 @@ import java.util.*
  */
 object PitonParts {
     private const val TAG = "climb:rope_part"
+    private val PART_OF = NamespacedKey("climb", "part_of")
 
     /** [piton] is always the source, [isMirror] tells a hit on its copy in the linked section apart */
     class Hitbox(private val source: ItemDisplay, val isRope: Boolean, val isMirror: Boolean) {
@@ -157,10 +160,13 @@ object PitonParts {
 
     private fun refresh(parts: Parts, loadMirror: Boolean, animate: Boolean) {
         syncMirror(parts, loadMirror)
-        if (parts.ropeLength == 0) return
-        if (parts.rope.display == null) spawnRope(parts, parts.rope, parts.anchor, RopeSections.regionAt(parts.anchor), isMirror = false, animate)
-        val mirror = parts.mirror ?: return
-        if (mirror.rope.display == null) spawnRope(parts, mirror.rope, mirror.link.toTarget(parts.anchor), mirror.link.target, isMirror = true, animate)
+        if (parts.ropeLength > 0) {
+            if (parts.rope.display == null) spawnRope(parts, parts.rope, parts.anchor, RopeSections.regionAt(parts.anchor), isMirror = false, animate)
+            parts.mirror?.let { mirror ->
+                if (mirror.rope.display == null) spawnRope(parts, mirror.rope, mirror.link.toTarget(parts.anchor), mirror.link.target, isMirror = true, animate)
+            }
+        }
+        sweepOrphans(parts)
     }
 
     /** Mirrors into the section the spot overlaps with, or the one the lowest bit of rope still inside the piton's own section overlaps with */
@@ -189,7 +195,7 @@ object PitonParts {
     private fun spawnMirror(parts: Parts, link: SectionLink, at: Location): MirrorParts {
         val piton = parts.piton
         val display = if (link.target.contains(at.toVector())) at.world.spawn(at, ItemDisplay::class.java) {
-            markPart(it)
+            markPart(it, piton)
             it.itemDisplayTransform = ItemDisplay.ItemDisplayTransform.FIXED
             it.setItemStack(piton.itemStack)
             it.transformation = piton.transformation
@@ -217,6 +223,7 @@ object PitonParts {
         if (entities) {
             mirror.display?.remove()
             mirror.hitbox?.remove()
+            sweepOrphans(parts, mirror.link.world to mirror.spot)
         }
         mirror.block?.let { unregister(mirror.link.world.uid, it, parts.piton) }
         unindexColumn(mirror.link.world.uid, mirror.spot, parts)
@@ -231,7 +238,7 @@ object PitonParts {
     private fun spawnPitonHitbox(location: Location, piton: ItemDisplay, isMirror: Boolean): Interaction {
         val size = ropeConfig.pitonHitboxSize
         return location.world.spawn(location, Interaction::class.java) {
-            markPart(it)
+            markPart(it, piton)
             it.interactionWidth = size
             it.interactionHeight = size
             it.isResponsive = false
@@ -249,7 +256,7 @@ object PitonParts {
         val hitboxHeight = last - first + 1
 
         val unrollTicks = (ropeConfig.dropAnimationTicksPerSegment * length).takeIf { animate && it > 0 }
-        val display = spawnRopeDisplay(bottom, shown, extent = if (unrollTicks == null) 1f else 0f)
+        val display = spawnRopeDisplay(parts.piton, bottom, shown, extent = if (unrollTicks == null) 1f else 0f)
         rope.display = display
         if (unrollTicks == null) return spawnRopeHitboxes(parts, rope, hitboxBottom, hitboxHeight, isMirror)
 
@@ -274,7 +281,7 @@ object PitonParts {
         while (remaining > 0) {
             val height = minOf(pieceHeight, remaining)
             val hitbox = bottom.world.spawn(pieceBottom, Interaction::class.java) {
-                markPart(it)
+                markPart(it, parts.piton)
                 it.interactionWidth = ropeConfig.ropeHitboxWidth
                 it.interactionHeight = height.toFloat()
                 it.isResponsive = false
@@ -319,11 +326,11 @@ object PitonParts {
      * The box is as wide as the rope is long so a swing never leaves it.
      * [shown] holds one entry per block of rope from the anchor down, the block fallback cannot hide any of them
      */
-    private fun spawnRopeDisplay(bottom: Location, shown: List<Boolean>, extent: Float): Display {
+    private fun spawnRopeDisplay(piton: ItemDisplay, bottom: Location, shown: List<Boolean>, extent: Float): Display {
         val model = ropeConfig.ropeModel
         val length = shown.size
         val configure = { display: Display ->
-            markPart(display)
+            markPart(display, piton)
             display.brightness = Display.Brightness(15, 15)
             display.displayWidth = 2f * length
             display.displayHeight = length.toFloat()
@@ -363,6 +370,7 @@ object PitonParts {
         parts.ropes.forEach { it.remove() }
         parts.ropeLength = 0
         syncMirror(parts, load = false)
+        sweepOrphans(parts)
     }
 
     fun remove(piton: ItemDisplay) = forget(piton, unloading = false)
@@ -416,8 +424,32 @@ object PitonParts {
         RopeMirrors.clear()
     }
 
-    fun markPart(entity: Entity) {
+    /** [piton] ties the part to the piton it belongs to, so one left behind untracked can be found and removed */
+    fun markPart(entity: Entity, piton: ItemDisplay? = null) {
         entity.isPersistent = false
         entity.addScoreboardTag(TAG)
+        piton?.let { entity.persistentDataContainer.set(PART_OF, PersistentDataType.STRING, it.uniqueId.toString()) }
+    }
+
+    /**
+     * A chunk unloading and coming back before its parts are discarded can leave copies the registry no longer knows.
+     * They still show but no longer respond to anything, so every column the piton's parts can sit in is cleared of them.
+     * [extra] adds a column the parts have just left, such as a removed mirror's
+     */
+    private fun sweepOrphans(parts: Parts, extra: Pair<World, BlockPos>? = null) {
+        val pitonId = parts.piton.uniqueId.toString()
+        val tracked = (listOfNotNull(parts.hitbox, parts.mirror?.display, parts.mirror?.hitbox) + parts.ropes.flatMap { listOfNotNull(it.display) + it.hitboxes })
+            .mapTo(HashSet()) { it.uniqueId }
+        val columns = listOfNotNull(
+            parts.piton.world to parts.spot,
+            parts.mirror?.let { it.link.world to it.spot },
+            extra,
+        )
+        val reach = ropeConfig.maxRopeLength + 2.0
+        columns.forEach { (world, spot) ->
+            val column = BoundingBox(spot.x.toDouble(), spot.y - reach, spot.z.toDouble(), spot.x + 1.0, spot.y + 2.0, spot.z + 1.0)
+            world.getNearbyEntities(column) { it.uniqueId !in tracked && it.persistentDataContainer.get(PART_OF, PersistentDataType.STRING) == pitonId }
+                .forEach(Entity::remove)
+        }
     }
 }
