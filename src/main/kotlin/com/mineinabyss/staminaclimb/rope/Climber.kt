@@ -29,6 +29,7 @@ class Climber(
     val placed: PlacedPiton,
     val mount: ItemDisplay,
     val riderOffset: Vector,
+    private val clearance: Vector,
     link: SectionLink?,
     val minLength: Double,
     val maxLength: Double,
@@ -40,11 +41,13 @@ class Climber(
     var link: SectionLink? = link
         set(value) {
             field = value
-            anchor = placed.ropeAnchor(piton.world, value).toVector()
+            anchor = hangPoint(value)
         }
-    var anchor: Vector = placed.ropeAnchor(piton.world, link).toVector()
+    var anchor: Vector = hangPoint(link)
         private set
     val world: World get() = link?.world ?: piton.world
+
+    private fun hangPoint(link: SectionLink?) = placed.ropeAnchor(piton.world, link).toVector().add(clearance)
 
     var input: Input? = null
     var dir: Vector = straightDown()

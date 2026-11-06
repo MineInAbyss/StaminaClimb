@@ -134,7 +134,7 @@ object RopeClimb {
             it.teleportDuration = 1
         }
 
-        val climber = Climber(player.uniqueId, piton, placed, mount, riderOffset(player, mount), link, minLength, maxLength, length).apply {
+        val climber = Climber(player.uniqueId, piton, placed, mount, riderOffset(player, mount), wallClearance(player, placed), link, minLength, maxLength, length).apply {
             input = player.currentInput
             this.slideSpeed = slideSpeed
             Vector(velocity.x, 0.0, velocity.z).takeIf { it.lengthSquared() > MIN_CARRIED_SPEED * MIN_CARRIED_SPEED }?.let { vel = it }
@@ -150,6 +150,13 @@ object RopeClimb {
         piton.pauseExpiry()
         PitonParts.hideRopeFrom(player, piton)
         ropeConfig.sounds.grabRope.play(player.location)
+    }
+
+    /** A rope hung closer to the wall than half the player's width would hold them inside it, so they hang out from the rope far enough to clear it */
+    private fun wallClearance(player: Player, placed: PlacedPiton): Vector {
+        if (placed.face.modY != 0) return Vector()
+        val gap = player.standingHalfWidth - ropeConfig.ropeOffset
+        return if (gap > 0) placed.face.direction.multiply(gap) else Vector()
     }
 
     /** The rider sits at the vehicle's passenger point minus its own vehicle attachment, 0.6 above the feet for a player */
@@ -298,7 +305,7 @@ object RopeClimb {
             }
             val wall = climber.placed.face
             if (wall != BlockFace.DOWN && !climber.swinging) add(player.location.apply {
-                val nudge = ropeConfig.ropeOffset - halfWidth
+                val nudge = (ropeConfig.ropeOffset - halfWidth).coerceAtLeast(0.0)
                 x = climber.anchor.x - wall.modX * nudge
                 z = climber.anchor.z - wall.modZ * nudge
             })
