@@ -5,6 +5,7 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.staminaclimb.modules.ropeConfig
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.block.Block
@@ -14,6 +15,9 @@ import org.bukkit.inventory.ItemStack
 
 val ItemDisplay.placedPiton: PlacedPiton? get() = toGearyOrNull()?.get<PlacedPiton>()
 val ItemDisplay.hangingRope: HangingRope? get() = toGearyOrNull()?.get<HangingRope>()
+
+/** A piton whose chunk reloaded is a new entity with the same UUID */
+fun ItemDisplay.reloaded(): ItemDisplay = if (isValid) this else Bukkit.getEntity(uniqueId) as? ItemDisplay ?: this
 
 fun ItemDisplay.setPlacedPiton(piton: PlacedPiton) {
     val geary = toGearyOrNull() ?: return

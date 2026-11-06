@@ -13,7 +13,6 @@ import com.mineinabyss.staminaclimb.holdsRope
 import com.mineinabyss.staminaclimb.isCreative
 import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.modules.stamina
-import com.mineinabyss.staminaclimb.rope.RopeClimb.isRopeClimbing
 import io.papermc.paper.event.player.PrePlayerAttackEntityEvent
 import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
@@ -97,25 +96,22 @@ object PitonListener : Listener {
         RopeClimb.consumeSwing(player)
 
         val piton = hitbox.piton
-        // From the ground anyone on the rope can be dropped, from another rope it would pull it out from under them mid swing
-        if (player.isRopeClimbing && RopeClimb.countOn(piton) > 0) return
-
-        val rope = piton.hangingRope
+        if (RopeClimb.climber(player)?.piton == piton) return RopeClimb.release(player)
+        if (hitbox.isRope && RopeClimb.isSwinging(piton)) return
+        val hasRope = piton.hangingRope != null
+        val ownsPiton = piton.placedPiton?.owner == player.uniqueId
         when {
-            hitbox.isRope -> if (!RopeClimb.isSwinging(piton)) takeRope(player, piton, hitbox.isMirror)
-            piton.placedPiton?.owner == player.uniqueId -> Pitons.breakPiton(piton, hitbox.isMirror)
-            rope?.owner == player.uniqueId -> takeRope(player, piton, hitbox.isMirror)
-            rope != null -> player.error(messages.ropeNotYours)
-            else -> player.error(messages.pitonNotYours)
+            hasRope && !RopeClimb.mayTakeRope(piton, player.uniqueId) -> player.error(messages.ropeInUse)
+            hasRope && (hitbox.isRope || !ownsPiton) -> takeRope(player, piton)
+            !ownsPiton -> player.error(messages.pitonNotYours)
+            else -> Pitons.breakPiton(piton, hitbox.isMirror)
         }
     }
 
-    private fun takeRope(player: Player, piton: ItemDisplay, viaMirror: Boolean) {
-        if (piton.hangingRope?.owner != player.uniqueId) return player.error(messages.ropeNotYours)
-        val location = PitonParts.locationOf(piton, viaMirror)
+    private fun takeRope(player: Player, piton: ItemDisplay) {
         val rope = Pitons.detachRope(piton) ?: return
         if (!player.isCreative) player.giveOrDrop(rope)
-        sounds.detachRope.play(location)
+        sounds.detachRope.play(player.location)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

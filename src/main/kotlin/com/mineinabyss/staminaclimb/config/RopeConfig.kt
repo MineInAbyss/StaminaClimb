@@ -6,12 +6,15 @@ import org.bukkit.Location
 import org.bukkit.SoundCategory
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /** Distances in blocks and speeds in blocks per tick */
 @Serializable
 class RopeConfig(
     val maxRopeLength: Int = 30,
     val pitonDespawn: @Serializable(DurationSerializer::class) Duration = 10.minutes,
+    // Anyone can take a rope down unless its owner is on it or let go of it less than this long ago
+    val ropeTakeDelay: @Serializable(DurationSerializer::class) Duration = 10.seconds,
     val climbSpeed: Double = 0.15,
     val pitonFaceOffset: Double = 0.125,
     val pitonHitboxSize: Float = 0.25f,
@@ -103,6 +106,6 @@ class RopeMessages(
     val pitonNotYours: String = "You can't break this piton.",
     val pitonFull: String = "This piton can't hold more ropes.",
     val noSpaceBelow: String = "There isn't enough space to climb down from this piton.",
-    val ropeNotYours: String = "This rope isn't yours!",
+    val ropeInUse: String = "The owner of this rope is still using it.",
     val fusingNoRope: String = "You don't have a rope!",
 )

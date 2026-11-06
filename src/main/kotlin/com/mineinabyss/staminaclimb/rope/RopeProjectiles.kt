@@ -42,16 +42,20 @@ object RopeProjectiles {
         val distance = travel.length().takeIf { it >= 1e-4 } ?: return false
         val hit = from.world.rayTraceEntities(from, travel, distance, PitonParts::isHitbox) ?: return false
         val hitbox = hit.hitEntity?.let(PitonParts::hitboxOf) ?: return false
-        val piton = hitbox.piton.takeIf { RopeClimb.countOn(it) == 0 } ?: return false
+        val piton = hitbox.piton
+        if (hitbox.isRope && RopeClimb.isSwinging(piton)) return false
+        val hasRope = piton.hangingRope != null
+        val ownsPiton = piton.placedPiton?.owner == shot.shooter
+        if (hasRope && !RopeClimb.mayTakeRope(piton, shot.shooter)) return false
 
         when {
-            piton.hangingRope?.owner == shot.shooter -> {
+            hasRope && (hitbox.isRope || !ownsPiton) -> {
                 val item = Pitons.detachRope(piton) ?: return false
                 val location = hit.hitPosition.toLocation(from.world)
                 if (shot.shooter.toPlayer()?.isCreative != true) Pitons.dropItem(location, item)
                 ropeConfig.sounds.detachRope.play(location)
             }
-            !hitbox.isRope && piton.placedPiton?.owner == shot.shooter -> Pitons.breakPiton(piton, hitbox.isMirror)
+            !hitbox.isRope && ownsPiton -> Pitons.breakPiton(piton, hitbox.isMirror)
             else -> return false
         }
 

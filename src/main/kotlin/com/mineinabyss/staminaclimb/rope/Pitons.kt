@@ -128,6 +128,7 @@ object Pitons {
     fun remove(display: ItemDisplay, dropRope: Boolean, viaMirror: Boolean = false) {
         if (!display.isValid) return
         RopeClimb.playersOn(display).forEach(RopeClimb::exit)
+        RopeClimb.forgetLetGo(display)
 
         val location = PitonParts.locationOf(display, viaMirror)
         val rope = display.hangingRope?.takeIf { dropRope }?.toItemStack()
@@ -205,6 +206,7 @@ object Pitons {
     fun detachRope(display: ItemDisplay): ItemStack? {
         val rope = display.hangingRope ?: return null
         RopeClimb.playersOn(display).forEach(RopeClimb::exit)
+        RopeClimb.forgetLetGo(display)
         PitonParts.removeRope(display)
         display.setHangingRope(null)
         return rope.toItemStack()

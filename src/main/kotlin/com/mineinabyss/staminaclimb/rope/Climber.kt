@@ -63,9 +63,9 @@ class Climber(
     private var lastStep = floor(length)
     private var holdDir: Vector? = null
 
-    /** A piton whose chunk reloaded is a new entity with the same UUID, false once there is none */
+    /** False once there is no piton left */
     fun refreshPiton(): Boolean {
-        if (!piton.isValid) (Bukkit.getEntity(piton.uniqueId) as? ItemDisplay)?.let { piton = it }
+        piton = piton.reloaded()
         return piton.isValid
     }
 

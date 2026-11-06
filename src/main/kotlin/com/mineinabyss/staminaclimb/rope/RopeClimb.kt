@@ -59,6 +59,7 @@ object RopeClimb {
     private var crossing: UUID? = null
     private val pendingRejoins = HashSet<UUID>()
     private val crossingChunks = HashSet<ChunkPos>()
+    private val ownerLetGo = HashMap<UUID, Long>()
 
     val climbers: Collection<Climber> get() = byPlayer.values
     val Player.isRopeClimbing get() = uniqueId in byPlayer
@@ -66,6 +67,18 @@ object RopeClimb {
     fun climberOfMount(mount: Entity) = playerByMount[mount.uniqueId]?.let(byPlayer::get)
     fun playersOn(piton: ItemDisplay) = onPiton[piton.uniqueId].orEmpty().mapNotNull { Bukkit.getPlayer(it.player) }
     fun countOn(piton: ItemDisplay) = onPiton[piton.uniqueId]?.size ?: 0
+
+    fun mayTakeRope(piton: ItemDisplay, taker: UUID): Boolean {
+        val owner = piton.hangingRope?.owner ?: return true
+        if (taker == owner) return true
+        if (onPiton[piton.uniqueId]?.any { it.player == owner } == true) return false
+        val letGo = ownerLetGo[piton.uniqueId] ?: return true
+        return System.currentTimeMillis() - letGo >= ropeConfig.ropeTakeDelay.inWholeMilliseconds
+    }
+
+    fun forgetLetGo(piton: ItemDisplay) {
+        ownerLetGo.remove(piton.uniqueId)
+    }
 
     fun leadOf(piton: ItemDisplay) = leads[piton.uniqueId]
     fun leadsRope(climber: Climber) = leadOf(climber.piton) === climber
@@ -264,6 +277,7 @@ object RopeClimb {
     /** [player] is null when they went offline still hanging, the mount and the piton get cleaned up either way */
     fun detach(uuid: UUID, player: Player?) {
         val climber = byPlayer.remove(uuid) ?: return
+        climber.refreshPiton()
         playerByMount.remove(climber.mount.uniqueId)
         // The dismount listener cancels a cancellable dismount, so the climber has to be gone from the map before this
         player?.leaveVehicle()
@@ -274,6 +288,7 @@ object RopeClimb {
         if (player != null && climber.slideSpeed == 0.0) player.fallDistance = 0f
 
         val pitonId = climber.piton.uniqueId
+        if (climber.piton.hangingRope?.owner == uuid) ownerLetGo[pitonId] = System.currentTimeMillis()
         val others = onPiton[pitonId]
         others?.remove(climber)
         if (others.isNullOrEmpty()) onPiton.remove(pitonId)

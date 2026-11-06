@@ -39,7 +39,9 @@ object PitonParts {
     private const val TAG = "climb:rope_part"
 
     /** [piton] is always the source, [isMirror] tells a hit on its copy in the linked section apart */
-    class Hitbox(val piton: ItemDisplay, val isRope: Boolean, val isMirror: Boolean)
+    class Hitbox(private val source: ItemDisplay, val isRope: Boolean, val isMirror: Boolean) {
+        val piton: ItemDisplay get() = source.reloaded()
+    }
 
     private class RopeParts {
         var display: Display? = null
