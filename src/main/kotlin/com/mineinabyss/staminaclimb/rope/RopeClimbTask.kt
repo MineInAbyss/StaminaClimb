@@ -8,6 +8,7 @@ class RopeClimbTask : BukkitRunnable() {
     override fun run() {
         if (RopeClimb.climbers.isEmpty()) return
         val limits = SwingLimits(ropeConfig.swing)
+        RopeClimb.refreshLeads()
         RopeClimb.climbers.toList().forEach { climber ->
             val player = Bukkit.getPlayer(climber.player) ?: return@forEach RopeClimb.detach(climber.player, null)
             if (!climber.refreshPiton() || player.vehicle != climber.mount) {

@@ -33,7 +33,7 @@ fun Climber.swing(player: Player, limits: SwingLimits): Vector {
     val cfg = ropeConfig.swing
     val input = input
     val braking = input?.isJump == true && input.isSneak
-    val pump = input?.takeIf { !braking && it.holdsDirection && RopeClimb.countOn(piton) == 1 }
+    val pump = input?.takeIf { !braking && it.holdsDirection }
         ?.let { pumpVector(player, it) }
         ?.takeIf { it.lengthSquared() > 0 }
     val pumping = pump != null

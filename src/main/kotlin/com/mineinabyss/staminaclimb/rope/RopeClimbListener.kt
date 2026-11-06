@@ -2,8 +2,10 @@ package com.mineinabyss.staminaclimb.rope
 
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.heldPiton
+import com.mineinabyss.staminaclimb.holdsBlock
 import com.mineinabyss.staminaclimb.rope.RopeClimb.isRopeClimbing
 import io.papermc.paper.event.player.PlayerArmSwingEvent
+import io.papermc.paper.event.player.PrePlayerAttackEntityEvent
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -22,8 +24,8 @@ object RopeClimbListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun PlayerInteractEvent.onRightClickWallFromRope() {
         if (action != Action.RIGHT_CLICK_BLOCK || hand != EquipmentSlot.HAND || !player.isRopeClimbing) return
-        // Right-clicking a wall with a piton places or throws it instead
-        if (player.heldPiton != null) return
+        // Right-clicking a wall with a piton places or throws it instead, and a held block is placed like it is off the rope
+        if (player.heldPiton != null || player.holdsBlock) return
         val block = clickedBlock?.takeIf { it.type.isSolid && ClimbBehaviour.isClimbable(it.type) } ?: return
         if (RopeClimb.climbWall(player, block, blockFace)) isCancelled = true
     }
@@ -49,10 +51,7 @@ object RopeClimbListener : Listener {
 
     @EventHandler
     fun PlayerInputEvent.onInput() {
-        val climber = RopeClimb.climber(player) ?: return
-        val pressedSprint = input.isSprint && climber.input?.isSprint != true
-        climber.input = input
-        if (pressedSprint) RopeClimb.sprintPressed(player)
+        RopeClimb.climber(player)?.updateInput(player, input)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -64,12 +63,25 @@ object RopeClimbListener : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun PlayerArmSwingEvent.onSwingOnRope() {
-        if (hand != EquipmentSlot.HAND || RopeClimb.swingConsumed(player)) return
-        val climber = RopeClimb.climber(player) ?: return
-        if (climber.input?.isSprint == true) {
-            RopeClimb.consumeSwing(player)
-            RopeClimb.release(player)
-        } else if (RopeClimb.climbWall(player)) RopeClimb.consumeSwing(player)
+        if (hand != EquipmentSlot.HAND || RopeClimb.swingConsumed(player) || !player.isRopeClimbing) return
+        RopeClimb.consumeSwing(player)
+        RopeClimb.release(player)
+    }
+
+    /** Attacks and right clicks swing the arm after their own packet, so a climber hitting a mob or using an item does not also let go */
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun PrePlayerAttackEntityEvent.onAttackFromRope() {
+        if (player.isRopeClimbing) RopeClimb.consumeSwing(player)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun PlayerInteractEvent.onRightClickFromRope() {
+        if (action.isRightClick && player.isRopeClimbing) RopeClimb.consumeSwing(player)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun PlayerInteractEntityEvent.onInteractFromRope() {
+        if (player.isRopeClimbing) RopeClimb.consumeSwing(player)
     }
 
     @EventHandler

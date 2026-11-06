@@ -50,6 +50,10 @@ class Climber(
     private fun hangPoint(link: SectionLink?) = placed.ropeAnchor(piton.world, link).toVector().add(clearance)
 
     var input: Input? = null
+    private var lastTapUp: Boolean? = null
+    private var lastTapTick = Int.MIN_VALUE
+    private var tappedFast = false
+    private var lastSprintTap: Int? = null
     var dir: Vector = straightDown()
     var vel: Vector = Vector()
 
@@ -127,7 +131,7 @@ class Climber(
         }
 
         val input = input
-        val fast = input?.isSprint == true && player.uniqueId.canClimb
+        val fast = (input?.isSprint == true || tappedFast) && player.uniqueId.canClimb
         val speed = ropeConfig.climbSpeed * if (fast) ropeConfig.fastClimbMultiplier else 1.0
         val delta = when {
             input?.isJump == true -> if (input.isSneak) 0.0 else -speed
@@ -161,6 +165,30 @@ class Climber(
         if (fast) player.removeStamina((ropeConfig.fastClimbStaminaPerBlock * abs(target - length)).toFloat())
         setLength(player, target)
         return true
+    }
+
+    /** Double tapping jump or sneak and holding it climbs fast, for players whose sprint is a double tapped walk rather than a key */
+    fun updateInput(player: Player, new: Input) {
+        val old = input
+        input = new
+        val tick = Bukkit.getCurrentTick()
+        val tapUp = when {
+            new.isJump && old?.isJump != true -> true
+            new.isSneak && old?.isSneak != true -> false
+            else -> null
+        }
+        if (tapUp != null) {
+            tappedFast = tapUp == lastTapUp && tick - lastTapTick <= ropeConfig.fastClimbDoubleTapTicks
+            lastTapUp = tapUp
+            lastTapTick = tick
+        }
+        if (!new.isJump && !new.isSneak) tappedFast = false
+
+        if (new.isSprint && old?.isSprint != true) {
+            val kicked = lastSprintTap?.let { tick - it <= ropeConfig.swing.kickDoubleTapTicks } == true
+            lastSprintTap = if (kicked) null else tick
+            if (kicked) RopeClimb.kick(player)
+        }
     }
 
     private fun setLength(player: Player, length: Double) {

@@ -29,6 +29,8 @@ class RopeConfig(
     // Holding sprint while climbing or descending moves this much faster and costs stamina per block, until the bar is in the red
     val fastClimbMultiplier: Double = 2.5,
     val fastClimbStaminaPerBlock: Float = 0.03f,
+    // Pressing jump or sneak twice within this many ticks and holding it also climbs fast, the same window as vanilla's double tap to sprint
+    val fastClimbDoubleTapTicks: Int = 7,
     // Item model for the whole rope, custom_model_data flag n shows the block of rope n blocks below the anchor and needs to exist for every length up to maxRopeLength.
     // Unset falls back to a stretched chain block display
     val ropeModel: String? = null,

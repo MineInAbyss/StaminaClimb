@@ -32,8 +32,8 @@ import org.bukkit.util.Vector
 import java.util.*
 
 object RopeClimb {
-    // How far off the rope a wall can be grabbed, about an arm's length
-    private const val WALL_REACH = 1.5
+    // How far from the rope a player can be moved onto a wall they grab from it
+    private const val WALL_REACH = 0.5
 
     // Vanilla default of the block interaction range attribute
     private const val DEFAULT_BLOCK_REACH = 4.5
@@ -51,10 +51,11 @@ object RopeClimb {
     private val byPlayer = HashMap<UUID, Climber>()
     private val playerByMount = HashMap<UUID, UUID>()
 
-    /** Climbers per piton in grab order, the first one is the one the rope display tilts with */
     private val onPiton = HashMap<UUID, MutableList<Climber>>()
+
+    /** The lowest climber on each piton, whose swing the rope display tilts with and everyone else hangs along */
+    private val leads = HashMap<UUID, Climber>()
     private val consumedSwings = HashMap<UUID, Int>()
-    private val sprintTaps = HashMap<UUID, Int>()
     private var crossing: UUID? = null
     private val pendingRejoins = HashSet<UUID>()
     private val crossingChunks = HashSet<ChunkPos>()
@@ -65,8 +66,22 @@ object RopeClimb {
     fun climberOfMount(mount: Entity) = playerByMount[mount.uniqueId]?.let(byPlayer::get)
     fun playersOn(piton: ItemDisplay) = onPiton[piton.uniqueId].orEmpty().mapNotNull { Bukkit.getPlayer(it.player) }
     fun countOn(piton: ItemDisplay) = onPiton[piton.uniqueId]?.size ?: 0
-    fun leadOf(piton: ItemDisplay) = onPiton[piton.uniqueId]?.firstOrNull()
+
+    fun leadOf(piton: ItemDisplay) = leads[piton.uniqueId]
     fun leadsRope(climber: Climber) = leadOf(climber.piton) === climber
+
+    fun refreshLeads() = onPiton.keys.forEach(::refreshLead)
+
+    /** A new lead takes over the swing at the same angular speed, so the rope carries on rather than jolting */
+    private fun refreshLead(pitonId: UUID) {
+        val lead = onPiton[pitonId]?.maxByOrNull { it.length } ?: return run { leads.remove(pitonId) }
+        val previous = leads.put(pitonId, lead)
+        if (previous == null || previous === lead) return
+        lead.dir = previous.dir.clone()
+        lead.vel = previous.vel.clone().multiply(lead.length / previous.length)
+        previous.vel = Vector()
+    }
+
     fun isSwinging(piton: ItemDisplay) = onPiton[piton.uniqueId]?.any { it.swinging } == true
 
     fun isCrossing(player: Player) = crossing == player.uniqueId
@@ -80,19 +95,10 @@ object RopeClimb {
 
     fun forget(player: Player) {
         consumedSwings.remove(player.uniqueId)
-        sprintTaps.remove(player.uniqueId)
     }
 
     /** Double tapping sprint kicks off, so a climber wedged against a wall with nowhere to swing can get free */
-    fun sprintPressed(player: Player) {
-        val tick = Bukkit.getCurrentTick()
-        val previous = sprintTaps.put(player.uniqueId, tick) ?: return
-        if (tick - previous > ropeConfig.swing.kickDoubleTapTicks) return
-        sprintTaps.remove(player.uniqueId)
-        kick(player)
-    }
-
-    private fun kick(player: Player) {
+    fun kick(player: Player) {
         val climber = byPlayer[player.uniqueId] ?: return
         val direction = kickDirection(player, climber).takeIf { it.lengthSquared() > 0.0 } ?: return
         climber.vel.add(direction.multiply(ropeConfig.swing.kickStrength))
@@ -139,6 +145,7 @@ object RopeClimb {
         byPlayer[player.uniqueId] = climber
         playerByMount[mount.uniqueId] = player.uniqueId
         onPiton.getOrPut(piton.uniqueId, ::mutableListOf).add(climber)
+        refreshLead(piton.uniqueId)
 
         if (slideSpeed == 0.0) player.fallDistance = 0f
         mount.addPassenger(player)
@@ -258,7 +265,6 @@ object RopeClimb {
     fun detach(uuid: UUID, player: Player?) {
         val climber = byPlayer.remove(uuid) ?: return
         playerByMount.remove(climber.mount.uniqueId)
-        sprintTaps.remove(uuid)
         // The dismount listener cancels a cancellable dismount, so the climber has to be gone from the map before this
         player?.leaveVehicle()
         climber.mount.remove()
@@ -269,27 +275,24 @@ object RopeClimb {
 
         val pitonId = climber.piton.uniqueId
         val others = onPiton[pitonId]
-        val wasLead = others?.firstOrNull() === climber
         others?.remove(climber)
         if (others.isNullOrEmpty()) onPiton.remove(pitonId)
+        refreshLead(pitonId)
 
         if (climber.piton.isDead) return
-        val lead = others?.firstOrNull()
-        if (lead == null) {
-            climber.piton.restartExpiry()
-            PitonParts.setRopeSwing(climber.piton, null)
-        } else if (wasLead) PitonParts.setRopeSwing(climber.piton, lead.swingDir)
+        val lead = leads[pitonId]
+        if (lead == null) climber.piton.restartExpiry()
+        PitonParts.setRopeSwing(climber.piton, lead?.swingDir)
     }
 
     /** The player is moved as close to the wall as a walking player gets, since the wall check only probes [checkRange] out */
-    fun climbWall(player: Player, block: Block? = null, face: BlockFace? = null): Boolean {
+    fun climbWall(player: Player, block: Block, face: BlockFace): Boolean {
         val climber = byPlayer[player.uniqueId] ?: return false
         if (!ClimbBehaviour.mayClimbWall(player)) return false
-        val feet = climber.feet
         val halfWidth = player.standingHalfWidth
 
         val candidates = buildList {
-            if (block != null && face?.modY == 0) {
+            if (face.modY == 0) {
                 val reach = player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE)?.value ?: DEFAULT_BLOCK_REACH
                 val hit = player.rayTraceBlocks(reach)?.takeIf { it.hitBlock == block && it.hitBlockFace == face }?.hitPosition
                     ?: block.location.toCenterLocation().toVector().add(face.direction.multiply(0.5))
@@ -299,7 +302,7 @@ object RopeClimb {
                 })
             }
             val wall = climber.placed.face
-            if (wall != BlockFace.DOWN && !climber.swinging) add(player.location.apply {
+            if (wall != BlockFace.DOWN) add(player.location.apply {
                 val nudge = (ropeConfig.ropeOffset - halfWidth).coerceAtLeast(0.0)
                 x = climber.anchor.x - wall.modX * nudge
                 z = climber.anchor.z - wall.modZ * nudge
@@ -307,9 +310,9 @@ object RopeClimb {
             add(player.location)
         }
 
+        val feet = climber.feet
         val standAt = candidates.firstOrNull {
-            val at = it.toVector()
-            at.clone().setY(feet.y).distanceSquared(feet) <= WALL_REACH * WALL_REACH && !player.collidesAt(at) && player.wallDifficultyAt(it) >= 0
+            it.toVector().setY(feet.y).distanceSquared(feet) <= WALL_REACH * WALL_REACH && !player.collidesAt(it.toVector()) && player.wallDifficultyAt(it) >= 0
         } ?: return false
 
         exit(player)
@@ -341,6 +344,5 @@ object RopeClimb {
             detach(uuid, player)
         }
         consumedSwings.clear()
-        sprintTaps.clear()
     }
 }

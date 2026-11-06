@@ -152,6 +152,7 @@ fun Player.collidesAt(feet: Vector): Boolean {
 
 val Player.heldPiton: Piton? get() = inventory.toGeary()?.itemInMainHand?.get<Piton>()
 val Player.holdsRope: Boolean get() = inventory.toGeary()?.itemInMainHand?.has<Rope>() == true
+val Player.holdsBlock: Boolean get() = inventory.itemInMainHand.type.let { it.isBlock && !it.isAir }
 
 fun Player.findRopeSlot(): Int? = inventory.toGeary()?.let { geary -> (0 until inventory.size).firstOrNull { geary.get(it)?.has<Rope>() == true } }
 

@@ -204,8 +204,7 @@ object ClimbBehaviour : Listener {
     private fun PlayerInteractEvent.rightClicked(): Boolean { //did player do a valid right click
         if (player.heldPiton != null) return false
         val block = clickedBlock?.type ?: return false
-        val heldItem = player.inventory.itemInMainHand.type
-        if (heldItem.isBlock && heldItem != Material.AIR || !isClimbable(block)) {
+        if (player.holdsBlock || !isClimbable(block)) {
             player.uniqueId.climbCooldown = conf.jumpCooldown
             return false
         }
