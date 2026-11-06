@@ -26,6 +26,10 @@ class RopeConfig(
     // Grabbing a rope or wall while falling slides you down it, losing this much speed per tick and this much stamina per block slid
     val slideDeceleration: Double = 0.03,
     val slideStaminaPerBlock: Float = 0.05f,
+    // Regained every tick while hanging still on the rope, climbing at normal speed neither drains nor regains
+    val stillStaminaRegenPerTick: Float = 0.003f,
+    // Running out of stamina on the rope slides you down it, gaining this much speed per tick
+    val exhaustedSlideAcceleration: Double = 0.04,
     // Holding sprint while climbing or descending moves this much faster and costs stamina per block, until the bar is in the red
     val fastClimbMultiplier: Double = 2.5,
     val fastClimbStaminaPerBlock: Float = 0.03f,

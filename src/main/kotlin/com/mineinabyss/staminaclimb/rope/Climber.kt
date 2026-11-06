@@ -6,6 +6,7 @@ import com.mineinabyss.staminaclimb.collidesAt
 import com.mineinabyss.staminaclimb.hasCollision
 import com.mineinabyss.staminaclimb.modules.ropeConfig
 import com.mineinabyss.staminaclimb.normalizeOrZero
+import com.mineinabyss.staminaclimb.stamina.StaminaBar
 import com.mineinabyss.staminaclimb.stamina.removeStamina
 import org.bukkit.Bukkit
 import org.bukkit.Input
@@ -71,6 +72,7 @@ class Climber(
     val feet: Vector get() = anchor.clone().add(dir.clone().multiply(length))
     val swinging: Boolean get() = dir.y > HANGING_DIR_Y || vel.lengthSquared() > 1e-6
     val swingDir: Vector? get() = dir.takeIf { swinging }
+    val isStill: Boolean get() = !swinging && slideSpeed == 0.0 && input.let { it == null || !it.isJump && !it.isSneak }
 
     fun canTopOut(): Boolean {
         if (swinging || placed.face == BlockFace.DOWN) return false
@@ -108,6 +110,8 @@ class Climber(
 
     /** Applies the slide or the climb input to the rope length, returns false when the player let go */
     fun updateLength(player: Player): Boolean {
+        val exhausted = player.uniqueId in StaminaBar.players && !player.uniqueId.canClimb
+        if (exhausted) slideSpeed += ropeConfig.exhaustedSlideAcceleration
         if (slideSpeed > 0) {
             if (player.uniqueId.canClimb) {
                 slideSpeed = (slideSpeed - ropeConfig.slideDeceleration).coerceAtLeast(0.0)

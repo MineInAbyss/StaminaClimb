@@ -8,6 +8,8 @@ import com.mineinabyss.staminaclimb.*
 import com.mineinabyss.staminaclimb.climbing.ClimbBehaviour
 import com.mineinabyss.staminaclimb.component.StaminaModifier
 import com.mineinabyss.staminaclimb.config.StaminaConfig
+import com.mineinabyss.staminaclimb.modules.ropeConfig
+import com.mineinabyss.staminaclimb.rope.RopeClimb
 import org.bukkit.GameMode
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.time.Duration.Companion.nanoseconds
@@ -33,8 +35,10 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
             }
 
             //regenerate stamina
-            if (!uuid.isClimbing && !ClimbBehaviour.isGrabSliding(uuid)) {
+            val ropeClimber = RopeClimb.climber(player)
+            if (!uuid.isClimbing && ropeClimber?.isStill != false && !ClimbBehaviour.isGrabSliding(uuid)) {
                 val base = when {
+                    ropeClimber != null -> ropeConfig.stillStaminaRegenPerTick
                     player.toNMS().onGround() -> config.staminaRegen
                     !player.isInClimbableBlock -> config.staminaRegenInAir
                     else -> 0f
