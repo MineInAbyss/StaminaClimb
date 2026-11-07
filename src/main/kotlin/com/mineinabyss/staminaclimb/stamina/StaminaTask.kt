@@ -39,7 +39,7 @@ class StaminaTask(private val config: StaminaConfig) : BukkitRunnable() {
                 StaminaBar.unregisterBar(uuid)
                 player.stopClimbing()
                 player.allowFlight = true
-                return
+                return@forEachPlayer
             }
 
             //regenerate stamina
